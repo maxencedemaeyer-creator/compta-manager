@@ -12,8 +12,8 @@ export default function VeloMonthForm({ config, existingEntries, onSubmit, onCan
   const existant = existingEntries.find((e) => e.mois === mois)
 
   const montantEstime = useMemo(() => {
-    const ar = Number(allersRetours) || 0
-    return ar * 2 * Number(config?.distanceKm || 0) * Number(config?.prixKm || 0)
+    const trajets = Number(allersRetours) || 0
+    return trajets * Number(config?.distanceKm || 0) * Number(config?.prixKm || 0)
   }, [allersRetours, config])
 
   async function handleSubmit(e) {
@@ -44,7 +44,7 @@ export default function VeloMonthForm({ config, existingEntries, onSubmit, onCan
           required
         />
       </Field>
-      <Field label="Nombre d'aller-retours effectués">
+      <Field label="Nombre de trajets effectués (aller simple)">
         <input
           type="number"
           min="0"
@@ -58,7 +58,7 @@ export default function VeloMonthForm({ config, existingEntries, onSubmit, onCan
 
       {existant && (
         <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2 mb-4">
-          Un enregistrement existe déjà pour ce mois ({existant.allersRetours} AR). Il sera
+          Un enregistrement existe déjà pour ce mois ({existant.allersRetours} trajets). Il sera
           remplacé.
         </p>
       )}
@@ -67,7 +67,7 @@ export default function VeloMonthForm({ config, existingEntries, onSubmit, onCan
         <p className="text-xs text-slate-500 mb-0.5">Montant estimé</p>
         <p className="text-xl font-bold text-slate-900">{formatEuros(montantEstime)}</p>
         <p className="text-xs text-slate-400 mt-1">
-          {allersRetours || 0} AR × 2 × {config?.distanceKm || 0} km × {formatEuros(config?.prixKm || 0)}
+          {allersRetours || 0} trajets × {config?.distanceKm || 0} km × {formatEuros(config?.prixKm || 0)}
         </p>
       </div>
 
