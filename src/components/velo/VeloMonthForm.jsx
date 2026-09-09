@@ -4,9 +4,11 @@ import Button from '../ui/Button.jsx'
 import { formatEuros } from '../../utils/format.js'
 import { moisKeyActuel } from '../../utils/dates.js'
 
-export default function VeloMonthForm({ config, existingEntries, onSubmit, onCancel }) {
-  const [mois, setMois] = useState(moisKeyActuel())
-  const [allersRetours, setAllersRetours] = useState('')
+export default function VeloMonthForm({ config, existingEntries, editingEntry, onSubmit, onCancel }) {
+  const [mois, setMois] = useState(editingEntry?.mois || moisKeyActuel())
+  const [allersRetours, setAllersRetours] = useState(
+    editingEntry ? String(editingEntry.allersRetours) : ''
+  )
   const [saving, setSaving] = useState(false)
 
   const existant = existingEntries.find((e) => e.mois === mois)
@@ -41,10 +43,11 @@ export default function VeloMonthForm({ config, existingEntries, onSubmit, onCan
           className={inputClass}
           value={mois}
           onChange={(e) => setMois(e.target.value)}
+          disabled={!!editingEntry}
           required
         />
       </Field>
-      <Field label="Nombre d'allers-retours effectués">
+      <Field label="Nombre d'aller-retours effectués">
         <input
           type="number"
           min="0"
@@ -53,13 +56,14 @@ export default function VeloMonthForm({ config, existingEntries, onSubmit, onCan
           onChange={(e) => setAllersRetours(e.target.value)}
           placeholder="0"
           required
+          autoFocus={!!editingEntry}
         />
       </Field>
 
-      {existant && (
+      {existant && !editingEntry && (
         <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2 mb-4">
-          Un enregistrement existe déjà pour ce mois ({existant.allersRetours} allers-retours). Il
-          sera remplacé.
+          Un enregistrement existe déjà pour ce mois ({existant.allersRetours} AR). Il sera
+          remplacé.
         </p>
       )}
 
@@ -76,7 +80,7 @@ export default function VeloMonthForm({ config, existingEntries, onSubmit, onCan
           Annuler
         </Button>
         <Button type="submit" className="flex-1" disabled={saving}>
-          {saving ? 'Enregistrement…' : 'Enregistrer'}
+          {saving ? 'Enregistrement…' : editingEntry ? 'Mettre à jour' : 'Enregistrer'}
         </Button>
       </div>
     </form>
