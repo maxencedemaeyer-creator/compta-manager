@@ -15,6 +15,7 @@ export default function VeloView() {
   const { entries, loading: loadingEntries, saveEntry, togglePaye } = useVeloEntries()
   const [modalConfig, setModalConfig] = useState(false)
   const [modalEntry, setModalEntry] = useState(false)
+  const [editingEntry, setEditingEntry] = useState(null)
 
   const configPret = !loadingConfig && config?.prixKm > 0 && config?.distanceKm > 0
   const totalAnnee = entries.reduce((sum, e) => sum + e.montant, 0)
@@ -27,6 +28,22 @@ export default function VeloView() {
   async function handleSaveEntry(values) {
     await saveEntry(values)
     setModalEntry(false)
+    setEditingEntry(null)
+  }
+
+  function handleOpenNewEntry() {
+    setEditingEntry(null)
+    setModalEntry(true)
+  }
+
+  function handleEditEntry(entry) {
+    setEditingEntry(entry)
+    setModalEntry(true)
+  }
+
+  function handleCloseEntryModal() {
+    setModalEntry(false)
+    setEditingEntry(null)
   }
 
   return (
@@ -38,7 +55,7 @@ export default function VeloView() {
             <Settings size={16} />
             <span className="hidden sm:inline">Paramètres</span>
           </Button>
-          <Button onClick={() => setModalEntry(true)} disabled={!configPret}>
+          <Button onClick={handleOpenNewEntry} disabled={!configPret}>
             <Plus size={16} />
             Enregistrer un mois
           </Button>
@@ -74,7 +91,7 @@ export default function VeloView() {
           <EmptyState
             icon={Bike}
             title="Aucun trajet enregistré"
-            description="Enregistre le nombre d'allers-retours effectués ce mois-ci."
+            description="Enregistre le nombre d'aller-retours effectués ce mois-ci."
           />
         </Card>
       )}
@@ -82,7 +99,12 @@ export default function VeloView() {
       {entries.length > 0 && (
         <Card>
           {entries.map((entry) => (
-            <VeloEntryRow key={entry.id} entry={entry} onTogglePaye={togglePaye} />
+            <VeloEntryRow
+              key={entry.id}
+              entry={entry}
+              onTogglePaye={togglePaye}
+              onEdit={handleEditEntry}
+            />
           ))}
         </Card>
       )}
@@ -97,14 +119,15 @@ export default function VeloView() {
 
       <Modal
         open={modalEntry}
-        onClose={() => setModalEntry(false)}
-        title="Frais vélo du mois"
+        onClose={handleCloseEntryModal}
+        title={editingEntry ? 'Modifier les aller-retours' : 'Frais vélo du mois'}
       >
         <VeloMonthForm
           config={config}
           existingEntries={entries}
+          editingEntry={editingEntry}
           onSubmit={handleSaveEntry}
-          onCancel={() => setModalEntry(false)}
+          onCancel={handleCloseEntryModal}
         />
       </Modal>
     </div>
