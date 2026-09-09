@@ -5,13 +5,14 @@ import { useEtudes } from './useEtudes.js'
 import { moisKeyFromDate, moisKeyActuel, moisKeyPrecedent, anneeActuelle, anneeDeMoisKey } from '../utils/dates.js'
 
 function moisVide() {
-  return { total: 0, percu: 0, aPercevoir: 0 }
+  return { total: 0, percu: 0, aPercevoir: 0, parPoste: { cours: 0, velo: 0, etudes: 0 } }
 }
 
-function ajouter(map, moisKey, montant, paye) {
+function ajouter(map, moisKey, montant, paye, poste) {
   if (!map.has(moisKey)) map.set(moisKey, moisVide())
   const m = map.get(moisKey)
   m.total += montant
+  m.parPoste[poste] += montant
   if (paye) {
     m.percu += montant
   } else {
@@ -31,13 +32,13 @@ export function useComptabilite() {
   const parMois = useMemo(() => {
     const map = new Map()
     for (const c of cours) {
-      ajouter(map, moisKeyFromDate(c.date), c.prix, c.paye)
+      ajouter(map, moisKeyFromDate(c.date), c.prix, c.paye, 'cours')
     }
     for (const e of veloEntries) {
-      ajouter(map, e.mois, e.montant, e.paye)
+      ajouter(map, e.mois, e.montant, e.paye, 'velo')
     }
     for (const e of etudes) {
-      ajouter(map, moisKeyFromDate(e.date), e.prix, e.paye)
+      ajouter(map, moisKeyFromDate(e.date), e.prix, e.paye, 'etudes')
     }
     return map
   }, [cours, veloEntries, etudes])
