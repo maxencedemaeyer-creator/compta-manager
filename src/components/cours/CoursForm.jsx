@@ -10,13 +10,18 @@ export default function CoursForm({ onSubmit, onCancel }) {
   const [duree, setDuree] = useState('60')
   const [date, setDate] = useState(today())
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
   async function handleSubmit(e) {
     e.preventDefault()
     if (!eleve || !prix || !duree || !date) return
     setSaving(true)
+    setError('')
     try {
       await onSubmit({ eleve, prix, duree, date })
+    } catch (err) {
+      console.error("Erreur lors de l'ajout du cours :", err)
+      setError(err.message || "Une erreur est survenue, le cours n'a pas été enregistré.")
     } finally {
       setSaving(false)
     }
@@ -67,6 +72,13 @@ export default function CoursForm({ onSubmit, onCancel }) {
           required
         />
       </Field>
+
+      {error && (
+        <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-4">
+          {error}
+        </p>
+      )}
+
       <div className="flex gap-3 mt-2">
         <Button type="button" variant="secondary" className="flex-1" onClick={onCancel}>
           Annuler
