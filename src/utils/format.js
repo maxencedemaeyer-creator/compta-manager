@@ -42,6 +42,16 @@ export function formatMoisLabel(moisKey) {
   return `${MOIS_LABELS[month - 1]} ${year}`
 }
 
+const jourSemaineFormatter = new Intl.DateTimeFormat('fr-BE', { weekday: 'long' })
+
+// Nom complet du jour de semaine pour une date donnée : "Lundi", "Mardi"... (utilisé devant les dates d'étude)
+export function formatJourSemaine(date) {
+  if (!date) return ''
+  const d = date instanceof Date ? date : date.toDate ? date.toDate() : new Date(date)
+  const libelle = jourSemaineFormatter.format(d)
+  return libelle.charAt(0).toUpperCase() + libelle.slice(1)
+}
+
 const JOURS_COURTS = ['Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa', 'Di']
 
 // Libellé court d'un jour de semaine (index 0 = lundi ... 6 = dimanche), pour l'en-tête du calendrier
