@@ -11,13 +11,18 @@ export default function CoursRecurrentForm({ onSubmit, onCancel }) {
   const [dateDebut, setDateDebut] = useState(today())
   const [nombreSeances, setNombreSeances] = useState('10')
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
   async function handleSubmit(e) {
     e.preventDefault()
     if (!eleve || !prix || !duree || !dateDebut || !nombreSeances) return
     setSaving(true)
+    setError('')
     try {
       await onSubmit({ eleve, prix, duree, dateDebut, nombreSeances })
+    } catch (err) {
+      console.error('Erreur lors de la création des cours récurrents :', err)
+      setError(err.message || "Une erreur est survenue, les cours n'ont pas été enregistrés.")
     } finally {
       setSaving(false)
     }
@@ -85,6 +90,13 @@ export default function CoursRecurrentForm({ onSubmit, onCancel }) {
           />
         </Field>
       </div>
+
+      {error && (
+        <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-4">
+          {error}
+        </p>
+      )}
+
       <div className="flex gap-3 mt-2">
         <Button type="button" variant="secondary" className="flex-1" onClick={onCancel}>
           Annuler
