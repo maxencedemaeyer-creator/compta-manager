@@ -15,6 +15,7 @@ export default function EtudesView() {
   const { entries, loading: loadingEntries, saveEntry, togglePaye } = useEtudesEntries()
   const [modalConfig, setModalConfig] = useState(false)
   const [modalEntry, setModalEntry] = useState(false)
+  const [editingEntry, setEditingEntry] = useState(null)
 
   const configPret = !loadingConfig && config?.prixEtude > 0
   const totalAnnee = entries.reduce((sum, e) => sum + e.montant, 0)
@@ -27,6 +28,22 @@ export default function EtudesView() {
   async function handleSaveEntry(values) {
     await saveEntry(values)
     setModalEntry(false)
+    setEditingEntry(null)
+  }
+
+  function handleOpenNewEntry() {
+    setEditingEntry(null)
+    setModalEntry(true)
+  }
+
+  function handleEditEntry(entry) {
+    setEditingEntry(entry)
+    setModalEntry(true)
+  }
+
+  function handleCloseEntryModal() {
+    setModalEntry(false)
+    setEditingEntry(null)
   }
 
   return (
@@ -38,7 +55,7 @@ export default function EtudesView() {
             <Settings size={16} />
             <span className="hidden sm:inline">Prix</span>
           </Button>
-          <Button onClick={() => setModalEntry(true)} disabled={!configPret}>
+          <Button onClick={handleOpenNewEntry} disabled={!configPret}>
             <Plus size={16} />
             Enregistrer un mois
           </Button>
@@ -79,7 +96,12 @@ export default function EtudesView() {
       {entries.length > 0 && (
         <Card>
           {entries.map((entry) => (
-            <EtudesEntryRow key={entry.id} entry={entry} onTogglePaye={togglePaye} />
+            <EtudesEntryRow
+              key={entry.id}
+              entry={entry}
+              onTogglePaye={togglePaye}
+              onEdit={handleEditEntry}
+            />
           ))}
         </Card>
       )}
@@ -92,12 +114,17 @@ export default function EtudesView() {
         />
       </Modal>
 
-      <Modal open={modalEntry} onClose={() => setModalEntry(false)} title="Études du mois">
+      <Modal
+        open={modalEntry}
+        onClose={handleCloseEntryModal}
+        title={editingEntry ? "Modifier le nombre d'études" : 'Études du mois'}
+      >
         <EtudesMonthForm
           config={config}
           existingEntries={entries}
+          editingEntry={editingEntry}
           onSubmit={handleSaveEntry}
-          onCancel={() => setModalEntry(false)}
+          onCancel={handleCloseEntryModal}
         />
       </Modal>
     </div>
