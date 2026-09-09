@@ -4,10 +4,10 @@ import { db } from '../firebase/config.js'
 import { useFirestoreCollection } from './useFirestoreCollection.js'
 import { usePin } from '../context/PinContext.jsx'
 
-const CONFIG_REF = 'config/velo'
-const ENTRIES_COLLECTION = 'veloEntries'
+const CONFIG_REF = 'config/etudes'
+const ENTRIES_COLLECTION = 'etudesEntries'
 
-export function useVeloConfig() {
+export function useEtudesConfig() {
   const { authReady } = usePin()
   const [config, setConfig] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -16,16 +16,15 @@ export function useVeloConfig() {
     if (!authReady) return
     const ref = doc(db, CONFIG_REF)
     const unsubscribe = onSnapshot(ref, (snap) => {
-      setConfig(snap.exists() ? snap.data() : { prixKm: 0, distanceKm: 0 })
+      setConfig(snap.exists() ? snap.data() : { prixEtude: 0 })
       setLoading(false)
     })
     return unsubscribe
   }, [authReady])
 
-  async function saveConfig({ prixKm, distanceKm }) {
+  async function saveConfig({ prixEtude }) {
     await setDoc(doc(db, CONFIG_REF), {
-      prixKm: Number(prixKm),
-      distanceKm: Number(distanceKm),
+      prixEtude: Number(prixEtude),
       updatedAt: serverTimestamp(),
     })
   }
@@ -33,19 +32,15 @@ export function useVeloConfig() {
   return { config, loading, saveConfig }
 }
 
-export function useVeloEntries() {
+export function useEtudesEntries() {
   const { data, loading, error } = useFirestoreCollection(ENTRIES_COLLECTION, 'mois', 'desc')
 
-  // Enregistre (ou met à jour) le trajet vélo d'un mois donné.
-  // Le calcul est figé au moment de l'enregistrement (snapshot du prix/km et de la distance),
-  // pour que l'historique reste correct même si la config change plus tard.
-  async function saveEntry({ mois, allersRetours, distanceKm, prixKm, paye = false }) {
-    const montant = Number(allersRetours) * 2 * Number(distanceKm) * Number(prixKm)
+  async function saveEntry({ mois, nombre, prixUnitaire, paye = false }) {
+    const montant = Number(nombre) * Number(prixUnitaire)
     await setDoc(doc(db, ENTRIES_COLLECTION, mois), {
       mois,
-      allersRetours: Number(allersRetours),
-      distanceKm: Number(distanceKm),
-      prixKm: Number(prixKm),
+      nombre: Number(nombre),
+      prixUnitaire: Number(prixUnitaire),
       montant,
       paye,
       updatedAt: serverTimestamp(),
