@@ -74,7 +74,7 @@ export default function VeloView() {
           <EmptyState
             icon={Bike}
             title="Aucun trajet enregistré"
-            description="Enregistre le nombre de trajets (aller simple) effectués ce mois-ci."
+            description="Enregistre le nombre d'allers-retours effectués ce mois-ci."
           />
         </Card>
       )}
