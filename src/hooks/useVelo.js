@@ -36,14 +36,13 @@ export function useVeloConfig() {
 export function useVeloEntries() {
   const { data, loading, error } = useFirestoreCollection(ENTRIES_COLLECTION, 'mois', 'desc')
 
-  // Enregistre (ou met à jour) le trajet vélo d'un mois donné.
-  // "allersRetours" représente le nombre de trajets ALLER SIMPLE effectués.
-  // "distanceKm" est déjà la distance aller simple (domicile → école), configurée dans les paramètres.
-  // Le calcul est donc : trajets × distance aller simple × prix/km (pas de ×2 supplémentaire).
+  // "allersRetours" représente le nombre d'ALLERS-RETOURS effectués dans le mois.
+  // "distanceKm" est la distance ALLER SIMPLE (domicile → école), configurée dans les paramètres.
+  // Calcul : allers-retours × 2 (aller + retour) × distance aller simple × prix/km.
   // Le montant est figé au moment de l'enregistrement (snapshot du prix/km et de la distance),
   // pour que l'historique reste correct même si la config change plus tard.
   async function saveEntry({ mois, allersRetours, distanceKm, prixKm, paye = false }) {
-    const montant = Number(allersRetours) * Number(distanceKm) * Number(prixKm)
+    const montant = Number(allersRetours) * 2 * Number(distanceKm) * Number(prixKm)
     await setDoc(doc(db, ENTRIES_COLLECTION, mois), {
       mois,
       allersRetours: Number(allersRetours),
