@@ -42,6 +42,14 @@ export function dateKeyFromDate(date) {
   return `${year}-${month}-${day}`
 }
 
+// Une étude se termine à 16h30 le jour même : elle est donc considérée "passée" à partir de
+// 16h30 ce jour-là, et pour toujours après (jours suivants inclus).
+export function etudeEstPassee(date) {
+  const d = date instanceof Date ? date : date.toDate ? date.toDate() : new Date(date)
+  const finEtude = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 16, 30, 0, 0)
+  return new Date() >= finEtude
+}
+
 // Génère `count` dates hebdomadaires en partant de `startDate` (incluse), même heure/jour chaque semaine.
 export function genererDatesRecurrentes(startDate, count) {
   const dates = []
