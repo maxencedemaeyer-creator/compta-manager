@@ -1,11 +1,23 @@
 import { useEffect, useState } from 'react'
-import { doc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore'
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  setDoc,
+  serverTimestamp,
+  Timestamp,
+  writeBatch,
+} from 'firebase/firestore'
 import { db } from '../firebase/config.js'
 import { useFirestoreCollection } from './useFirestoreCollection.js'
 import { usePin } from '../context/PinContext.jsx'
+import { withTimeout } from '../utils/withTimeout.js'
+import { moisKeyFromDate } from '../utils/dates.js'
 
 const CONFIG_REF = 'config/etudes'
-const ENTRIES_COLLECTION = 'etudesEntries'
+const COLLECTION = 'etudes'
 
 export function useEtudesConfig() {
   const { authReady } = usePin()
@@ -32,24 +44,51 @@ export function useEtudesConfig() {
   return { config, loading, saveConfig }
 }
 
-export function useEtudesEntries() {
-  const { data, loading, error } = useFirestoreCollection(ENTRIES_COLLECTION, 'mois', 'desc')
+// Chaque étude est désormais un enregistrement individuel daté (même logique que les cours),
+// ce qui permet de les afficher/ajouter/supprimer jour par jour dans le calendrier.
+export function useEtudes() {
+  const { data, loading, error } = useFirestoreCollection(COLLECTION, 'date', 'desc')
 
-  async function saveEntry({ mois, nombre, prixUnitaire, paye = false }) {
-    const montant = Number(nombre) * Number(prixUnitaire)
-    await setDoc(doc(db, ENTRIES_COLLECTION, mois), {
-      mois,
-      nombre: Number(nombre),
-      prixUnitaire: Number(prixUnitaire),
-      montant,
-      paye,
-      updatedAt: serverTimestamp(),
+  async function addEtude({ date, prix }) {
+    await withTimeout(
+      addDoc(collection(db, COLLECTION), {
+        date: Timestamp.fromDate(new Date(date)),
+        prix: Number(prix),
+        paye: false,
+        createdAt: serverTimestamp(),
+      })
+    )
+  }
+
+  async function addEtudesSerie({ dates, prix }) {
+    const batch = writeBatch(db)
+    dates.forEach((date) => {
+      const ref = doc(collection(db, COLLECTION))
+      batch.set(ref, {
+        date: Timestamp.fromDate(new Date(date)),
+        prix: Number(prix),
+        paye: false,
+        createdAt: serverTimestamp(),
+      })
     })
+    await withTimeout(batch.commit())
   }
 
-  async function togglePaye(mois, currentPaye) {
-    await setDoc(doc(db, ENTRIES_COLLECTION, mois), { paye: !currentPaye }, { merge: true })
+  async function removeEtude(id) {
+    await withTimeout(deleteDoc(doc(db, COLLECTION, id)))
   }
 
-  return { entries: data, loading, error, saveEntry, togglePaye }
+  // Bascule le statut payé/non payé de toutes les études d'un mois donné en une fois
+  // (les études d'un même mois sont facturées ensemble, comme dans l'ancienne vue mensuelle).
+  async function toggleMoisPaye(moisKey, currentPaye) {
+    const concernees = data.filter((e) => moisKeyFromDate(e.date) === moisKey)
+    if (concernees.length === 0) return
+    const batch = writeBatch(db)
+    concernees.forEach((e) => {
+      batch.update(doc(db, COLLECTION, e.id), { paye: !currentPaye })
+    })
+    await withTimeout(batch.commit())
+  }
+
+  return { etudes: data, loading, error, addEtude, addEtudesSerie, removeEtude, toggleMoisPaye }
 }
