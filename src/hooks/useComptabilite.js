@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useCoursParticuliers } from './useCoursParticuliers.js'
 import { useVeloEntries } from './useVelo.js'
-import { useEtudesEntries } from './useEtudes.js'
+import { useEtudes } from './useEtudes.js'
 import { moisKeyFromDate, moisKeyActuel, moisKeyPrecedent, anneeActuelle, anneeDeMoisKey } from '../utils/dates.js'
 
 function moisVide() {
@@ -24,7 +24,7 @@ function ajouter(map, moisKey, montant, paye) {
 export function useComptabilite() {
   const { cours, loading: loadingCours } = useCoursParticuliers()
   const { entries: veloEntries, loading: loadingVelo } = useVeloEntries()
-  const { entries: etudesEntries, loading: loadingEtudes } = useEtudesEntries()
+  const { etudes, loading: loadingEtudes } = useEtudes()
 
   const loading = loadingCours || loadingVelo || loadingEtudes
 
@@ -36,11 +36,11 @@ export function useComptabilite() {
     for (const e of veloEntries) {
       ajouter(map, e.mois, e.montant, e.paye)
     }
-    for (const e of etudesEntries) {
-      ajouter(map, e.mois, e.montant, e.paye)
+    for (const e of etudes) {
+      ajouter(map, moisKeyFromDate(e.date), e.prix, e.paye)
     }
     return map
-  }, [cours, veloEntries, etudesEntries])
+  }, [cours, veloEntries, etudes])
 
   const historique = useMemo(
     () => Array.from(parMois.entries()).sort((a, b) => (a[0] < b[0] ? 1 : -1)),
