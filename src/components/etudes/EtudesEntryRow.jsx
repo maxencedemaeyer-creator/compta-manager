@@ -1,7 +1,7 @@
-import { Check } from 'lucide-react'
+import { Check, Pencil } from 'lucide-react'
 import { formatEuros, formatMoisLabel } from '../../utils/format.js'
 
-export default function EtudesEntryRow({ entry, onTogglePaye }) {
+export default function EtudesEntryRow({ entry, onTogglePaye, onEdit }) {
   return (
     <div className="flex items-center gap-3 py-3 border-b border-slate-100 last:border-0">
       <div className="flex-1 min-w-0">
@@ -9,6 +9,13 @@ export default function EtudesEntryRow({ entry, onTogglePaye }) {
         <p className="text-xs text-slate-500">{entry.nombre} études</p>
       </div>
       <p className="font-semibold text-slate-900 tabular-nums">{formatEuros(entry.montant)}</p>
+      <button
+        onClick={() => onEdit(entry)}
+        className="p-1.5 text-slate-300 hover:text-blue-500"
+        aria-label="Modifier le nombre d'études"
+      >
+        <Pencil size={16} />
+      </button>
       <button
         onClick={() => onTogglePaye(entry.mois, entry.paye)}
         className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
