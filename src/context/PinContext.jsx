@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback } from 'rea
 import { onAuthStateChanged, signInAnonymously } from 'firebase/auth'
 import { auth } from '../firebase/config.js'
 import { sha256Hex } from '../utils/hash.js'
+import { withTimeout } from '../utils/withTimeout.js'
 
 const SESSION_KEY = 'cm_unlocked'
 const PIN_HASH = import.meta.env.VITE_PIN_HASH
@@ -16,49 +17,23 @@ export function PinProvider({ children }) {
   // Authentification anonyme Firebase : nécessaire pour que les règles Firestore
   // ("autoriser seulement les utilisateurs authentifiés") laissent passer les requêtes.
   useEffect(() => {
-    let settled = false
-
-    // Si Firebase ne répond ni en succès ni en erreur après 8s (mauvaise config,
-    // domaine non autorisé, variables d'env absentes...), on affiche un message
-    // clair au lieu de rester bloqué sur "Connexion..." indéfiniment.
-    const timeout = setTimeout(() => {
-      if (!settled) {
-        setError(
-          "La connexion à Firebase prend trop de temps. Vérifie dans la console Firebase que l'authentification Anonyme est activée (Authentication → Sign-in method), que le domaine du site est dans la liste des domaines autorisés (Authentication → Settings → Authorized domains), et que toutes les variables VITE_FIREBASE_... sont bien configurées sur Vercel (puis redéploie)."
-        )
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setAuthReady(true)
+        setError('')
+      } else {
+        withTimeout(
+          signInAnonymously(auth),
+          15000,
+          "La connexion à Firebase n'aboutit pas (réseau bloqué ou VPN actif ?). Vérifie ta connexion et réessaie."
+        ).catch((err) => {
+          console.error('Erreur de connexion Firebase :', err)
+          const detail = err.code ? ` (${err.code})` : err.message ? ` — ${err.message}` : ''
+          setError(`Impossible de se connecter à la base de données${detail}.`)
+        })
       }
-    }, 8000)
-
-    const unsubscribe = onAuthStateChanged(
-      auth,
-      (user) => {
-        if (user) {
-          settled = true
-          clearTimeout(timeout)
-          setAuthReady(true)
-        } else {
-          signInAnonymously(auth).catch((err) => {
-            settled = true
-            clearTimeout(timeout)
-            console.error('Erreur de connexion Firebase :', err.code, err.message)
-            setError(
-              `Impossible de se connecter à la base de données (${err.code || 'erreur inconnue'}). Vérifie la configuration Firebase (authentification Anonyme activée + variables d'environnement correctes).`
-            )
-          })
-        }
-      },
-      (err) => {
-        settled = true
-        clearTimeout(timeout)
-        console.error('Erreur onAuthStateChanged :', err)
-        setError("Impossible de joindre Firebase. Vérifie ta connexion internet et la configuration du projet.")
-      }
-    )
-
-    return () => {
-      clearTimeout(timeout)
-      unsubscribe()
-    }
+    })
+    return unsubscribe
   }, [])
 
   const unlock = useCallback(async (pin) => {
