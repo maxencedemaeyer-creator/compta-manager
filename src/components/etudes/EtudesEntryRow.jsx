@@ -1,29 +1,17 @@
-import { Check, Pencil } from 'lucide-react'
-import { formatEuros, formatMoisLabel } from '../../utils/format.js'
+import { Trash2 } from 'lucide-react'
+import { formatDate, formatEuros } from '../../utils/format.js'
 
-export default function EtudesEntryRow({ entry, onTogglePaye, onEdit }) {
+export default function EtudesEntryRow({ entry, onDelete }) {
   return (
-    <div className="flex items-center gap-3 py-3 border-b border-slate-100 last:border-0">
-      <div className="flex-1 min-w-0">
-        <p className="font-medium text-slate-900 capitalize">{formatMoisLabel(entry.mois)}</p>
-        <p className="text-xs text-slate-500">{entry.nombre} études</p>
-      </div>
-      <p className="font-semibold text-slate-900 tabular-nums">{formatEuros(entry.montant)}</p>
+    <div className="flex items-center gap-3 py-2.5 border-b border-slate-100 last:border-0">
+      <p className="flex-1 min-w-0 text-sm font-medium text-slate-800">{formatDate(entry.date)}</p>
+      <p className="text-sm text-slate-500 tabular-nums">{formatEuros(entry.prix)}</p>
       <button
-        onClick={() => onEdit(entry)}
-        className="p-1.5 text-slate-300 hover:text-blue-500"
-        aria-label="Modifier le nombre d'études"
+        onClick={() => onDelete(entry.id)}
+        className="p-1.5 text-slate-300 hover:text-red-500"
+        aria-label="Supprimer cette étude"
       >
-        <Pencil size={16} />
-      </button>
-      <button
-        onClick={() => onTogglePaye(entry.mois, entry.paye)}
-        className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
-          entry.paye ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600 hover:bg-red-100'
-        }`}
-      >
-        <Check size={14} />
-        {entry.paye ? 'Payé' : 'Non payé'}
+        <Trash2 size={16} />
       </button>
     </div>
   )
