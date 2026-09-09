@@ -4,9 +4,9 @@ import Button from '../ui/Button.jsx'
 import { formatEuros } from '../../utils/format.js'
 import { moisKeyActuel } from '../../utils/dates.js'
 
-export default function EtudesMonthForm({ config, existingEntries, onSubmit, onCancel }) {
-  const [mois, setMois] = useState(moisKeyActuel())
-  const [nombre, setNombre] = useState('')
+export default function EtudesMonthForm({ config, existingEntries, editingEntry, onSubmit, onCancel }) {
+  const [mois, setMois] = useState(editingEntry?.mois || moisKeyActuel())
+  const [nombre, setNombre] = useState(editingEntry ? String(editingEntry.nombre) : '')
   const [saving, setSaving] = useState(false)
 
   const existant = existingEntries.find((e) => e.mois === mois)
@@ -39,6 +39,7 @@ export default function EtudesMonthForm({ config, existingEntries, onSubmit, onC
           className={inputClass}
           value={mois}
           onChange={(e) => setMois(e.target.value)}
+          disabled={!!editingEntry}
           required
         />
       </Field>
@@ -51,10 +52,11 @@ export default function EtudesMonthForm({ config, existingEntries, onSubmit, onC
           onChange={(e) => setNombre(e.target.value)}
           placeholder="0"
           required
+          autoFocus={!!editingEntry}
         />
       </Field>
 
-      {existant && (
+      {existant && !editingEntry && (
         <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2 mb-4">
           Un enregistrement existe déjà pour ce mois ({existant.nombre} études). Il sera remplacé.
         </p>
@@ -73,7 +75,7 @@ export default function EtudesMonthForm({ config, existingEntries, onSubmit, onC
           Annuler
         </Button>
         <Button type="submit" className="flex-1" disabled={saving}>
-          {saving ? 'Enregistrement…' : 'Enregistrer'}
+          {saving ? 'Enregistrement…' : editingEntry ? 'Mettre à jour' : 'Enregistrer'}
         </Button>
       </div>
     </form>
