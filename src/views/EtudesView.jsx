@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Plus, Settings, BookOpen, List, CalendarDays, Check } from 'lucide-react'
+import { Plus, Settings, BookOpen, List, CalendarDays, Check, ChevronRight } from 'lucide-react'
 import { useEtudesConfig, useEtudes } from '../hooks/useEtudes.js'
 import Card from '../components/ui/Card.jsx'
 import Button from '../components/ui/Button.jsx'
@@ -23,6 +23,7 @@ export default function EtudesView() {
   const [modalConfig, setModalConfig] = useState(false)
   const [modalAjout, setModalAjout] = useState(false)
   const [jourSelectionne, setJourSelectionne] = useState(null)
+  const [moisOuverts, setMoisOuverts] = useState(() => new Set())
 
   const configPret = !loadingConfig && config?.prixEtude > 0
   const totalGeneral = etudes.reduce((sum, e) => sum + e.prix, 0)
@@ -63,6 +64,15 @@ export default function EtudesView() {
 
   function handleSupprimerEtude(id) {
     if (confirm('Supprimer cette étude ?')) removeEtude(id)
+  }
+
+  function toggleMoisOuvert(moisKey) {
+    setMoisOuverts((prev) => {
+      const next = new Set(prev)
+      if (next.has(moisKey)) next.delete(moisKey)
+      else next.add(moisKey)
+      return next
+    })
   }
 
   return (
@@ -141,16 +151,29 @@ export default function EtudesView() {
           {groupes.map(([moisKey, items]) => {
             const total = items.reduce((sum, e) => sum + e.prix, 0)
             const toutPaye = items.every((e) => e.paye)
+            const estOuvert = moisOuverts.has(moisKey)
             return (
               <Card key={moisKey}>
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <h3 className="font-semibold text-slate-800 capitalize">
-                      {formatMoisLabel(moisKey)}
-                    </h3>
-                    <p className="text-xs text-slate-500">{items.length} études</p>
-                  </div>
-                  <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between mb-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => toggleMoisOuvert(moisKey)}
+                    className="flex items-center gap-2 text-left min-w-0 py-1 -my-1"
+                  >
+                    <ChevronRight
+                      size={16}
+                      className={`shrink-0 text-slate-400 transition-transform ${
+                        estOuvert ? 'rotate-90' : ''
+                      }`}
+                    />
+                    <div className="min-w-0">
+                      <h3 className="font-semibold text-slate-800 capitalize truncate">
+                        {formatMoisLabel(moisKey)}
+                      </h3>
+                      <p className="text-xs text-slate-500">{items.length} études</p>
+                    </div>
+                  </button>
+                  <div className="flex items-center gap-3 shrink-0">
                     <p className="font-semibold text-slate-900 tabular-nums">{formatEuros(total)}</p>
                     <button
                       onClick={() => toggleMoisPaye(moisKey, toutPaye)}
@@ -165,11 +188,13 @@ export default function EtudesView() {
                     </button>
                   </div>
                 </div>
-                <div>
-                  {items.map((entry) => (
-                    <EtudesEntryRow key={entry.id} entry={entry} onDelete={handleSupprimerEtude} />
-                  ))}
-                </div>
+                {estOuvert && (
+                  <div>
+                    {items.map((entry) => (
+                      <EtudesEntryRow key={entry.id} entry={entry} onDelete={handleSupprimerEtude} />
+                    ))}
+                  </div>
+                )}
               </Card>
             )
           })}
