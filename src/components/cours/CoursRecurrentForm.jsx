@@ -4,19 +4,20 @@ import Button from '../ui/Button.jsx'
 
 const today = () => new Date().toISOString().slice(0, 10)
 
-export default function CoursForm({ onSubmit, onCancel }) {
+export default function CoursRecurrentForm({ onSubmit, onCancel }) {
   const [eleve, setEleve] = useState('')
   const [prix, setPrix] = useState('')
   const [duree, setDuree] = useState('60')
-  const [date, setDate] = useState(today())
+  const [dateDebut, setDateDebut] = useState(today())
+  const [nombreSeances, setNombreSeances] = useState('10')
   const [saving, setSaving] = useState(false)
 
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!eleve || !prix || !duree || !date) return
+    if (!eleve || !prix || !duree || !dateDebut || !nombreSeances) return
     setSaving(true)
     try {
-      await onSubmit({ eleve, prix, duree, date })
+      await onSubmit({ eleve, prix, duree, dateDebut, nombreSeances })
     } finally {
       setSaving(false)
     }
@@ -24,6 +25,10 @@ export default function CoursForm({ onSubmit, onCancel }) {
 
   return (
     <form onSubmit={handleSubmit}>
+      <p className="text-sm text-slate-500 mb-4">
+        Crée plusieurs cours d'un coup pour le même élève, un par semaine à partir de la date de
+        début.
+      </p>
       <Field label="Prénom de l'élève">
         <input
           className={inputClass}
@@ -34,7 +39,7 @@ export default function CoursForm({ onSubmit, onCancel }) {
         />
       </Field>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Prix (€)">
+        <Field label="Prix par cours (€)">
           <input
             type="number"
             step="0.01"
@@ -58,21 +63,34 @@ export default function CoursForm({ onSubmit, onCancel }) {
           />
         </Field>
       </div>
-      <Field label="Date">
-        <input
-          type="date"
-          className={inputClass}
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          required
-        />
-      </Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Première date">
+          <input
+            type="date"
+            className={inputClass}
+            value={dateDebut}
+            onChange={(e) => setDateDebut(e.target.value)}
+            required
+          />
+        </Field>
+        <Field label="Nombre de séances">
+          <input
+            type="number"
+            min="1"
+            max="52"
+            className={inputClass}
+            value={nombreSeances}
+            onChange={(e) => setNombreSeances(e.target.value)}
+            required
+          />
+        </Field>
+      </div>
       <div className="flex gap-3 mt-2">
         <Button type="button" variant="secondary" className="flex-1" onClick={onCancel}>
           Annuler
         </Button>
         <Button type="submit" className="flex-1" disabled={saving}>
-          {saving ? 'Ajout…' : 'Ajouter le cours'}
+          {saving ? 'Création…' : `Créer ${nombreSeances || 0} cours`}
         </Button>
       </div>
     </form>
