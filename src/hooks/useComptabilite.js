@@ -2,7 +2,16 @@ import { useMemo } from 'react'
 import { useCoursParticuliers } from './useCoursParticuliers.js'
 import { useVeloEntries } from './useVelo.js'
 import { useEtudes } from './useEtudes.js'
-import { moisKeyFromDate, moisKeyActuel, moisKeyPrecedent, anneeActuelle, anneeDeMoisKey } from '../utils/dates.js'
+import {
+  moisKeyFromDate,
+  moisKeyActuel,
+  moisKeyPrecedent,
+  anneeActuelle,
+  anneeDeMoisKey,
+  coursEstPasse,
+  etudeEstPassee,
+  moisEstTermine,
+} from '../utils/dates.js'
 
 function moisVide() {
   return { total: 0, percu: 0, aPercevoir: 0, parPoste: { cours: 0, velo: 0, etudes: 0 } }
@@ -72,6 +81,23 @@ export function useComptabilite() {
     [historique]
   )
 
+  // Total des prestations déjà réalisées (cours donné / étude passée / mois vélo entièrement
+  // terminé — même logique que le petit "V" bleu affiché sur chaque module) mais pas encore payées.
+  const totalPresteNonPaye = useMemo(() => {
+    const parPoste = { cours: 0, velo: 0, etudes: 0 }
+    for (const c of cours) {
+      if (!c.paye && coursEstPasse(c.date)) parPoste.cours += c.prix
+    }
+    for (const e of veloEntries) {
+      if (!e.paye && moisEstTermine(e.mois)) parPoste.velo += e.montant
+    }
+    for (const e of etudes) {
+      if (!e.paye && etudeEstPassee(e.date)) parPoste.etudes += e.prix
+    }
+    const total = parPoste.cours + parPoste.velo + parPoste.etudes
+    return { total, parPoste }
+  }, [cours, veloEntries, etudes])
+
   return {
     loading,
     ceMois,
@@ -79,6 +105,7 @@ export function useComptabilite() {
     totalAnnee,
     historique,
     totalEnAttente,
+    totalPresteNonPaye,
     anneeCourante,
   }
 }
