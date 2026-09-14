@@ -1,4 +1,4 @@
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, Check } from 'lucide-react'
 import { useComptabilite } from '../hooks/useComptabilite.js'
 import Card from '../components/ui/Card.jsx'
 import StatCard from '../components/ui/StatCard.jsx'
@@ -7,12 +7,36 @@ import HistoriqueMoisRow from '../components/accueil/HistoriqueMoisRow.jsx'
 import { formatEuros } from '../utils/format.js'
 
 export default function AccueilView() {
-  const { loading, ceMois, moisDernier, totalAnnee, historique, totalEnAttente, anneeCourante } =
-    useComptabilite()
+  const {
+    loading,
+    ceMois,
+    moisDernier,
+    totalAnnee,
+    historique,
+    totalEnAttente,
+    totalPresteNonPaye,
+    anneeCourante,
+  } = useComptabilite()
 
   return (
     <div>
       <h1 className="text-2xl font-bold text-slate-900 mb-6">Comptabilité totale</h1>
+
+      {!loading && (
+        <Card className="mb-5 border-brand-200 bg-brand-50 flex items-center gap-3">
+          <span className="flex items-center justify-center w-10 h-10 rounded-full bg-brand-500 text-white shrink-0">
+            <Check size={20} strokeWidth={3} />
+          </span>
+          <div>
+            <p className="text-xs font-medium text-brand-700 uppercase tracking-wide">
+              Déjà presté, pas encore payé
+            </p>
+            <p className="text-xl font-bold text-brand-900">
+              {formatEuros(totalPresteNonPaye.total)}
+            </p>
+          </div>
+        </Card>
+      )}
 
       {!loading && totalEnAttente > 0 && (
         <Card className="mb-5 border-red-200 bg-red-50 flex items-center gap-3">
