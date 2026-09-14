@@ -57,6 +57,14 @@ export function etudeEstPassee(date) {
   return new Date() >= finEtude
 }
 
+// Un cours est considéré "passé" à partir de 20h00 le jour même (peu importe son heure réelle,
+// non enregistrée), et pour toujours après (jours suivants inclus).
+export function coursEstPasse(date) {
+  const d = date instanceof Date ? date : date.toDate ? date.toDate() : new Date(date)
+  const finJournee = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 20, 0, 0, 0)
+  return new Date() >= finJournee
+}
+
 // Génère `count` dates hebdomadaires en partant de `startDate` (incluse), même heure/jour chaque semaine.
 export function genererDatesRecurrentes(startDate, count) {
   const dates = []
