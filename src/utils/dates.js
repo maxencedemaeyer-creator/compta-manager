@@ -10,6 +10,13 @@ export function moisKeyActuel() {
   return moisKeyFromDate(new Date())
 }
 
+// Un mois ("YYYY-MM") est considéré "terminé" dès qu'on est passé au mois suivant (ou plus tard),
+// c'est-à-dire dès le premier jour suivant le dernier jour de ce mois. Comparaison de chaînes
+// "YYYY-MM" : fonctionne car elles sont triables lexicographiquement comme des dates.
+export function moisEstTermine(moisKey) {
+  return moisKey < moisKeyActuel()
+}
+
 export function moisKeyPrecedent(moisKey = moisKeyActuel()) {
   const [year, month] = moisKey.split('-').map(Number)
   const d = new Date(year, month - 1, 1)
@@ -48,14 +55,6 @@ export function etudeEstPassee(date) {
   const d = date instanceof Date ? date : date.toDate ? date.toDate() : new Date(date)
   const finEtude = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 16, 30, 0, 0)
   return new Date() >= finEtude
-}
-
-// Un cours est considéré "passé" à partir de 20h00 le jour même (peu importe son heure réelle,
-// non enregistrée), et pour toujours après (jours suivants inclus).
-export function coursEstPasse(date) {
-  const d = date instanceof Date ? date : date.toDate ? date.toDate() : new Date(date)
-  const finJournee = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 20, 0, 0, 0)
-  return new Date() >= finJournee
 }
 
 // Génère `count` dates hebdomadaires en partant de `startDate` (incluse), même heure/jour chaque semaine.
