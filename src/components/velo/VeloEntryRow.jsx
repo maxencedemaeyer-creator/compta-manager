@@ -1,11 +1,24 @@
 import { Check, Pencil } from 'lucide-react'
 import { formatEuros, formatMoisLabel } from '../../utils/format.js'
+import { moisEstTermine } from '../../utils/dates.js'
 
 export default function VeloEntryRow({ entry, onTogglePaye, onEdit }) {
+  const termine = moisEstTermine(entry.mois)
+
   return (
     <div className="flex items-center gap-3 py-3 border-b border-slate-100 last:border-0">
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-slate-900 capitalize">{formatMoisLabel(entry.mois)}</p>
+        <div className="flex items-center gap-1.5">
+          <p className="font-medium text-slate-900 capitalize">{formatMoisLabel(entry.mois)}</p>
+          {termine && (
+            <span
+              className="flex items-center justify-center w-4 h-4 rounded-full bg-brand-500 text-white shrink-0"
+              title="Mois terminé"
+            >
+              <Check size={10} strokeWidth={3} />
+            </span>
+          )}
+        </div>
         <p className="text-xs text-slate-500">{entry.allersRetours} aller-retours</p>
       </div>
       <p className="font-semibold text-slate-900 tabular-nums">{formatEuros(entry.montant)}</p>
