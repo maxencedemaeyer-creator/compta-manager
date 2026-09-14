@@ -50,19 +50,12 @@ export function etudeEstPassee(date) {
   return new Date() >= finEtude
 }
 
-// Un cours n'a pas d'heure précise enregistrée (juste une date), donc on ne peut pas se baser
-// sur une heure de fin comme pour les études. Il est considéré "passé" dès que son jour
-// calendaire est révolu, c'est-à-dire à partir du lendemain de la date du cours.
+// Un cours est considéré "passé" à partir de 20h00 le jour même (peu importe son heure réelle,
+// non enregistrée), et pour toujours après (jours suivants inclus).
 export function coursEstPasse(date) {
   const d = date instanceof Date ? date : date.toDate ? date.toDate() : new Date(date)
-  const jourCours = new Date(d.getFullYear(), d.getMonth(), d.getDate())
-  const maintenant = new Date()
-  const debutAujourdHui = new Date(
-    maintenant.getFullYear(),
-    maintenant.getMonth(),
-    maintenant.getDate()
-  )
-  return jourCours < debutAujourdHui
+  const finJournee = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 20, 0, 0, 0)
+  return new Date() >= finJournee
 }
 
 // Génère `count` dates hebdomadaires en partant de `startDate` (incluse), même heure/jour chaque semaine.
