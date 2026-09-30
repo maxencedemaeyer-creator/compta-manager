@@ -4,13 +4,18 @@ import Button from '../ui/Button.jsx'
 
 const today = () => new Date().toISOString().slice(0, 10)
 
-export default function MedecinForm({ types, onSubmit, onAjouterType, onCancel }) {
-  const [type, setType] = useState(types[0] || '')
+export default function MedecinForm({ types, initialValues, onSubmit, onAjouterType, onCancel }) {
+  const [type, setType] = useState(initialValues?.type || types[0] || '')
   const [nouveauType, setNouveauType] = useState('')
   const [modeNouveauType, setModeNouveauType] = useState(false)
+  // La date n'est jamais reprise d'un soin dupliqué : on repart toujours d'aujourd'hui.
   const [date, setDate] = useState(today())
-  const [montantPaye, setMontantPaye] = useState('')
-  const [montantMutuelle, setMontantMutuelle] = useState('')
+  const [montantPaye, setMontantPaye] = useState(
+    initialValues?.montantPaye != null ? String(initialValues.montantPaye) : ''
+  )
+  const [montantMutuelle, setMontantMutuelle] = useState(
+    initialValues?.montantMutuelle ? String(initialValues.montantMutuelle) : ''
+  )
   const [saving, setSaving] = useState(false)
 
   function annulerNouveauType() {
@@ -116,7 +121,7 @@ export default function MedecinForm({ types, onSubmit, onAjouterType, onCancel }
           Annuler
         </Button>
         <Button type="submit" className="flex-1" disabled={saving}>
-          {saving ? 'Ajout…' : 'Ajouter le soin'}
+          {saving ? 'Ajout…' : initialValues ? 'Dupliquer le soin' : 'Ajouter le soin'}
         </Button>
       </div>
     </form>
