@@ -1,7 +1,7 @@
-import { Trash2, Check } from 'lucide-react'
+import { Trash2, Check, Copy } from 'lucide-react'
 import { formatDate, formatEuros } from '../../utils/format.js'
 
-export default function MedecinListItem({ soin, onTogglePaye, onDelete }) {
+export default function MedecinListItem({ soin, onTogglePaye, onDuplicate, onDelete }) {
   const coutReel = soin.montantPaye - soin.montantMutuelle
 
   return (
@@ -24,6 +24,14 @@ export default function MedecinListItem({ soin, onTogglePaye, onDelete }) {
       >
         <Check size={14} />
         {soin.paye ? 'Remboursé' : 'Non remboursé'}
+      </button>
+      <button
+        onClick={() => onDuplicate(soin)}
+        className="p-1.5 text-slate-300 hover:text-brand-600"
+        aria-label="Dupliquer"
+        title="Dupliquer ce soin"
+      >
+        <Copy size={16} />
       </button>
       <button
         onClick={() => onDelete(soin.id)}
