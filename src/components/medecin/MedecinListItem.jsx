@@ -9,11 +9,16 @@ export default function MedecinListItem({ soin, onTogglePaye, onDuplicate, onDel
       <div className="flex-1 min-w-0">
         <p className="font-medium text-slate-900 truncate">{soin.type}</p>
         <p className="text-xs text-slate-500">
-          {formatDate(soin.date)} · payé {formatEuros(soin.montantPaye)}
-          {soin.montantMutuelle > 0 && ` · mutuelle ${formatEuros(soin.montantMutuelle)}`}
+          {formatDate(soin.date)} · payé {formatEuros(soin.montantPaye)} · coût réel{' '}
+          {formatEuros(coutReel)}
         </p>
       </div>
-      <p className="font-semibold text-slate-900 tabular-nums">{formatEuros(coutReel)}</p>
+      <div className="text-right leading-tight">
+        <p className="font-semibold text-slate-900 tabular-nums">
+          {soin.montantMutuelle > 0 ? formatEuros(soin.montantMutuelle) : '—'}
+        </p>
+        <p className="text-[11px] text-slate-400">mutuelle</p>
+      </div>
       <button
         onClick={() => onTogglePaye(soin.id, soin.paye)}
         className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
