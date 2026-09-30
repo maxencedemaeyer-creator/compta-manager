@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import attendusP5P6 from '../data/labo/programme_francais_P5-P6_attendus.json'
+import { useLaboStatuts } from '../hooks/useLaboStatuts.js'
 
 const DOMAINE_COLORS = {
   Lire: 'bg-sky-100 text-sky-700 border-sky-200',
@@ -26,6 +27,9 @@ export default function LabView() {
   const [domaine, setDomaine] = useState('Tous')
   const [niveau, setNiveau] = useState('Tous')
   const [mention, setMention] = useState('Tous')
+
+  const { statuts, loading: statutsLoading, marquerTravaille, marquerNonTravaille, changerDate } =
+    useLaboStatuts()
 
   const domaines = useMemo(
     () => ['Tous', ...Array.from(new Set(attendusP5P6.map((a) => a.domaine_nom)))],
@@ -56,6 +60,11 @@ export default function LabView() {
     })
   }, [search, domaine, niveau, mention])
 
+  const travailleCount = useMemo(
+    () => filtered.filter((a) => statuts[String(a.id)]?.travaille).length,
+    [filtered, statuts]
+  )
+
   const groups = useMemo(() => {
     const byDomaine = new Map()
     for (const item of filtered) {
@@ -77,6 +86,15 @@ export default function LabView() {
     return Array.from(byDomaine.entries()).sort((a, b) => a[1].numero - b[1].numero)
   }, [filtered])
 
+  function toggleStatus(item) {
+    const statut = statuts[String(item.id)]
+    if (statut?.travaille) {
+      marquerNonTravaille(item.id)
+    } else {
+      marquerTravaille(item.id, new Date().toISOString().slice(0, 10))
+    }
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 px-4 sm:px-8 py-6 sm:py-10">
       <div className="max-w-5xl mx-auto">
@@ -90,6 +108,8 @@ export default function LabView() {
             </h1>
             <p className="text-sm text-slate-500 mt-1">
               {filtered.length} attendu{filtered.length > 1 ? 's' : ''} sur {attendusP5P6.length}
+              {' · '}
+              {statutsLoading ? 'synchronisation…' : `${travailleCount} travaillé${travailleCount > 1 ? 's' : ''}`}
             </p>
           </div>
           <a href="/" className="text-xs text-slate-400 hover:text-slate-600 shrink-0 mt-1">
@@ -165,30 +185,57 @@ export default function LabView() {
                             {sousKey}
                           </div>
                           <ul className="divide-y divide-slate-100">
-                            {items.map((item) => (
-                              <li
-                                key={item.id}
-                                className="px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-2"
-                              >
-                                <div className="flex-1">
-                                  <p className="text-sm text-slate-800">{item.attendu}</p>
-                                  <p className="text-xs text-slate-400 mt-0.5">{item.libelle}</p>
-                                </div>
-                                <div className="flex items-center gap-2 shrink-0">
-                                  <span
-                                    className={`text-xs px-2 py-0.5 rounded-full ${
-                                      MENTION_COLORS[item.mention] || 'bg-slate-100 text-slate-600'
-                                    }`}
-                                  >
-                                    {item.mention}
-                                  </span>
-                                  <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">
-                                    {item.niveau}
-                                  </span>
-                                  <span className="text-xs text-slate-300">p.{item.page}</span>
-                                </div>
-                              </li>
-                            ))}
+                            {items.map((item) => {
+                              const statut = statuts[String(item.id)]
+                              const travaille = Boolean(statut?.travaille)
+                              return (
+                                <li
+                                  key={item.id}
+                                  className={`px-4 py-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4 transition-colors ${
+                                    travaille ? 'bg-emerald-50' : ''
+                                  }`}
+                                >
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm text-slate-800">{item.attendu}</p>
+                                    <p className="text-xs text-slate-400 mt-0.5">{item.libelle}</p>
+                                  </div>
+                                  <div className="flex items-center gap-2 flex-wrap sm:shrink-0">
+                                    <span
+                                      className={`text-xs px-2 py-0.5 rounded-full ${
+                                        MENTION_COLORS[item.mention] || 'bg-slate-100 text-slate-600'
+                                      }`}
+                                    >
+                                      {item.mention}
+                                    </span>
+                                    <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">
+                                      {item.niveau}
+                                    </span>
+                                    <span className="text-xs text-slate-300">p.{item.page}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2 sm:shrink-0 sm:w-56 sm:justify-end">
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleStatus(item)}
+                                      className={`text-xs font-medium px-3 py-1.5 rounded-full transition-colors ${
+                                        travaille
+                                          ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                                          : 'bg-red-100 text-red-700 hover:bg-red-200'
+                                      }`}
+                                    >
+                                      {travaille ? 'Travaillé en classe' : 'Non travaillé'}
+                                    </button>
+                                    {travaille && (
+                                      <input
+                                        type="date"
+                                        value={statut?.date || ''}
+                                        onChange={(e) => changerDate(item.id, e.target.value)}
+                                        className="text-xs border border-emerald-300 rounded-md px-2 py-1 bg-white text-slate-700"
+                                      />
+                                    )}
+                                  </div>
+                                </li>
+                              )
+                            })}
                           </ul>
                         </div>
                       ))}
