@@ -1,11 +1,12 @@
 import { NavLink } from 'react-router-dom'
-import { Home, GraduationCap, Bike, BookOpen } from 'lucide-react'
+import { Home, GraduationCap, Bike, BookOpen, Stethoscope } from 'lucide-react'
 
 const LINKS = [
   { to: '/', label: 'Accueil', icon: Home, end: true },
   { to: '/cours', label: 'Cours', icon: GraduationCap },
   { to: '/velo', label: 'Vélo', icon: Bike },
   { to: '/etudes', label: 'Études', icon: BookOpen },
+  { to: '/medecin', label: 'Médecin', icon: Stethoscope },
 ]
 
 function linkClasses(isActive, direction) {
