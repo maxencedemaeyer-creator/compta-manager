@@ -7,8 +7,9 @@ import CoursParticuliersView from './views/CoursParticuliersView.jsx'
 import VeloView from './views/VeloView.jsx'
 import EtudesView from './views/EtudesView.jsx'
 import MedecinView from './views/MedecinView.jsx'
+import LabView from './views/LabView.jsx'
 
-export default function App() {
+function ComptaManagerApp() {
   const { unlocked, authReady } = usePin()
 
   if (!unlocked) {
@@ -32,6 +33,18 @@ export default function App() {
         <Route path="/etudes" element={<EtudesView />} />
         <Route path="/medecin" element={<MedecinView />} />
       </Route>
+    </Routes>
+  )
+}
+
+export default function App() {
+  return (
+    <Routes>
+      {/* Zone labo : indépendante de Compta Manager, pas de PIN, pas de Firebase */}
+      <Route path="/test/*" element={<LabView />} />
+
+      {/* Tout le reste = Compta Manager normal, verrouillé par PIN */}
+      <Route path="/*" element={<ComptaManagerApp />} />
     </Routes>
   )
 }
