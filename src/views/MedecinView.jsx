@@ -14,6 +14,7 @@ export default function MedecinView() {
   const { types, ajouterType } = useMedecinTypes()
   const { entries, loading, addSoin, togglePaye, removeSoin } = useMedecinEntries()
   const [modalOpen, setModalOpen] = useState(false)
+  const [valeursInitiales, setValeursInitiales] = useState(null)
 
   const groupes = useMemo(() => {
     const map = new Map()
@@ -24,6 +25,20 @@ export default function MedecinView() {
     }
     return Array.from(map.entries()).sort((a, b) => (a[0] < b[0] ? 1 : -1))
   }, [entries])
+
+  function handleOpenAjouter() {
+    setValeursInitiales(null)
+    setModalOpen(true)
+  }
+
+  function handleDuplicate(soin) {
+    setValeursInitiales({
+      type: soin.type,
+      montantPaye: soin.montantPaye,
+      montantMutuelle: soin.montantMutuelle,
+    })
+    setModalOpen(true)
+  }
 
   async function handleAdd(values) {
     await addSoin(values)
@@ -38,7 +53,7 @@ export default function MedecinView() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-slate-900">Médecin</h1>
-        <Button onClick={() => setModalOpen(true)}>
+        <Button onClick={handleOpenAjouter}>
           <Plus size={16} />
           Ajouter
         </Button>
@@ -79,6 +94,7 @@ export default function MedecinView() {
                     key={s.id}
                     soin={s}
                     onTogglePaye={togglePaye}
+                    onDuplicate={handleDuplicate}
                     onDelete={handleDelete}
                   />
                 ))}
@@ -88,9 +104,14 @@ export default function MedecinView() {
         })}
       </div>
 
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Nouveau soin">
+      <Modal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={valeursInitiales ? 'Dupliquer le soin' : 'Nouveau soin'}
+      >
         <MedecinForm
           types={types}
+          initialValues={valeursInitiales}
           onSubmit={handleAdd}
           onAjouterType={ajouterType}
           onCancel={() => setModalOpen(false)}
