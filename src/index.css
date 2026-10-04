@@ -5,8 +5,11 @@
 @layer base {
   html {
     -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+    overflow-x: hidden;
   }
   body {
+    overflow-x: hidden;
     @apply bg-slate-50 text-slate-900 font-sans antialiased;
   }
 }
@@ -22,4 +25,39 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+}
+
+/* ===== Correctifs iPhone (Safari) =====
+   Safari zoome automatiquement sur un champ dont la police fait moins de 16px,
+   puis ne dézoome pas toujours : l'écran se décale. On force donc 16px sur mobile.
+   (Règle hors @layer pour qu'elle l'emporte sur les classes text-sm de Tailwind.) */
+@media (max-width: 639px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Champs date/heure : sur iPhone ils débordent de leur colonne et élargissent la page */
+input[type='date'],
+input[type='month'],
+input[type='time'] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 2.75rem;
+  background-color: #fff;
+}
+input[type='date']::-webkit-date-and-time-value {
+  text-align: left;
+}
+
+/* Les colonnes de grille doivent pouvoir rétrécir (sinon un champ trop large fait déborder la page) */
+form .grid > *,
+form label {
+  min-width: 0;
 }
