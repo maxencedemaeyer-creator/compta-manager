@@ -1,63 +1,19 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Compta Manager</title>
 
-@layer base {
-  html {
-    -webkit-tap-highlight-color: transparent;
-    -webkit-text-size-adjust: 100%;
-    overflow-x: hidden;
-  }
-  body {
-    overflow-x: hidden;
-    @apply bg-slate-50 text-slate-900 font-sans antialiased;
-  }
-}
-
-@layer utilities {
-  .safe-bottom {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-}
-
-/* ===== Correctifs iPhone (Safari) =====
-   Safari zoome automatiquement sur un champ dont la police fait moins de 16px,
-   puis ne dézoome pas toujours : l'écran se décale. On force donc 16px sur mobile.
-   (Règle hors @layer pour qu'elle l'emporte sur les classes text-sm de Tailwind.) */
-@media (max-width: 639px) {
-  input,
-  select,
-  textarea {
-    font-size: 16px !important;
-  }
-}
-
-/* Champs date/heure : sur iPhone ils débordent de leur colonne et élargissent la page */
-input[type='date'],
-input[type='month'],
-input[type='time'] {
-  -webkit-appearance: none;
-  appearance: none;
-  display: block;
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-  min-height: 2.75rem;
-  background-color: #fff;
-}
-input[type='date']::-webkit-date-and-time-value {
-  text-align: left;
-}
-
-/* Les colonnes de grille doivent pouvoir rétrécir (sinon un champ trop large fait déborder la page) */
-form .grid > *,
-form label {
-  min-width: 0;
-}
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Compta" />
+    <meta name="theme-color" content="#2563EB" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
