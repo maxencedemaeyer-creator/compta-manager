@@ -7,6 +7,7 @@ import CoursParticuliersView from './views/CoursParticuliersView.jsx'
 import VeloView from './views/VeloView.jsx'
 import EtudesView from './views/EtudesView.jsx'
 import MedecinView from './views/MedecinView.jsx'
+import RemboursementsView from './views/RemboursementsView.jsx'
 import LabView from './views/LabView.jsx'
 
 function ComptaManagerApp() {
@@ -32,6 +33,7 @@ function ComptaManagerApp() {
         <Route path="/velo" element={<VeloView />} />
         <Route path="/etudes" element={<EtudesView />} />
         <Route path="/medecin" element={<MedecinView />} />
+        <Route path="/perso" element={<RemboursementsView />} />
       </Route>
     </Routes>
   )
