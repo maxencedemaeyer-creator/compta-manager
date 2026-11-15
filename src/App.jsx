@@ -15,6 +15,10 @@ import RemboursementsView from './views/RemboursementsView.jsx'
 import LabView from './views/LabView.jsx'
 import GenealogieListeView from './views/genealogie/GenealogieListeView.jsx'
 import GenealogieArbreView from './views/genealogie/GenealogieArbreView.jsx'
+import ProjectionView from './views/projection/ProjectionView.jsx'
+import ProjectionPhotoView from './views/projection/ProjectionPhotoView.jsx'
+import ProjectionEcranView from './views/projection/ProjectionEcranView.jsx'
+import ProjectionGalerieView from './views/projection/ProjectionGalerieView.jsx'
 
 // Tout le site est protégé par le code PIN (une seule saisie par session),
 // puis attend la connexion anonyme à Firebase.
@@ -56,6 +60,12 @@ export default function App() {
 
         {/* Application Programme Français P5-P6 */}
         <Route path="/francais" element={<Protege><LabView /></Protege>} />
+
+        {/* Application Projection (photo du téléphone → écran de la classe) */}
+        <Route path="/projection" element={<Protege><ProjectionView /></Protege>} />
+        <Route path="/projection/photo" element={<Protege><ProjectionPhotoView /></Protege>} />
+        <Route path="/projection/ecran" element={<Protege><ProjectionEcranView /></Protege>} />
+        <Route path="/projection/galerie" element={<Protege><ProjectionGalerieView /></Protege>} />
 
         {/* Paramètres du site */}
         <Route path="/settings" element={<Protege><SettingsView /></Protege>} />

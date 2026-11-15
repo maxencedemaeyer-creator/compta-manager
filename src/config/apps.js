@@ -1,4 +1,4 @@
-import { BookOpenCheck, GitBranch, Wallet } from 'lucide-react'
+import { BookOpenCheck, GitBranch, Projector, Wallet } from 'lucide-react'
 
 // =============================================================
 //  Liste des applications du site "Maxence".
@@ -30,6 +30,14 @@ export const APPS = [
     description: 'Programme P5-P6 et suivi en classe',
     icon: BookOpenCheck,
     couleur: 'from-sky-400 to-indigo-600',
+  },
+  {
+    id: 'projection',
+    to: '/projection',
+    nom: 'Projection',
+    description: 'Photo prise en classe, projetée au tableau',
+    icon: Projector,
+    couleur: 'from-violet-500 to-amber-400',
   },
 ]
 

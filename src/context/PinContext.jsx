@@ -133,6 +133,11 @@ export function PinProvider({ children }) {
       sessionStorage.setItem(ACTIVITE_KEY, String(maintenant))
     }
     function verifier() {
+      // L'écran de projection reste allumé sans activité en classe : jamais verrouillé
+      if (window.location.pathname.startsWith('/projection/ecran')) {
+        sessionStorage.setItem(ACTIVITE_KEY, String(Date.now()))
+        return
+      }
       const derniere = Number(sessionStorage.getItem(ACTIVITE_KEY)) || Date.now()
       if (Date.now() - derniere > minutes * 60000) lock()
     }
