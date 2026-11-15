@@ -1,5 +1,5 @@
-import { Outlet } from 'react-router-dom'
-import { LogOut } from 'lucide-react'
+import { Link, Outlet } from 'react-router-dom'
+import { ChevronLeft, LogOut } from 'lucide-react'
 import { BottomNav, Sidebar } from './NavBar.jsx'
 import { usePin } from '../../context/PinContext.jsx'
 
@@ -10,7 +10,15 @@ export default function AppShell() {
     <div className="min-h-screen flex bg-slate-50">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="hidden sm:flex items-center justify-end px-6 py-3 border-b border-slate-200 bg-white">
+        {/* Barre du haut : retour vers l'accueil Maxence + verrouillage */}
+        <header className="flex items-center justify-between px-4 sm:px-6 py-2.5 sm:py-3 border-b border-slate-200 bg-white">
+          <Link
+            to="/"
+            className="flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-slate-800"
+          >
+            <ChevronLeft size={18} />
+            Maxence
+          </Link>
           <button
             onClick={lock}
             className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700"

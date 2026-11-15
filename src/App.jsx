@@ -1,7 +1,8 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { usePin } from './context/PinContext.jsx'
 import PinLock from './components/PinLock.jsx'
 import AppShell from './components/layout/AppShell.jsx'
+import HomeView from './views/HomeView.jsx'
 import AccueilView from './views/AccueilView.jsx'
 import CoursParticuliersView from './views/CoursParticuliersView.jsx'
 import VeloView from './views/VeloView.jsx'
@@ -9,14 +10,15 @@ import EtudesView from './views/EtudesView.jsx'
 import MedecinView from './views/MedecinView.jsx'
 import RemboursementsView from './views/RemboursementsView.jsx'
 import LabView from './views/LabView.jsx'
+import GenealogieListeView from './views/genealogie/GenealogieListeView.jsx'
+import GenealogieArbreView from './views/genealogie/GenealogieArbreView.jsx'
 
-function ComptaManagerApp() {
+// Tout le site est protégé par le code PIN (une seule saisie par session),
+// puis attend la connexion anonyme à Firebase.
+function Protege({ children }) {
   const { unlocked, authReady } = usePin()
 
-  if (!unlocked) {
-    return <PinLock />
-  }
-
+  if (!unlocked) return <PinLock />
   if (!authReady) {
     return (
       <div className="min-h-screen flex items-center justify-center text-slate-400 text-sm">
@@ -24,29 +26,41 @@ function ComptaManagerApp() {
       </div>
     )
   }
-
-  return (
-    <Routes>
-      <Route element={<AppShell />}>
-        <Route path="/" element={<AccueilView />} />
-        <Route path="/cours" element={<CoursParticuliersView />} />
-        <Route path="/velo" element={<VeloView />} />
-        <Route path="/etudes" element={<EtudesView />} />
-        <Route path="/medecin" element={<MedecinView />} />
-        <Route path="/perso" element={<RemboursementsView />} />
-      </Route>
-    </Routes>
-  )
+  return children
 }
+
+// Anciennes adresses de la compta (favoris, raccourcis sur l'écran d'accueil du téléphone)
+const ANCIENNES_PAGES_COMPTA = ['cours', 'velo', 'etudes', 'medecin', 'perso']
 
 export default function App() {
   return (
     <Routes>
-      {/* Zone labo : indépendante de Compta Manager, pas de PIN, pas de Firebase */}
-      <Route path="/test/*" element={<LabView />} />
+      {/* Page d'accueil : le lanceur d'applications "Maxence" */}
+      <Route path="/" element={<Protege><HomeView /></Protege>} />
 
-      {/* Tout le reste = Compta Manager normal, verrouillé par PIN */}
-      <Route path="/*" element={<ComptaManagerApp />} />
+      {/* Application Compta */}
+      <Route path="/compta" element={<Protege><AppShell /></Protege>}>
+        <Route index element={<AccueilView />} />
+        <Route path="cours" element={<CoursParticuliersView />} />
+        <Route path="velo" element={<VeloView />} />
+        <Route path="etudes" element={<EtudesView />} />
+        <Route path="medecin" element={<MedecinView />} />
+        <Route path="perso" element={<RemboursementsView />} />
+      </Route>
+
+      {/* Application Généalogie */}
+      <Route path="/genealogie" element={<Protege><GenealogieListeView /></Protege>} />
+      <Route path="/genealogie/:arbreId" element={<Protege><GenealogieArbreView /></Protege>} />
+
+      {/* Application Programme Français P5-P6 */}
+      <Route path="/francais" element={<Protege><LabView /></Protege>} />
+
+      {/* Redirections des anciennes adresses */}
+      {ANCIENNES_PAGES_COMPTA.map((page) => (
+        <Route key={page} path={`/${page}`} element={<Navigate to={`/compta/${page}`} replace />} />
+      ))}
+      <Route path="/test/*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }

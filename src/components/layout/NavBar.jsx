@@ -2,12 +2,12 @@ import { NavLink } from 'react-router-dom'
 import { Home, GraduationCap, Bike, BookOpen, Stethoscope, Users } from 'lucide-react'
 
 const LINKS = [
-  { to: '/', label: 'Accueil', icon: Home, end: true },
-  { to: '/cours', label: 'Cours', icon: GraduationCap },
-  { to: '/velo', label: 'Vélo', icon: Bike },
-  { to: '/etudes', label: 'Études', icon: BookOpen },
-  { to: '/medecin', label: 'Médecin', icon: Stethoscope },
-  { to: '/perso', label: 'Perso', icon: Users },
+  { to: '/compta', label: 'Accueil', icon: Home, end: true },
+  { to: '/compta/cours', label: 'Cours', icon: GraduationCap },
+  { to: '/compta/velo', label: 'Vélo', icon: Bike },
+  { to: '/compta/etudes', label: 'Études', icon: BookOpen },
+  { to: '/compta/medecin', label: 'Médecin', icon: Stethoscope },
+  { to: '/compta/perso', label: 'Perso', icon: Users },
 ]
 
 function linkClasses(isActive, direction) {

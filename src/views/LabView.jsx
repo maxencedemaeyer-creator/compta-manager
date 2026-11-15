@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import attendusP5P6 from '../data/labo/programme_francais_P5-P6_attendus.json'
 import { useLaboStatuts } from '../hooks/useLaboStatuts.js'
 
@@ -101,7 +102,7 @@ export default function LabView() {
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">
-              Labo — brouillon, hors Compta Manager
+              Maxence · Programme Français
             </p>
             <h1 className="text-2xl font-semibold text-slate-800 mt-1">
               Programme Français — P5-P6
@@ -112,9 +113,9 @@ export default function LabView() {
               {statutsLoading ? 'synchronisation…' : `${travailleCount} travaillé${travailleCount > 1 ? 's' : ''}`}
             </p>
           </div>
-          <a href="/" className="text-xs text-slate-400 hover:text-slate-600 shrink-0 mt-1">
-            ← Compta Manager
-          </a>
+          <Link to="/" className="text-xs text-slate-400 hover:text-slate-600 shrink-0 mt-1">
+            ← Maxence
+          </Link>
         </div>
 
         <div className="bg-white rounded-xl border border-slate-200 p-4 mb-6 flex flex-col sm:flex-row gap-3">

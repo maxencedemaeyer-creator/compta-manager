@@ -50,12 +50,12 @@ export default function PinLock() {
   const keypad = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del']
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-brand-600 to-brand-800 px-6 text-white safe-bottom">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-emerald-700 to-emerald-950 px-6 text-white safe-bottom">
       <div className="w-full max-w-xs flex flex-col items-center">
         <div className="w-16 h-16 rounded-2xl bg-white/15 flex items-center justify-center mb-6">
           <Lock size={28} />
         </div>
-        <h1 className="text-xl font-semibold mb-1">Compta Manager</h1>
+        <h1 className="font-display text-3xl font-semibold mb-1">Maxence</h1>
         <p className="text-white/70 text-sm mb-8">Entre ton code PIN</p>
 
         <div
