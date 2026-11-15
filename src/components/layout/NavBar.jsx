@@ -38,10 +38,8 @@ export function Sidebar() {
   return (
     <aside className="hidden sm:flex sm:flex-col w-60 shrink-0 border-r border-slate-200 bg-white p-4">
       <div className="flex items-center gap-2 px-2 mb-6 mt-1">
-        <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white font-bold text-sm">
-          €
-        </div>
-        <span className="font-semibold text-slate-900">Compta Manager</span>
+        <img src="/favicon.svg?v=2" alt="" className="w-8 h-8 rounded-lg" />
+        <span className="font-semibold text-slate-900">Compta</span>
       </div>
       <nav className="flex flex-col gap-1">
         {LINKS.map(({ to, label, icon: Icon, end }) => (

@@ -1,25 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#4F9CFF"/>
-      <stop offset="0.55" stop-color="#2563EB"/>
-      <stop offset="1" stop-color="#1E3A8A"/>
+    <linearGradient id="fond" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0f7a5a"/>
+      <stop offset="1" stop-color="#053d2e"/>
     </linearGradient>
-    <radialGradient id="glow" cx="0.25" cy="0.15" r="0.8">
-      <stop offset="0" stop-color="#ffffff" stop-opacity="0.45"/>
-      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    <radialGradient id="lueur" cx="0.82" cy="0.12" r="0.75">
+      <stop offset="0" stop-color="#6ee7b7" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#6ee7b7" stop-opacity="0"/>
     </radialGradient>
-    <linearGradient id="coin" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#FFFFFF"/>
-      <stop offset="1" stop-color="#DCE8FF"/>
-    </linearGradient>
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
-      <feDropShadow dx="0" dy="14" stdDeviation="14" flood-color="#0B1B4D" flood-opacity="0.45"/>
-    </filter>
   </defs>
-  <rect width="512" height="512" fill="url(#bg)"/>
-  <rect width="512" height="512" fill="url(#glow)"/>
-  <circle cx="256" cy="256" r="168" fill="url(#coin)" filter="url(#shadow)"/>
-  <circle cx="256" cy="256" r="146" fill="none" stroke="#2563EB" stroke-opacity="0.18" stroke-width="6"/>
-  <text x="256" y="256" text-anchor="middle" dominant-baseline="central" font-family="Helvetica, Arial, sans-serif" font-weight="700" font-size="230" fill="#2563EB">€</text>
+  <rect width="512" height="512" fill="url(#fond)"/>
+  <rect width="512" height="512" fill="url(#lueur)"/>
+  <path transform="translate(95.77 368.82) scale(0.14402 -0.14402)" fill="#f4f1ea" d="M985 380 883 347 1259 1309Q1278 1360 1304.5 1380.0Q1331 1400 1377 1400H1666Q1697 1400 1712.5 1388.0Q1728 1376 1728 1354Q1728 1335 1717.5 1322.5Q1707 1310 1685 1303L1634 1289Q1600 1280 1588.0 1262.0Q1576 1244 1578 1204L1654 181Q1656 147 1668.5 133.0Q1681 119 1711 110L1761 97Q1782 90 1791.5 78.0Q1801 66 1801 48Q1801 28 1786.0 14.0Q1771 0 1740 0H1258Q1227 0 1211.5 12.5Q1196 25 1196 46Q1196 64 1205.5 76.5Q1215 89 1239 97L1290 110Q1325 120 1337.5 135.0Q1350 150 1348 181L1265 1232L1358 1238L931 137Q913 89 894.0 74.5Q875 60 849 60Q830 60 814.0 65.5Q798 71 784.5 88.0Q771 105 756 141L323 1209L412 1241L325 211Q322 168 343.5 146.0Q365 124 403 108L452 91Q468 84 477.0 74.5Q486 65 486 48Q486 26 471.0 13.0Q456 0 425 0H107Q76 0 61.0 12.5Q46 25 46 46Q46 67 59.0 78.5Q72 90 93 98L133 112Q167 123 187.5 146.0Q208 169 211 212L294 1186Q298 1233 284.5 1256.5Q271 1280 237 1289L188 1302Q165 1309 154.0 1321.0Q143 1333 143 1353Q143 1400 206 1400H491Q534 1400 560.5 1382.5Q587 1365 607 1313Z"/>
+  <circle cx="392.46" cy="351.68" r="17.14" fill="#34d399"/>
 </svg>
