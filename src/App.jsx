@@ -3,6 +3,7 @@ import { usePin } from './context/PinContext.jsx'
 import PinLock from './components/PinLock.jsx'
 import AppShell from './components/layout/AppShell.jsx'
 import HomeView from './views/HomeView.jsx'
+import SettingsView from './views/SettingsView.jsx'
 import AccueilView from './views/AccueilView.jsx'
 import CoursParticuliersView from './views/CoursParticuliersView.jsx'
 import VeloView from './views/VeloView.jsx'
@@ -54,6 +55,11 @@ export default function App() {
 
       {/* Application Programme Français P5-P6 */}
       <Route path="/francais" element={<Protege><LabView /></Protege>} />
+
+      {/* Paramètres du site */}
+      <Route path="/settings" element={<Protege><SettingsView /></Protege>} />
+      <Route path="/setting" element={<Navigate to="/settings" replace />} />
+      <Route path="/parametres" element={<Navigate to="/settings" replace />} />
 
       {/* Redirections des anciennes adresses */}
       {ANCIENNES_PAGES_COMPTA.map((page) => (

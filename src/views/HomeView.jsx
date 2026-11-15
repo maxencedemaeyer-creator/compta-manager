@@ -1,35 +1,13 @@
 import { Link } from 'react-router-dom'
-import { BookOpenCheck, GitBranch, Lock, Plus, Wallet } from 'lucide-react'
+import { Lock, Plus, Settings } from 'lucide-react'
 import { usePin } from '../context/PinContext.jsx'
+import { appsOrdonnees } from '../config/apps.js'
 
 // =============================================================
 //  Page d'accueil "Maxence" : chaque tuile ouvre une application.
-//  Pour ajouter une application : ajouter un objet dans APPS
-//  (et sa route dans App.jsx).
+//  La liste des applications est dans src/config/apps.js ;
+//  l'ordre et la visibilité se règlent dans Paramètres.
 // =============================================================
-const APPS = [
-  {
-    to: '/compta',
-    nom: 'Compta',
-    description: 'Cours, vélo, études, frais',
-    icon: Wallet,
-    couleur: 'from-emerald-400 to-teal-600',
-  },
-  {
-    to: '/genealogie',
-    nom: 'Généalogie',
-    description: 'Arbre familial, éventail et photos',
-    icon: GitBranch,
-    couleur: 'from-rose-400 to-orange-500',
-  },
-  {
-    to: '/francais',
-    nom: 'Français',
-    description: 'Programme P5-P6 et suivi en classe',
-    icon: BookOpenCheck,
-    couleur: 'from-sky-400 to-indigo-600',
-  },
-]
 
 function salutation() {
   const h = new Date().getHours()
@@ -40,7 +18,9 @@ function salutation() {
 }
 
 export default function HomeView() {
-  const { lock } = usePin()
+  const { lock, parametres } = usePin()
+  const masquees = parametres.appsMasquees || []
+  const apps = appsOrdonnees(parametres.appsOrdre).filter((a) => !masquees.includes(a.id))
   const date = new Date().toLocaleDateString('fr-BE', {
     weekday: 'long',
     day: 'numeric',
@@ -56,13 +36,24 @@ export default function HomeView() {
       <div className="relative max-w-3xl mx-auto px-5 sm:px-8 pt-6 sm:pt-10 pb-16 min-h-screen flex flex-col">
         <div className="flex items-center justify-between">
           <p className="text-sm text-emerald-900/60 first-letter:uppercase">{date}</p>
-          <button
-            onClick={lock}
-            className="w-10 h-10 rounded-full bg-white/70 border border-emerald-900/10 flex items-center justify-center text-emerald-900/60 hover:text-emerald-900 hover:bg-white transition-colors"
-            aria-label="Verrouiller"
-          >
-            <Lock size={16} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={lock}
+              className="w-10 h-10 rounded-full bg-white/70 border border-emerald-900/10 flex items-center justify-center text-emerald-900/60 hover:text-emerald-900 hover:bg-white transition-colors"
+              aria-label="Verrouiller"
+              title="Verrouiller"
+            >
+              <Lock size={16} />
+            </button>
+            <Link
+              to="/settings"
+              className="w-10 h-10 rounded-full bg-white/70 border border-emerald-900/10 flex items-center justify-center text-emerald-900/60 hover:text-emerald-900 hover:bg-white transition-colors"
+              aria-label="Paramètres"
+              title="Paramètres"
+            >
+              <Settings size={17} />
+            </Link>
+          </div>
         </div>
 
         {/* Nom */}
@@ -78,7 +69,7 @@ export default function HomeView() {
           Applications
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-          {APPS.map(({ to, nom, description, icon: Icon, couleur }) => (
+          {apps.map(({ to, nom, description, icon: Icon, couleur }) => (
             <Link
               key={to}
               to={to}
