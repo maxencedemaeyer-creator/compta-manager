@@ -17,7 +17,26 @@
     <meta name="theme-color" content="#f4f1ea" />
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Écran de chargement affiché pendant que le site se charge
+           (remplacé automatiquement dès que le site est prêt) -->
+      <style>
+        .ecran-depart { position: fixed; inset: 0; background: #f4f1ea; color: #022c22; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
+        .ecran-depart .forme1 { position: absolute; top: -8rem; right: -6rem; width: 20rem; height: 20rem; border-radius: 9999px; background: rgba(110, 231, 183, 0.4); filter: blur(64px); }
+        .ecran-depart .forme2 { position: absolute; bottom: 0; left: -8rem; width: 20rem; height: 20rem; border-radius: 9999px; background: rgba(253, 230, 138, 0.5); filter: blur(64px); }
+        .ecran-depart .nom { position: relative; font-family: Fraunces, Georgia, serif; font-size: 2.25rem; font-weight: 600; letter-spacing: -0.025em; margin: 0; }
+        .ecran-depart .roue { position: relative; margin-top: 1.5rem; width: 2rem; height: 2rem; border-radius: 9999px; border: 3px solid rgba(6, 78, 59, 0.15); border-top-color: #047857; animation: tourner 1s linear infinite; }
+        .ecran-depart .texte { position: relative; margin-top: 1rem; font-family: Inter, system-ui, sans-serif; font-size: 0.875rem; color: rgba(6, 78, 59, 0.6); }
+        @keyframes tourner { to { transform: rotate(360deg); } }
+      </style>
+      <div class="ecran-depart">
+        <div class="forme1"></div>
+        <div class="forme2"></div>
+        <p class="nom">Maxence</p>
+        <div class="roue"></div>
+        <p class="texte">Chargement…</p>
+      </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
