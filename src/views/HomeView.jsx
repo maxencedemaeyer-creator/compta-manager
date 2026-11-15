@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom'
-import { Lock, Plus, Settings } from 'lucide-react'
+import { Lock, Plus, Settings, Users } from 'lucide-react'
 import { usePin } from '../context/PinContext.jsx'
-import { appsOrdonnees } from '../config/apps.js'
+import { appsDuProfil } from '../config/apps.js'
+import { trouverProfil } from '../config/profils.js'
 
 // =============================================================
-//  Page d'accueil "Maxence" : chaque tuile ouvre une application.
-//  La liste des applications est dans src/config/apps.js ;
+//  Page d'accueil d'un profil (/maxence, /julie…) : chaque tuile
+//  ouvre une application. La liste est dans src/config/apps.js ;
 //  l'ordre et la visibilité se règlent dans Paramètres.
 // =============================================================
 
@@ -18,9 +19,10 @@ function salutation() {
 }
 
 export default function HomeView() {
-  const { lock, parametres } = usePin()
+  const { lock, parametres, profilId } = usePin()
+  const profil = trouverProfil(profilId)
   const masquees = parametres.appsMasquees || []
-  const apps = appsOrdonnees(parametres.appsOrdre).filter((a) => !masquees.includes(a.id))
+  const apps = appsDuProfil(profil, parametres.appsOrdre).filter((a) => !masquees.includes(a.id))
   const date = new Date().toLocaleDateString('fr-BE', {
     weekday: 'long',
     day: 'numeric',
@@ -37,6 +39,14 @@ export default function HomeView() {
         <div className="flex items-center justify-between">
           <p className="text-sm text-emerald-900/60 first-letter:uppercase">{date}</p>
           <div className="flex items-center gap-2">
+            <Link
+              to="/"
+              className="w-10 h-10 rounded-full bg-white/70 border border-emerald-900/10 flex items-center justify-center text-emerald-900/60 hover:text-emerald-900 hover:bg-white transition-colors"
+              aria-label="Changer de profil"
+              title="Changer de profil"
+            >
+              <Users size={16} />
+            </Link>
             <button
               onClick={lock}
               className="w-10 h-10 rounded-full bg-white/70 border border-emerald-900/10 flex items-center justify-center text-emerald-900/60 hover:text-emerald-900 hover:bg-white transition-colors"
@@ -46,7 +56,7 @@ export default function HomeView() {
               <Lock size={16} />
             </button>
             <Link
-              to="/settings"
+              to={`/${profilId}/settings`}
               className="w-10 h-10 rounded-full bg-white/70 border border-emerald-900/10 flex items-center justify-center text-emerald-900/60 hover:text-emerald-900 hover:bg-white transition-colors"
               aria-label="Paramètres"
               title="Paramètres"
@@ -60,7 +70,8 @@ export default function HomeView() {
         <header className="mt-14 sm:mt-20 mb-12 sm:mb-16">
           <p className="text-lg text-emerald-900/60">{salutation()},</p>
           <h1 className="font-display text-[3.75rem] leading-[0.95] sm:text-8xl font-semibold tracking-tight text-emerald-900">
-            Maxence<span className="text-emerald-500">.</span>
+            {profil?.nom}
+            <span className={profil?.accent || 'text-emerald-500'}>.</span>
           </h1>
         </header>
 
@@ -98,7 +109,7 @@ export default function HomeView() {
           </div>
         </div>
 
-        <p className="mt-auto pt-16 text-center text-xs text-emerald-900/30">maxence · espace personnel</p>
+        <p className="mt-auto pt-16 text-center text-xs text-emerald-900/30">{profilId} · espace personnel</p>
       </div>
     </div>
   )

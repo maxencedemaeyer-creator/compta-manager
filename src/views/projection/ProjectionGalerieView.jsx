@@ -183,12 +183,12 @@ export default function ProjectionGalerieView() {
             </>
           ) : (
             <>
-              <Link to="/projection" className="inline-flex items-center gap-1.5 text-sm text-white/60 hover:text-white">
+              <Link to="/maxence/projection" className="inline-flex items-center gap-1.5 text-sm text-white/60 hover:text-white">
                 <ArrowLeft size={16} />
                 Projection
               </Link>
               <div className="flex-1" />
-              <Link to="/projection/ecran" className="h-10 px-3 rounded-xl hover:bg-white/10 text-sm inline-flex items-center gap-2 text-white/70">
+              <Link to="/maxence/projection/ecran" className="h-10 px-3 rounded-xl hover:bg-white/10 text-sm inline-flex items-center gap-2 text-white/70">
                 <MonitorPlay size={18} />
                 <span className="hidden sm:inline">Écran</span>
               </Link>
@@ -220,7 +220,7 @@ export default function ProjectionGalerieView() {
           <div className="rounded-3xl border border-dashed border-white/15 p-10 text-center">
             <Images size={36} className="mx-auto text-white/30" />
             <p className="mt-3 text-white/60">Aucune photo pour l’instant.</p>
-            <Link to="/projection/photo" className="inline-block mt-4 text-sm text-amber-300 hover:text-amber-200">
+            <Link to="/maxence/projection/photo" className="inline-block mt-4 text-sm text-amber-300 hover:text-amber-200">
               Prendre une photo →
             </Link>
           </div>

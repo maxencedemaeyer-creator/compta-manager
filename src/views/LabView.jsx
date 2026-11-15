@@ -113,7 +113,7 @@ export default function LabView() {
               {statutsLoading ? 'synchronisation…' : `${travailleCount} travaillé${travailleCount > 1 ? 's' : ''}`}
             </p>
           </div>
-          <Link to="/" className="text-xs text-slate-400 hover:text-slate-600 shrink-0 mt-1">
+          <Link to="/maxence" className="text-xs text-slate-400 hover:text-slate-600 shrink-0 mt-1">
             ← Maxence
           </Link>
         </div>

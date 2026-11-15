@@ -1,37 +1,75 @@
 import { useState, useRef, useEffect } from 'react'
-import { Lock, Delete } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { ChevronLeft, Delete, KeyRound, Lock } from 'lucide-react'
 import { usePin } from '../context/PinContext.jsx'
+import { trouverProfil } from '../config/profils.js'
+import Chargement from './Chargement.jsx'
 
 const PIN_LENGTH = 4
 
 export default function PinLock() {
-  const { unlock, error } = usePin()
+  const { profilId, unlock, creerPin, etatPin, error } = usePin()
+  const profil = trouverProfil(profilId)
+  const creation = etatPin === 'absent'
+
   const [digits, setDigits] = useState([])
+  const [premierPin, setPremierPin] = useState(null) // création : PIN tapé une 1re fois
+  const [messageLocal, setMessageLocal] = useState('')
   const [shake, setShake] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const inputRef = useRef(null)
 
   useEffect(() => {
     inputRef.current?.focus()
-  }, [])
+  }, [etatPin])
+
+  function echec(message = '') {
+    setMessageLocal(message)
+    setShake(true)
+    setTimeout(() => {
+      setShake(false)
+      setDigits([])
+    }, 400)
+  }
 
   useEffect(() => {
-    if (digits.length === PIN_LENGTH) {
-      const pin = digits.join('')
+    if (digits.length !== PIN_LENGTH) return
+    const pin = digits.join('')
+
+    if (creation) {
+      if (!premierPin) {
+        setPremierPin(pin)
+        setMessageLocal('')
+        setDigits([])
+        return
+      }
+      if (pin !== premierPin) {
+        setPremierPin(null)
+        echec('Les deux codes ne correspondent pas. Recommence.')
+        return
+      }
       setSubmitting(true)
-      unlock(pin).then((ok) => {
+      creerPin(pin).then((ok) => {
         setSubmitting(false)
         if (!ok) {
-          setShake(true)
-          setTimeout(() => {
-            setShake(false)
-            setDigits([])
-          }, 400)
+          setPremierPin(null)
+          echec()
         }
       })
+      return
     }
+
+    setSubmitting(true)
+    unlock(pin).then((ok) => {
+      setSubmitting(false)
+      if (!ok) echec()
+    })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [digits])
+
+  if (etatPin === 'inconnu' && !error) {
+    return <Chargement message="Ouverture de l'espace…" />
+  }
 
   function pushDigit(d) {
     if (submitting) return
@@ -48,15 +86,29 @@ export default function PinLock() {
   }
 
   const keypad = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del']
+  const consigne = !creation
+    ? 'Entre ton code PIN'
+    : premierPin
+      ? 'Confirme ton nouveau code'
+      : 'Bienvenue ! Choisis ton code PIN à 4 chiffres'
+  const messageAffiche = messageLocal || error
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-emerald-700 to-emerald-950 px-6 text-white safe-bottom">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-emerald-700 to-emerald-950 px-6 text-white safe-bottom relative">
+      <Link
+        to="/"
+        className="absolute top-5 left-4 inline-flex items-center gap-1 text-sm text-white/60 hover:text-white"
+      >
+        <ChevronLeft size={18} />
+        Profils
+      </Link>
+
       <div className="w-full max-w-xs flex flex-col items-center">
         <div className="w-16 h-16 rounded-2xl bg-white/15 flex items-center justify-center mb-6">
-          <Lock size={28} />
+          {creation ? <KeyRound size={28} /> : <Lock size={28} />}
         </div>
-        <h1 className="font-display text-3xl font-semibold mb-1">Maxence</h1>
-        <p className="text-white/70 text-sm mb-8">Entre ton code PIN</p>
+        <h1 className="font-display text-3xl font-semibold mb-1">{profil?.nom}</h1>
+        <p className="text-white/70 text-sm mb-8 text-center">{consigne}</p>
 
         <div
           className={`flex gap-4 mb-10 ${shake ? 'animate-pulse' : ''}`}
@@ -72,7 +124,7 @@ export default function PinLock() {
           ))}
         </div>
 
-        {error && <p className="text-red-200 text-sm mb-4 -mt-6">{error}</p>}
+        {messageAffiche && <p className="text-red-200 text-sm mb-4 -mt-6 text-center">{messageAffiche}</p>}
 
         {/* Champ invisible pour capter la saisie clavier physique / autofill mobile */}
         <input

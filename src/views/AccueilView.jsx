@@ -130,7 +130,7 @@ export default function AccueilView() {
       {!loading && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
           <RecapVolet
-            to="/compta/cours"
+            to="/maxence/compta/cours"
             icon={GraduationCap}
             titre="Cours particuliers"
             teinte="bg-brand-50 text-brand-600"
@@ -170,7 +170,7 @@ export default function AccueilView() {
           </RecapVolet>
 
           <RecapVolet
-            to="/compta/etudes"
+            to="/maxence/compta/etudes"
             icon={BookOpen}
             titre="Études"
             teinte="bg-amber-50 text-amber-600"
@@ -188,7 +188,7 @@ export default function AccueilView() {
           </RecapVolet>
 
           <RecapVolet
-            to="/compta/velo"
+            to="/maxence/compta/velo"
             icon={Bike}
             titre="Vélo"
             teinte="bg-emerald-50 text-emerald-600"
@@ -216,7 +216,7 @@ export default function AccueilView() {
           </RecapVolet>
 
           <RecapVolet
-            to="/compta/medecin"
+            to="/maxence/compta/medecin"
             icon={Stethoscope}
             titre="Médecin"
             teinte="bg-rose-50 text-rose-600"
@@ -234,7 +234,7 @@ export default function AccueilView() {
           </RecapVolet>
 
           <RecapVolet
-            to="/compta/perso"
+            to="/maxence/compta/perso"
             icon={Users}
             titre="Perso"
             teinte="bg-violet-50 text-violet-600"

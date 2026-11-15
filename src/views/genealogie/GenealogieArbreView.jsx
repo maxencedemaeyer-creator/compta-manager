@@ -128,7 +128,7 @@ export default function GenealogieArbreView() {
     return (
       <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center gap-3 p-6 text-center">
         <p className="text-rose-300">Impossible de charger l'arbre.</p>
-        <Link to="/genealogie" className="text-sm text-white/60 underline">
+        <Link to="/maxence/genealogie" className="text-sm text-white/60 underline">
           Retour à mes arbres
         </Link>
       </div>
@@ -139,7 +139,7 @@ export default function GenealogieArbreView() {
     return (
       <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center gap-3 p-6">
         <p>Cet arbre n'existe plus.</p>
-        <Link to="/genealogie" className="text-sm text-white/60 underline">
+        <Link to="/maxence/genealogie" className="text-sm text-white/60 underline">
           Retour à mes arbres
         </Link>
       </div>
@@ -160,7 +160,7 @@ export default function GenealogieArbreView() {
       {/* ---------- Barre du haut ---------- */}
       <header className="relative z-20 border-b border-white/10 bg-slate-950/90 backdrop-blur px-3 sm:px-5 py-2.5 flex flex-wrap items-center gap-2 sm:gap-3">
         <Link
-          to="/genealogie"
+          to="/maxence/genealogie"
           className="p-2 rounded-xl text-white/60 hover:text-white hover:bg-white/10"
           aria-label="Retour"
         >

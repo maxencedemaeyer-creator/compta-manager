@@ -56,11 +56,11 @@ export default function ProjectionPhotoView() {
   return (
     <div className="min-h-[100dvh] bg-slate-950 text-white flex flex-col">
       <div className="flex items-center justify-between px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-3">
-        <Link to="/projection" className="inline-flex items-center gap-1.5 text-sm text-white/60 hover:text-white">
+        <Link to="/maxence/projection" className="inline-flex items-center gap-1.5 text-sm text-white/60 hover:text-white">
           <ArrowLeft size={16} />
           Projection
         </Link>
-        <Link to="/projection/galerie" className="inline-flex items-center gap-1.5 text-sm text-white/60 hover:text-white">
+        <Link to="/maxence/projection/galerie" className="inline-flex items-center gap-1.5 text-sm text-white/60 hover:text-white">
           <Images size={16} />
           Galerie
         </Link>

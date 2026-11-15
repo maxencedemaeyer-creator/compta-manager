@@ -1,7 +1,8 @@
 import { BookOpenCheck, GitBranch, Projector, Wallet } from 'lucide-react'
 
 // =============================================================
-//  Liste des applications du site "Maxence".
+//  Liste des applications du site (adresses sous /maxence).
+//  Quelles applis chaque profil voit : src/config/profils.js
 //  Pour ajouter une application : ajouter un objet ici
 //  (et sa route dans App.jsx). L'ordre et la visibilité se
 //  règlent ensuite directement dans Paramètres.
@@ -9,7 +10,7 @@ import { BookOpenCheck, GitBranch, Projector, Wallet } from 'lucide-react'
 export const APPS = [
   {
     id: 'compta',
-    to: '/compta',
+    to: '/maxence/compta',
     nom: 'Compta',
     description: 'Cours, vélo, études, frais',
     icon: Wallet,
@@ -17,7 +18,7 @@ export const APPS = [
   },
   {
     id: 'genealogie',
-    to: '/genealogie',
+    to: '/maxence/genealogie',
     nom: 'Généalogie',
     description: 'Arbre familial, éventail et photos',
     icon: GitBranch,
@@ -25,7 +26,7 @@ export const APPS = [
   },
   {
     id: 'francais',
-    to: '/francais',
+    to: '/maxence/francais',
     nom: 'Français',
     description: 'Programme P5-P6 et suivi en classe',
     icon: BookOpenCheck,
@@ -33,7 +34,7 @@ export const APPS = [
   },
   {
     id: 'projection',
-    to: '/projection',
+    to: '/maxence/projection',
     nom: 'Projection',
     description: 'Photo prise en classe, projetée au tableau',
     icon: Projector,
@@ -48,4 +49,12 @@ export function appsOrdonnees(ordre = []) {
     return i === -1 ? 1000 + APPS.findIndex((a) => a.id === id) : i
   }
   return [...APPS].sort((a, b) => position(a.id) - position(b.id))
+}
+
+// Applications d'un profil (voir src/config/profils.js), dans l'ordre choisi dans ses Paramètres
+export function appsDuProfil(profil, ordre = []) {
+  const toutes = appsOrdonnees(ordre)
+  if (!profil) return []
+  if (profil.apps === 'toutes') return toutes
+  return toutes.filter((a) => profil.apps.includes(a.id))
 }

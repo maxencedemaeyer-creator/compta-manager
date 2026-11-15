@@ -9,21 +9,21 @@ import { ArrowLeft, Camera, ChevronRight, Images, MonitorPlay, Projector } from 
 // =============================================================
 const ENTREES = [
   {
-    to: '/projection/photo',
+    to: '/maxence/projection/photo',
     titre: 'Prendre une photo',
     texte: 'Sur le téléphone : photographie et envoie à l’écran',
     icon: Camera,
     couleur: 'from-amber-400 to-orange-500',
   },
   {
-    to: '/projection/ecran',
+    to: '/maxence/projection/ecran',
     titre: 'Écran de projection',
     texte: 'Sur l’ordinateur de la classe : affiche la dernière photo',
     icon: MonitorPlay,
     couleur: 'from-violet-500 to-indigo-600',
   },
   {
-    to: '/projection/galerie',
+    to: '/maxence/projection/galerie',
     titre: 'Galerie',
     texte: 'Revoir, reprojeter ou supprimer les anciennes photos',
     icon: Images,
@@ -38,7 +38,7 @@ export default function ProjectionView() {
       <div className="pointer-events-none absolute bottom-0 -left-32 w-80 h-80 rounded-full bg-amber-500/15 blur-3xl" />
 
       <div className="relative max-w-3xl mx-auto px-4 sm:px-8 py-6 sm:py-12">
-        <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-white/60 hover:text-white transition-colors">
+        <Link to="/maxence" className="inline-flex items-center gap-1.5 text-sm text-white/60 hover:text-white transition-colors">
           <ArrowLeft size={16} />
           Maxence
         </Link>

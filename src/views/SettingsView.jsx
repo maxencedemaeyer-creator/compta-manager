@@ -15,7 +15,8 @@ import {
   Timer,
 } from 'lucide-react'
 import { usePin } from '../context/PinContext.jsx'
-import { appsOrdonnees } from '../config/apps.js'
+import { appsDuProfil } from '../config/apps.js'
+import { PROFIL_PRINCIPAL, trouverProfil } from '../config/profils.js'
 import { creerSauvegarde } from '../utils/sauvegarde.js'
 
 // ---------- Petits éléments réutilisés ----------
@@ -119,8 +120,9 @@ function ChangerPin() {
 
 // ---------- 2. Applications de l'accueil ----------
 function GererApps() {
-  const { parametres, majParametres } = usePin()
-  const apps = appsOrdonnees(parametres.appsOrdre)
+  const { parametres, majParametres, profilId } = usePin()
+  const apps = appsDuProfil(trouverProfil(profilId), parametres.appsOrdre)
+  if (apps.length === 0) return null
   const masquees = parametres.appsMasquees || []
 
   function deplacer(index, sens) {
@@ -288,17 +290,18 @@ function Sauvegarde() {
 
 // ---------- Page ----------
 export default function SettingsView() {
-  const { lock } = usePin()
+  const { lock, profilId } = usePin()
+  const profil = trouverProfil(profilId)
 
   return (
     <div className="min-h-screen bg-[#f4f1ea] text-emerald-950">
       <div className="max-w-2xl mx-auto px-4 sm:px-8 pt-5 sm:pt-10 pb-16">
         <Link
-          to="/"
+          to={`/${profilId}`}
           className="inline-flex items-center gap-1 text-sm font-medium text-emerald-900/60 hover:text-emerald-900"
         >
           <ChevronLeft size={18} />
-          Maxence
+          {profil?.nom}
         </Link>
         <h1 className="font-display text-4xl sm:text-5xl font-semibold tracking-tight text-emerald-900 mt-6 mb-8">
           Paramètres
@@ -308,7 +311,8 @@ export default function SettingsView() {
           <ChangerPin />
           <GererApps />
           <Verrouillage />
-          <Sauvegarde />
+          {/* La sauvegarde concerne les données de Maxence (compta, généalogie, programme) */}
+          {profilId === PROFIL_PRINCIPAL && <Sauvegarde />}
 
           <button
             type="button"

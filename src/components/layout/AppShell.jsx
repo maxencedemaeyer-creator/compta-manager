@@ -13,7 +13,7 @@ export default function AppShell() {
         {/* Barre du haut : retour vers l'accueil Maxence + verrouillage */}
         <header className="flex items-center justify-between px-4 sm:px-6 py-2.5 sm:py-3 border-b border-slate-200 bg-white">
           <Link
-            to="/"
+            to="/maxence"
             className="flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-slate-800"
           >
             <ChevronLeft size={18} />

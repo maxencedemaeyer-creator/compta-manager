@@ -24,7 +24,7 @@ export default function GenealogieListeView() {
       const texte = await lireFichierTexte(file)
       const nom = file.name.replace(/\.ged$/i, '').replace(/[_-]+/g, ' ')
       const id = await importerArbre(nom, texte)
-      navigate(`/genealogie/${id}`)
+      navigate(`/maxence/genealogie/${id}`)
     } catch (err) {
       console.error(err)
       setMessage(err.message || "L'import a échoué.")
@@ -46,7 +46,7 @@ export default function GenealogieListeView() {
 
       <div className="relative max-w-4xl mx-auto px-4 sm:px-8 py-6 sm:py-12">
         <Link
-          to="/"
+          to="/maxence"
           className="inline-flex items-center gap-1.5 text-sm text-white/60 hover:text-white transition-colors"
         >
           <ArrowLeft size={16} />
@@ -119,7 +119,7 @@ export default function GenealogieListeView() {
             {arbres.map((a) => (
               <Link
                 key={a.id}
-                to={`/genealogie/${a.id}`}
+                to={`/maxence/genealogie/${a.id}`}
                 className="group rounded-2xl bg-white/[0.06] border border-white/10 p-4 hover:bg-white/[0.1] transition-colors flex items-center gap-3"
               >
                 <div className="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center shrink-0">

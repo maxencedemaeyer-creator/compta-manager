@@ -1,9 +1,10 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { usePin } from './context/PinContext.jsx'
 import PinLock from './components/PinLock.jsx'
 import Chargement from './components/Chargement.jsx'
 import MiseAJour from './components/MiseAJour.jsx'
 import AppShell from './components/layout/AppShell.jsx'
+import ChoixProfilView from './views/ChoixProfilView.jsx'
 import HomeView from './views/HomeView.jsx'
 import SettingsView from './views/SettingsView.jsx'
 import AccueilView from './views/AccueilView.jsx'
@@ -20,16 +21,23 @@ import ProjectionPhotoView from './views/projection/ProjectionPhotoView.jsx'
 import ProjectionEcranView from './views/projection/ProjectionEcranView.jsx'
 import ProjectionGalerieView from './views/projection/ProjectionGalerieView.jsx'
 
-// Tout le site est protégé par le code PIN (une seule saisie par session),
-// puis attend la connexion anonyme à Firebase.
+// Chaque espace (/maxence, /julie…) est protégé par le code PIN de son profil
+// (une seule saisie par session), puis attend la connexion anonyme à Firebase.
 function Protege({ children }) {
-  const { unlocked, authReady } = usePin()
+  const { profilId, unlocked, authReady } = usePin()
 
+  if (!profilId) return <Navigate to="/" replace />
   if (!unlocked) return <PinLock />
   if (!authReady) {
     return <Chargement message="Connexion à la base de données…" />
   }
   return children
+}
+
+// Anciennes adresses (avant les profils) : /compta/velo → /maxence/compta/velo, etc.
+function VersMaxence() {
+  const { pathname, search, hash } = useLocation()
+  return <Navigate to={`/maxence${pathname}${search}${hash}`} replace />
 }
 
 // Anciennes adresses de la compta (favoris, raccourcis sur l'écran d'accueil du téléphone)
@@ -41,11 +49,12 @@ export default function App() {
       {/* Recharge le site tout seul quand une nouvelle version est déployée */}
       <MiseAJour />
       <Routes>
-        {/* Page d'accueil : le lanceur d'applications "Maxence" */}
-        <Route path="/" element={<Protege><HomeView /></Protege>} />
+        {/* Écran d'entrée : choix du profil */}
+        <Route path="/" element={<ChoixProfilView />} />
 
+        {/* ================= Espace Maxence ================= */}
         {/* Application Compta */}
-        <Route path="/compta" element={<Protege><AppShell /></Protege>}>
+        <Route path="/maxence/compta" element={<Protege><AppShell /></Protege>}>
           <Route index element={<AccueilView />} />
           <Route path="cours" element={<CoursParticuliersView />} />
           <Route path="velo" element={<VeloView />} />
@@ -55,26 +64,35 @@ export default function App() {
         </Route>
 
         {/* Application Généalogie */}
-        <Route path="/genealogie" element={<Protege><GenealogieListeView /></Protege>} />
-        <Route path="/genealogie/:arbreId" element={<Protege><GenealogieArbreView /></Protege>} />
+        <Route path="/maxence/genealogie" element={<Protege><GenealogieListeView /></Protege>} />
+        <Route path="/maxence/genealogie/:arbreId" element={<Protege><GenealogieArbreView /></Protege>} />
 
         {/* Application Programme Français P5-P6 */}
-        <Route path="/francais" element={<Protege><LabView /></Protege>} />
+        <Route path="/maxence/francais" element={<Protege><LabView /></Protege>} />
 
         {/* Application Projection (photo du téléphone → écran de la classe) */}
-        <Route path="/projection" element={<Protege><ProjectionView /></Protege>} />
-        <Route path="/projection/photo" element={<Protege><ProjectionPhotoView /></Protege>} />
-        <Route path="/projection/ecran" element={<Protege><ProjectionEcranView /></Protege>} />
-        <Route path="/projection/galerie" element={<Protege><ProjectionGalerieView /></Protege>} />
+        <Route path="/maxence/projection" element={<Protege><ProjectionView /></Protege>} />
+        <Route path="/maxence/projection/photo" element={<Protege><ProjectionPhotoView /></Protege>} />
+        <Route path="/maxence/projection/ecran" element={<Protege><ProjectionEcranView /></Protege>} />
+        <Route path="/maxence/projection/galerie" element={<Protege><ProjectionGalerieView /></Protege>} />
 
-        {/* Paramètres du site */}
-        <Route path="/settings" element={<Protege><SettingsView /></Protege>} />
-        <Route path="/setting" element={<Navigate to="/settings" replace />} />
-        <Route path="/parametres" element={<Navigate to="/settings" replace />} />
+        {/* ================= Tous les profils ================= */}
+        {/* Accueil et paramètres de chaque profil (/maxence, /julie, /julie/settings…) */}
+        <Route path="/:profil" element={<Protege><HomeView /></Protege>} />
+        <Route path="/:profil/settings" element={<Protege><SettingsView /></Protege>} />
+        <Route path="/:profil/setting" element={<Navigate to="../settings" relative="path" replace />} />
+        <Route path="/:profil/parametres" element={<Navigate to="../settings" relative="path" replace />} />
 
-        {/* Redirections des anciennes adresses */}
+        {/* ================= Anciennes adresses ================= */}
+        <Route path="/compta/*" element={<VersMaxence />} />
+        <Route path="/genealogie/*" element={<VersMaxence />} />
+        <Route path="/francais" element={<VersMaxence />} />
+        <Route path="/projection/*" element={<VersMaxence />} />
+        <Route path="/settings" element={<VersMaxence />} />
+        <Route path="/setting" element={<Navigate to="/maxence/settings" replace />} />
+        <Route path="/parametres" element={<Navigate to="/maxence/settings" replace />} />
         {ANCIENNES_PAGES_COMPTA.map((page) => (
-          <Route key={page} path={`/${page}`} element={<Navigate to={`/compta/${page}`} replace />} />
+          <Route key={page} path={`/${page}`} element={<Navigate to={`/maxence/compta/${page}`} replace />} />
         ))}
         <Route path="/test/*" element={<Navigate to="/" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -131,10 +131,10 @@ export default function ProjectionEcranView() {
           controlesVisibles ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
       >
-        <Link to="/projection" className={bouton} title="Retour">
+        <Link to="/maxence/projection" className={bouton} title="Retour">
           <ArrowLeft size={20} />
         </Link>
-        <Link to="/projection/galerie" className={bouton} title="Galerie">
+        <Link to="/maxence/projection/galerie" className={bouton} title="Galerie">
           <Images size={20} />
         </Link>
         <button type="button" onClick={basculerPleinEcran} className={bouton} title="Plein écran">
