@@ -1,43 +1,53 @@
 import { formatEuros, formatMoisLabel } from '../../utils/format.js'
 
-const POSTES = [
-  { key: 'cours', label: 'Cours' },
-  { key: 'velo', label: 'Vélo' },
-  { key: 'etudes', label: 'Études' },
+// Les 3 rentrées d'argent, avec leur couleur (identique dans tout l'Accueil)
+export const POSTES = [
+  { key: 'cours', label: 'Cours', couleur: 'bg-brand-500' },
+  { key: 'velo', label: 'Vélo', couleur: 'bg-emerald-500' },
+  { key: 'etudes', label: 'Études', couleur: 'bg-amber-400' },
 ]
 
-export default function HistoriqueMoisRow({ moisKey, valeurs }) {
-  const postes = POSTES.filter((p) => valeurs.parPoste?.[p.key] > 0)
-
+// Une ligne de l'historique : le mois, son total, et en petit le détail par volet.
+// La barre de couleur montre la taille du mois par rapport au meilleur mois.
+export default function HistoriqueMoisRow({ moisKey, valeurs, max, enCours = false }) {
+  const largeur = max > 0 ? (valeurs.total / max) * 100 : 0
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-4 py-3 border-b border-slate-100 last:border-0">
-      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 min-w-0">
-        <p className="font-medium text-slate-800 capitalize shrink-0">{formatMoisLabel(moisKey)}</p>
-        {postes.length > 0 && (
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-400">
-            {postes.map((p) => (
-              <span key={p.key}>
-                {p.label}{' '}
-                <span className="text-slate-500 font-medium">
-                  {formatEuros(valeurs.parPoste[p.key])}
-                </span>
-              </span>
-            ))}
-          </div>
-        )}
+    <div className="py-3 border-b border-slate-100 last:border-0">
+      <div className="flex items-baseline justify-between gap-3">
+        <div className="flex items-center gap-2 min-w-0">
+          <p className="font-medium text-slate-800 capitalize truncate">
+            {formatMoisLabel(moisKey)}
+          </p>
+          {enCours && (
+            <span className="shrink-0 text-[11px] font-medium bg-brand-50 text-brand-700 rounded-full px-2 py-0.5">
+              en cours
+            </span>
+          )}
+        </div>
+        <p className="shrink-0 font-bold text-slate-900 tabular-nums">{formatEuros(valeurs.total)}</p>
       </div>
-      <div className="flex items-center gap-4 text-sm shrink-0">
-        <span className="text-slate-400">{formatEuros(valeurs.total)}</span>
-        <span className="text-emerald-600 font-medium w-20 text-right">
-          {formatEuros(valeurs.percu)}
-        </span>
-        {valeurs.aPercevoir > 0 ? (
-          <span className="text-red-600 font-semibold w-20 text-right">
-            {formatEuros(valeurs.aPercevoir)}
+
+      <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
+        {POSTES.filter((p) => valeurs.parPoste[p.key] > 0).map((p) => (
+          <span key={p.key} className="flex items-center gap-1 text-xs text-slate-500">
+            <span className={`w-1.5 h-1.5 rounded-full ${p.couleur}`} />
+            {p.label} <span className="tabular-nums">{formatEuros(valeurs.parPoste[p.key])}</span>
           </span>
-        ) : (
-          <span className="w-20" />
-        )}
+        ))}
+      </div>
+
+      <div className="mt-2 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+        <div className="h-full flex" style={{ width: `${largeur}%` }}>
+          {POSTES.map((p) =>
+            valeurs.parPoste[p.key] > 0 ? (
+              <div
+                key={p.key}
+                className={p.couleur}
+                style={{ width: `${(valeurs.parPoste[p.key] / valeurs.total) * 100}%` }}
+              />
+            ) : null
+          )}
+        </div>
       </div>
     </div>
   )
