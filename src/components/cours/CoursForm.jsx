@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import Field, { inputClass } from '../ui/Field.jsx'
 import Button from '../ui/Button.jsx'
+import { EleveSelecteur } from './Eleves.jsx'
 
 const today = () => new Date().toISOString().slice(0, 10)
 
-export default function CoursForm({ onSubmit, onCancel }) {
+export default function CoursForm({ onSubmit, onCancel, eleves = [], dernierCoursDe }) {
   const [eleve, setEleve] = useState('')
   const [prix, setPrix] = useState('')
   const [duree, setDuree] = useState('60')
@@ -12,13 +13,25 @@ export default function CoursForm({ onSubmit, onCancel }) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
+  // Quand on choisit un élève déjà connu, on reprend le prix et la durée de son dernier cours
+  function choisirEleve(nom, profil) {
+    setEleve(nom)
+    if (profil && dernierCoursDe) {
+      const dernier = dernierCoursDe(profil.id)
+      if (dernier) {
+        setPrix(String(dernier.prix))
+        setDuree(String(dernier.duree))
+      }
+    }
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!eleve || !prix || !duree || !date) return
+    if (!eleve.trim() || !prix || !duree || !date) return
     setSaving(true)
     setError('')
     try {
-      await onSubmit({ eleve, prix, duree, date })
+      await onSubmit({ eleve: eleve.trim(), prix, duree, date })
     } catch (err) {
       console.error("Erreur lors de l'ajout du cours :", err)
       setError(err.message || "Une erreur est survenue, le cours n'a pas été enregistré.")
@@ -29,15 +42,7 @@ export default function CoursForm({ onSubmit, onCancel }) {
 
   return (
     <form onSubmit={handleSubmit}>
-      <Field label="Prénom de l'élève">
-        <input
-          className={inputClass}
-          value={eleve}
-          onChange={(e) => setEleve(e.target.value)}
-          placeholder="Ex. Lucas"
-          required
-        />
-      </Field>
+      <EleveSelecteur eleves={eleves} value={eleve} onChange={choisirEleve} />
       <div className="grid grid-cols-2 gap-3">
         <Field label="Prix (€)">
           <input

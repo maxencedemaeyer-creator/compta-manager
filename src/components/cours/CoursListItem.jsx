@@ -1,14 +1,23 @@
 import { Trash2, Check } from 'lucide-react'
 import { formatDate, formatEuros } from '../../utils/format.js'
 import { coursEstPasse } from '../../utils/dates.js'
+import { PastilleEleve } from './Eleves.jsx'
 
-export default function CoursListItem({ cours, onTogglePaye, onDelete }) {
+export default function CoursListItem({ cours, profil, onClickEleve, onTogglePaye, onDelete }) {
   const passe = coursEstPasse(cours.date)
 
   return (
     <div className="flex items-center gap-3 py-3 border-b border-slate-100 last:border-0">
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-slate-900 truncate">{cours.eleve}</p>
+        <button
+          type="button"
+          onClick={() => onClickEleve?.(cours.eleve)}
+          className="flex items-center gap-1.5 max-w-full text-left"
+          title="Voir les élèves"
+        >
+          {profil && <PastilleEleve eleve={profil} />}
+          <span className="font-medium text-slate-900 truncate">{cours.eleve}</span>
+        </button>
         <div className="flex items-center gap-1.5">
           <p className="text-xs text-slate-500">
             {formatDate(cours.date)} · {cours.duree} min

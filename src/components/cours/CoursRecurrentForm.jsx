@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import Field, { inputClass } from '../ui/Field.jsx'
 import Button from '../ui/Button.jsx'
+import { EleveSelecteur } from './Eleves.jsx'
 
 const today = () => new Date().toISOString().slice(0, 10)
 
-export default function CoursRecurrentForm({ onSubmit, onCancel }) {
+export default function CoursRecurrentForm({ onSubmit, onCancel, eleves = [], dernierCoursDe }) {
   const [eleve, setEleve] = useState('')
   const [prix, setPrix] = useState('')
   const [duree, setDuree] = useState('60')
@@ -13,13 +14,25 @@ export default function CoursRecurrentForm({ onSubmit, onCancel }) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
+  // Quand on choisit un élève déjà connu, on reprend le prix et la durée de son dernier cours
+  function choisirEleve(nom, profil) {
+    setEleve(nom)
+    if (profil && dernierCoursDe) {
+      const dernier = dernierCoursDe(profil.id)
+      if (dernier) {
+        setPrix(String(dernier.prix))
+        setDuree(String(dernier.duree))
+      }
+    }
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!eleve || !prix || !duree || !dateDebut || !nombreSeances) return
+    if (!eleve.trim() || !prix || !duree || !dateDebut || !nombreSeances) return
     setSaving(true)
     setError('')
     try {
-      await onSubmit({ eleve, prix, duree, dateDebut, nombreSeances })
+      await onSubmit({ eleve: eleve.trim(), prix, duree, dateDebut, nombreSeances })
     } catch (err) {
       console.error('Erreur lors de la création des cours récurrents :', err)
       setError(err.message || "Une erreur est survenue, les cours n'ont pas été enregistrés.")
@@ -34,15 +47,7 @@ export default function CoursRecurrentForm({ onSubmit, onCancel }) {
         Crée plusieurs cours d'un coup pour le même élève, un par semaine à partir de la date de
         début.
       </p>
-      <Field label="Prénom de l'élève">
-        <input
-          className={inputClass}
-          value={eleve}
-          onChange={(e) => setEleve(e.target.value)}
-          placeholder="Ex. Lucas"
-          required
-        />
-      </Field>
+      <EleveSelecteur eleves={eleves} value={eleve} onChange={choisirEleve} />
       <div className="grid grid-cols-2 gap-3">
         <Field label="Prix par cours (€)">
           <input
