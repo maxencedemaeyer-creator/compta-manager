@@ -23,7 +23,7 @@ export default function CadreJeu({ code, titre, attendus = [], couleur = '#7CFF6
           </Link>
           <div className="min-w-0 flex-1">
             <p className="labo-mono truncate text-[11px] tracking-[.1em]" style={{ color: couleur }}>
-              PAILLASSE {code}
+              {code ? `PAILLASSE ${code}` : "LE CORPS EN 3D"}
               {attendus.length > 0 && ` · ATTENDUS ${attendus.join(', ')}`}
             </p>
             <h1 className="labo-titre truncate text-xl font-bold text-[#F4F6FF]">{titre}</h1>

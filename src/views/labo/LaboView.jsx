@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight, Sparkles } from 'lucide-react'
+import { ArrowRight, Rotate3d, Sparkles } from 'lucide-react'
 import { DecorLabo, Fiole } from '../../components/labo/DecorLabo.jsx'
 import { EXPERIENCE, PAILLASSES } from '../../config/laboAteliers.js'
 import Corps3D from '../../components/labo/Corps3D.jsx'
@@ -43,9 +43,16 @@ export default function LaboView() {
             <span className="text-xs text-[#8A93B8]">{PAILLASSES.length} paillasses</span>
           </div>
           <div className="mt-3 flex gap-4">
-            <div className="h-44 w-28 flex-none overflow-hidden rounded-2xl border border-white/10 bg-[#070B16]/70">
-              <Corps3D className="h-full w-full" tourner credit={false} marge={1.02} />
-            </div>
+            <Link
+              to="/labo/explorateur"
+              aria-label="Explorer le corps humain en 3D"
+              className="relative h-44 w-28 flex-none overflow-hidden rounded-2xl border border-[#7CFF6B]/40 bg-[#070B16]/70 active:scale-[.97]"
+            >
+              <Corps3D className="pointer-events-none h-full w-full" tourner credit={false} marge={1.02} />
+              <span className="labo-mono absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-[#7CFF6B]/90 py-1 text-[10px] font-bold text-[#06210A]">
+                <Rotate3d size={12} /> EXPLORER
+              </span>
+            </Link>
             <div className="flex min-w-0 flex-col justify-between">
               <div>
                 <h2 className="labo-titre text-[22px] font-bold leading-tight text-[#F4F6FF]">{EXPERIENCE.titre}</h2>

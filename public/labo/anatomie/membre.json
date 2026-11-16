@@ -1,0 +1,212 @@
+{
+ "source": "BodyParts3D 4.0, \u00a9 The Database Center for Life Science, CC BY 4.0",
+ "pieces": {
+  "humerus": {
+   "positions": 0,
+   "sommets": 794,
+   "indices": 9528,
+   "nIndices": 3210,
+   "longueur": 0.30866350514805235,
+   "largeur": 0.06397074439797729,
+   "epaisseur": 0.04773453905295115
+  },
+  "radius": {
+   "positions": 15948,
+   "sommets": 249,
+   "indices": 18936,
+   "nIndices": 1224,
+   "longueur": 0.23748079757116225,
+   "largeur": 0.031129316781012713,
+   "epaisseur": 0.025450301301423527
+  },
+  "cubitus": {
+   "positions": 21384,
+   "sommets": 305,
+   "indices": 25044,
+   "nIndices": 1446,
+   "longueur": 0.25523772769174863,
+   "largeur": 0.02514318337525373,
+   "epaisseur": 0.035177225691591804
+  },
+  "carpes": {
+   "positions": 27936,
+   "sommets": 1725,
+   "indices": 48636,
+   "nIndices": 7980,
+   "longueur": 0.03049701452255249,
+   "largeur": 0.04976600408554077,
+   "epaisseur": 0.02712399885058403
+  },
+  "mc1": {
+   "positions": 64596,
+   "sommets": 287,
+   "indices": 68040,
+   "nIndices": 1578,
+   "longueur": 0.04734724565162869,
+   "largeur": 0.01538711988526081,
+   "epaisseur": 0.01588546846694195
+  },
+  "p11": {
+   "positions": 71196,
+   "sommets": 196,
+   "indices": 73548,
+   "nIndices": 948,
+   "longueur": 0.03152609272752287,
+   "largeur": 0.01392913574122158,
+   "epaisseur": 0.013296343498843063
+  },
+  "p13": {
+   "positions": 75444,
+   "sommets": 181,
+   "indices": 77616,
+   "nIndices": 684,
+   "longueur": 0.02486694346002552,
+   "largeur": 0.010474450774760146,
+   "epaisseur": 0.011423178024030332
+  },
+  "mc2": {
+   "positions": 78984,
+   "sommets": 347,
+   "indices": 83148,
+   "nIndices": 1830,
+   "longueur": 0.07124675997313867,
+   "largeur": 0.016229876181966932,
+   "epaisseur": 0.01692485478047266
+  },
+  "p21": {
+   "positions": 86808,
+   "sommets": 213,
+   "indices": 89364,
+   "nIndices": 1080,
+   "longueur": 0.040151469449599304,
+   "largeur": 0.015430580807116276,
+   "epaisseur": 0.0111596596650485
+  },
+  "p22": {
+   "positions": 91524,
+   "sommets": 186,
+   "indices": 93756,
+   "nIndices": 768,
+   "longueur": 0.025242055821943395,
+   "largeur": 0.011258738548634701,
+   "epaisseur": 0.00840685921799348
+  },
+  "p23": {
+   "positions": 95292,
+   "sommets": 187,
+   "indices": 97536,
+   "nIndices": 624,
+   "longueur": 0.019079801462566097,
+   "largeur": 0.009252824782453269,
+   "epaisseur": 0.006189069282453247
+  },
+  "mc3": {
+   "positions": 98784,
+   "sommets": 345,
+   "indices": 102924,
+   "nIndices": 1758,
+   "longueur": 0.06819575062440102,
+   "largeur": 0.013806116524914421,
+   "epaisseur": 0.016783444900780254
+  },
+  "p31": {
+   "positions": 106440,
+   "sommets": 266,
+   "indices": 109632,
+   "nIndices": 1344,
+   "longueur": 0.044845609772243354,
+   "largeur": 0.015168976083811096,
+   "epaisseur": 0.012848746078070072
+  },
+  "p32": {
+   "positions": 112320,
+   "sommets": 221,
+   "indices": 114972,
+   "nIndices": 990,
+   "longueur": 0.030377041034970173,
+   "largeur": 0.012229075731123234,
+   "epaisseur": 0.009466011468887254
+  },
+  "p33": {
+   "positions": 116952,
+   "sommets": 141,
+   "indices": 118644,
+   "nIndices": 510,
+   "longueur": 0.018351186746253807,
+   "largeur": 0.009665477944032778,
+   "epaisseur": 0.006321358818608295
+  },
+  "mc4": {
+   "positions": 119664,
+   "sommets": 280,
+   "indices": 123024,
+   "nIndices": 1266,
+   "longueur": 0.061084006856152284,
+   "largeur": 0.012668416283215984,
+   "epaisseur": 0.0141479713222661
+  },
+  "p41": {
+   "positions": 125556,
+   "sommets": 202,
+   "indices": 127980,
+   "nIndices": 1092,
+   "longueur": 0.041939361095122946,
+   "largeur": 0.013231114745406013,
+   "epaisseur": 0.012048683481122001
+  },
+  "p42": {
+   "positions": 130164,
+   "sommets": 214,
+   "indices": 132732,
+   "nIndices": 918,
+   "longueur": 0.030146591518404833,
+   "largeur": 0.011524653964270706,
+   "epaisseur": 0.008783644957459622
+  },
+  "p43": {
+   "positions": 134568,
+   "sommets": 114,
+   "indices": 135936,
+   "nIndices": 336,
+   "longueur": 0.01585733572804344,
+   "largeur": 0.008250563896990479,
+   "epaisseur": 0.005275461789683841
+  },
+  "mc5": {
+   "positions": 136608,
+   "sommets": 236,
+   "indices": 139440,
+   "nIndices": 1284,
+   "longueur": 0.0565792384975195,
+   "largeur": 0.012328290955603824,
+   "epaisseur": 0.012649939557821965
+  },
+  "p51": {
+   "positions": 142008,
+   "sommets": 186,
+   "indices": 144240,
+   "nIndices": 936,
+   "longueur": 0.03432287768185626,
+   "largeur": 0.013470109213519297,
+   "epaisseur": 0.009646312897610157
+  },
+  "p52": {
+   "positions": 146112,
+   "sommets": 168,
+   "indices": 148128,
+   "nIndices": 618,
+   "longueur": 0.022632046792266942,
+   "largeur": 0.010277492095114166,
+   "epaisseur": 0.007850000603103256
+  },
+  "p53": {
+   "positions": 149364,
+   "sommets": 138,
+   "indices": 151020,
+   "nIndices": 552,
+   "longueur": 0.016097502855577428,
+   "largeur": 0.00835481779498315,
+   "epaisseur": 0.004883422343832298
+  }
+ }
+}

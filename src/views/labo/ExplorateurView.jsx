@@ -47,7 +47,7 @@ export default function ExplorateurView() {
   const etats = choisi ? { [choisi]: 'actif' } : {}
 
   return (
-    <CadreJeu code="A9" titre="L’explorateur 3D" attendus={[112, 116]} couleur="#9DE7C2">
+    <CadreJeu code="" titre="L’explorateur 3D" attendus={[112, 116]} couleur="#9DE7C2">
       <div className="grid grid-cols-2 gap-2">
         <button
           type="button"

@@ -1,4 +1,4 @@
-import { Activity, Bone, Brain, Dumbbell, HeartPulse, Microscope, PersonStanding, ScanFace, Shield, Siren, Rotate3d, Bird, Zap } from 'lucide-react'
+import { Activity, Bone, Brain, Dumbbell, HeartPulse, Microscope, PersonStanding, ScanFace, Shield, Siren, Bird, Zap } from 'lucide-react'
 
 // =============================================================
 //  Le labo de sciences : l'expérience de la semaine et ses paillasses.
@@ -36,10 +36,10 @@ export const PAILLASSES = [
   { id: 'protection', code: 'A6', titre: 'Mission protection', texte: 'Soutien, locomotion ou protection ?', icon: Shield, couleur: '#7CB8FF', attendus: [115] },
   { id: 'reflexes', code: 'A7', titre: 'Message express', texte: 'Du cerveau au muscle + test de réflexes', icon: Brain, couleur: '#FFD27A', attendus: [114] },
   { id: 'dissection', code: 'A8', titre: 'Le scalpel', texte: 'Dissèque couche par couche', icon: Microscope, couleur: '#FF8A95', attendus: [119, 120] },
-  { id: 'explorateur', code: 'A9', titre: 'L’explorateur 3D', texte: 'Le vrai corps humain, à faire tourner', icon: Rotate3d, couleur: '#9DE7C2', attendus: [112, 116] },
+  { id: 'cousins', code: 'A9', titre: 'Les cousins cachés', texte: 'Mêmes os 3D chez l’oiseau, la baleine…', icon: Bird, couleur: '#9DE7C2', attendus: [112] },
   { id: 'urgences', code: 'A10', titre: 'Service des urgences', texte: 'De vraies radios de fractures', icon: Siren, couleur: '#FF6B7A', attendus: [112, 115] },
   { id: 'defi', code: 'A11', titre: 'Défi éclair', texte: '60 secondes, tableau des records', icon: Zap, couleur: '#FFE45E', attendus: [112, 113, 116] },
-  { id: 'cousins', code: 'A12', titre: 'Les cousins cachés', texte: 'Mêmes os chez l’oiseau, la baleine…', icon: Bird, couleur: '#7FE0B5', attendus: [112] },
+  
 ]
 
 export const PAILLASSE = Object.fromEntries(PAILLASSES.map((p) => [p.id, p]))
