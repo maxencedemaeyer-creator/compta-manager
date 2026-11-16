@@ -67,3 +67,97 @@ form label {
   from { opacity: 0; transform: scale(0.98); }
   to { opacity: 1; transform: scale(1); }
 }
+
+/* ===== Thèmes par profil =====
+   Les classes « emerald-… », « bg-creme » et « bg-douceur » utilisent ces variables.
+   PinContext ajoute la classe theme-<profil> sur <html> selon l'espace ouvert. */
+@layer base {
+  :root {
+    --theme-50: 236 253 245;
+    --theme-100: 209 250 229;
+    --theme-200: 167 243 208;
+    --theme-300: 110 231 183;
+    --theme-400: 52 211 153;
+    --theme-500: 16 185 129;
+    --theme-600: 5 150 105;
+    --theme-700: 4 120 87;
+    --theme-800: 6 95 70;
+    --theme-900: 6 78 59;
+    --theme-950: 2 44 34;
+    --theme-creme: 244 241 234;
+    --theme-douceur: 253 230 138;
+  }
+  .theme-julie {
+    --theme-50: 253 242 248;
+    --theme-100: 252 231 243;
+    --theme-200: 251 207 232;
+    --theme-300: 246 170 210;
+    --theme-400: 238 120 178;
+    --theme-500: 225 80 150;
+    --theme-600: 201 52 123;
+    --theme-700: 166 38 101;
+    --theme-800: 122 32 82;
+    --theme-900: 84 26 64;
+    --theme-950: 46 14 37;
+    --theme-creme: 252 245 247;
+    --theme-douceur: 221 214 254;
+  }
+
+  /* Titres de Julie : serif fine et italique, très éditorial */
+  .theme-julie .font-display {
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-style: italic;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+  }
+  .theme-julie body,
+  .theme-julie {
+    background-color: rgb(var(--theme-creme));
+  }
+}
+
+@layer utilities {
+  /* Formes floues de l'arrière-plan : elles flottent doucement chez Julie */
+  .theme-julie .blob {
+    animation: blob-flotte 18s ease-in-out infinite alternate;
+  }
+  .theme-julie .blob + .blob {
+    animation-duration: 23s;
+    animation-direction: alternate-reverse;
+  }
+  @keyframes blob-flotte {
+    0% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(-30px, 40px) scale(1.12); }
+    100% { transform: translate(25px, -20px) scale(0.95); }
+  }
+  /* Nom de Julie en dégradé prune → rose → lilas */
+  .theme-julie .nom-profil {
+    background-image: linear-gradient(110deg, rgb(var(--theme-900)) 10%, rgb(var(--theme-500)) 55%, #a78bfa 95%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    padding-right: 0.1em;
+  }
+  /* Tuiles façon verre dépoli */
+  .theme-julie .tuile {
+    border-radius: 1.75rem;
+    background-color: rgb(255 255 255 / 0.55);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    backdrop-filter: blur(20px) saturate(1.4);
+    border: 1px solid rgb(255 255 255 / 0.8);
+    box-shadow: 0 1px 2px rgb(var(--theme-900) / 0.04), 0 18px 40px -22px rgb(var(--theme-700) / 0.35);
+  }
+  .theme-julie .tuile-vide {
+    border-style: dashed;
+    border-width: 1.5px;
+    border-color: rgb(var(--theme-400) / 0.45);
+    background-color: rgb(255 255 255 / 0.35);
+  }
+  /* Reflet nacré (tuiles, avatar) */
+  .nacre {
+    background-image: linear-gradient(135deg, #fbcfe8 0%, #f5d0fe 30%, #ddd6fe 55%, #fecdd3 80%, #fde68a 100%);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .theme-julie .blob { animation: none; }
+  }
+}

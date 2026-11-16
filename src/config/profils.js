@@ -9,6 +9,8 @@ import { db } from '../firebase/config.js'
 //  - apps    : 'toutes' = toutes les applis de src/config/apps.js,
 //              sinon la liste des id d'applis de ce profil.
 //  - couleur : dégradé de la pastille sur l'écran de choix.
+//  - theme   : habillage de l'espace (couleurs et polices dans src/index.css).
+//  - fondPin : dégradé de l'écran du code PIN.
 //
 //  Données Firebase :
 //  - Maxence : à la racine de la base (comme avant, rien ne bouge).
@@ -21,13 +23,17 @@ export const PROFILS = [
     apps: 'toutes',
     couleur: 'from-emerald-400 to-teal-600',
     accent: 'text-emerald-500',
+    theme: null,
+    fondPin: 'bg-gradient-to-b from-emerald-700 to-emerald-950',
   },
   {
     id: 'julie',
     nom: 'Julie',
     apps: [],
-    couleur: 'from-rose-400 to-fuchsia-600',
-    accent: 'text-rose-500',
+    couleur: 'from-pink-400 via-fuchsia-400 to-violet-500',
+    accent: 'text-emerald-400',
+    theme: 'julie',
+    fondPin: 'bg-gradient-to-br from-emerald-300 via-emerald-500 to-emerald-800',
   },
 ]
 

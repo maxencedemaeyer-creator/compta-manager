@@ -58,7 +58,7 @@ export default function PinOublie({ onRetour }) {
   }
 
   return (
-    <div className="w-full max-w-xs flex flex-col items-center">
+    <div className="relative w-full max-w-xs flex flex-col items-center">
       <div className="w-16 h-16 rounded-2xl bg-white/15 flex items-center justify-center mb-6">
         <Mail size={28} />
       </div>

@@ -96,10 +96,17 @@ export default function PinLock() {
   const messageAffiche = messageLocal || error
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-emerald-700 to-emerald-950 px-6 text-white safe-bottom relative">
+    <div
+      className={`min-h-screen flex flex-col items-center justify-center ${
+        profil?.fondPin || 'bg-gradient-to-b from-emerald-700 to-emerald-950'
+      } px-6 text-white safe-bottom relative overflow-hidden`}
+    >
+      {/* Halos lumineux */}
+      <div className="blob pointer-events-none absolute -top-24 -right-20 w-72 h-72 rounded-full bg-white/15 blur-3xl" />
+      <div className="blob pointer-events-none absolute -bottom-24 -left-16 w-72 h-72 rounded-full bg-douceur/30 blur-3xl" />
       <Link
         to="/"
-        className="absolute top-5 left-4 inline-flex items-center gap-1 text-sm text-white/60 hover:text-white"
+        className="absolute z-10 top-5 left-4 inline-flex items-center gap-1 text-sm text-white/60 hover:text-white"
       >
         <ChevronLeft size={18} />
         Profils
@@ -108,11 +115,11 @@ export default function PinLock() {
       {oubli ? (
         <PinOublie onRetour={() => setOubli(false)} />
       ) : (
-      <div className="w-full max-w-xs flex flex-col items-center">
-        <div className="w-16 h-16 rounded-2xl bg-white/15 flex items-center justify-center mb-6">
+      <div className="relative w-full max-w-xs flex flex-col items-center">
+        <div className="w-16 h-16 rounded-2xl bg-white/15 backdrop-blur flex items-center justify-center mb-6">
           {creation ? <KeyRound size={28} /> : <Lock size={28} />}
         </div>
-        <h1 className="font-display text-3xl font-semibold mb-1">{profil?.nom}</h1>
+        <h1 className="font-display text-4xl font-semibold mb-1">{profil?.nom}</h1>
         <p className="text-white/70 text-sm mb-8 text-center">{consigne}</p>
 
         <div
@@ -160,7 +167,7 @@ export default function PinLock() {
               <button
                 key={i}
                 onClick={() => pushDigit(key)}
-                className="h-16 rounded-2xl bg-white/10 text-xl font-medium active:bg-white/20 transition-colors"
+                className="h-16 rounded-2xl bg-white/10 backdrop-blur text-xl font-medium active:bg-white/20 transition-colors"
               >
                 {key}
               </button>

@@ -99,9 +99,13 @@ export function PinProvider({ children }) {
     return unsubscribe
   }, [])
 
-  // On efface le message d'erreur quand on change de profil
+  // On efface le message d'erreur et on applique l'habillage du profil (classe theme-… sur <html>)
   useEffect(() => {
     setError('')
+    const theme = trouverProfil(profilId)?.theme
+    const html = document.documentElement
+    html.classList.forEach((c) => c.startsWith('theme-') && html.classList.remove(c))
+    if (theme) html.classList.add(`theme-${theme}`)
   }, [profilId])
 
   // Le profil a-t-il déjà un PIN ? (sinon : écran de création au premier passage)

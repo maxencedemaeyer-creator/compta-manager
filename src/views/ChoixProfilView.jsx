@@ -9,10 +9,10 @@ import { PROFILS } from '../config/profils.js'
 // =============================================================
 export default function ChoixProfilView() {
   return (
-    <div className="min-h-screen bg-[#f4f1ea] text-emerald-950 relative overflow-hidden">
+    <div className="min-h-screen bg-creme text-emerald-950 relative overflow-hidden">
       {/* Formes douces en arrière-plan */}
-      <div className="pointer-events-none absolute -top-32 -right-24 w-80 h-80 sm:w-[30rem] sm:h-[30rem] rounded-full bg-emerald-300/40 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-0 -left-32 w-80 h-80 rounded-full bg-rose-200/50 blur-3xl" />
+      <div className="blob pointer-events-none absolute -top-32 -right-24 w-80 h-80 sm:w-[30rem] sm:h-[30rem] rounded-full bg-emerald-300/40 blur-3xl" />
+      <div className="blob pointer-events-none absolute bottom-0 -left-32 w-80 h-80 rounded-full bg-rose-200/50 blur-3xl" />
 
       <div className="relative max-w-xl mx-auto px-5 sm:px-8 pt-16 sm:pt-24 pb-16 min-h-screen flex flex-col">
         <header className="mb-10 sm:mb-14">

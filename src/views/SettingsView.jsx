@@ -349,7 +349,7 @@ export default function SettingsView() {
   const profil = trouverProfil(profilId)
 
   return (
-    <div className="min-h-screen bg-[#f4f1ea] text-emerald-950">
+    <div className="min-h-screen bg-creme text-emerald-950">
       <div className="max-w-2xl mx-auto px-4 sm:px-8 pt-5 sm:pt-10 pb-16">
         <Link
           to={`/${profilId}`}

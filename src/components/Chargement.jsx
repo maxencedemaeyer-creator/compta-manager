@@ -9,14 +9,14 @@ export default function Chargement({ message = 'Chargement…', superpose = fals
   return (
     <div
       className={`${
-        superpose ? 'fixed inset-0 z-[100] bg-[#f4f1ea]/95 backdrop-blur-sm' : 'relative min-h-screen bg-[#f4f1ea]'
+        superpose ? 'fixed inset-0 z-[100] bg-creme/95 backdrop-blur-sm' : 'relative min-h-screen bg-creme'
       } flex flex-col items-center justify-center text-emerald-950 overflow-hidden`}
       role="status"
       aria-live="polite"
     >
       {/* Formes douces en arrière-plan */}
-      <div className="pointer-events-none absolute -top-32 -right-24 w-80 h-80 rounded-full bg-emerald-300/40 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-0 -left-32 w-80 h-80 rounded-full bg-amber-200/50 blur-3xl" />
+      <div className="blob pointer-events-none absolute -top-32 -right-24 w-80 h-80 rounded-full bg-emerald-300/40 blur-3xl" />
+      <div className="blob pointer-events-none absolute bottom-0 -left-32 w-80 h-80 rounded-full bg-douceur/50 blur-3xl" />
 
       <div className="relative flex flex-col items-center">
         <p className="font-display text-4xl font-semibold tracking-tight">Maxence</p>
