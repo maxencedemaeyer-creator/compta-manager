@@ -48,7 +48,9 @@ export function lienWhatsApp() {
     `Je t'invite à découvrir ma galerie de créations couture faites main :\n` +
     `👉 ${lienGalerie()}\n` +
     `🔑 Code d'accès : ${CODE_GALERIE}\n\n` +
-    `Un modèle te plaît ? Clique sur « J'en veux un ! » et dis-moi tes envies (taille, couleur…) 🎀`
+    `Un modèle te plaît ? Clique sur « J'en veux un ! » et dis-moi tes envies (taille, couleur…) 🎀\n\n` +
+    `🤫 Si tu connais d'autres personnes intéressées, demande-leur de m'envoyer un petit message privé sur WhatsApp, ` +
+    `mais ne leur donne pas accès directement à la galerie s'il te plaît 🙏`
   return `https://wa.me/?text=${encodeURIComponent(message)}`
 }
 
