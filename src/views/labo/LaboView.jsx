@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, Sparkles } from 'lucide-react'
 import { DecorLabo, Fiole } from '../../components/labo/DecorLabo.jsx'
 import { EXPERIENCE, PAILLASSES } from '../../config/laboAteliers.js'
-import Squelette from '../../components/labo/Squelette.jsx'
+import Corps3D from '../../components/labo/Corps3D.jsx'
 import './labo.css'
 
 // =============================================================
@@ -43,8 +43,8 @@ export default function LaboView() {
             <span className="text-xs text-[#8A93B8]">{PAILLASSES.length} paillasses</span>
           </div>
           <div className="mt-3 flex gap-4">
-            <div className="h-40 w-24 flex-none rounded-2xl border border-white/10 bg-[#070B16]/70 p-1">
-              <Squelette className="h-full w-full" />
+            <div className="h-44 w-28 flex-none overflow-hidden rounded-2xl border border-white/10 bg-[#070B16]/70">
+              <Corps3D className="h-full w-full" tourner credit={false} marge={1.02} />
             </div>
             <div className="flex min-w-0 flex-col justify-between">
               <div>
@@ -76,7 +76,7 @@ export default function LaboView() {
                   <Sparkles size={12} /> PAILLASSE VEDETTE · {vedette.code}
                 </p>
                 <p className="labo-titre text-lg font-bold text-[#F4F6FF]">{vedette.titre}</p>
-                <p className="text-sm text-[#B9C1E3]">Mets-toi devant la caméra : ton squelette apparaît sur toi.</p>
+                <p className="text-sm text-[#B9C1E3]">Scanne ta main, puis un copain : leurs os apparaissent en direct.</p>
               </div>
               <ArrowRight className="flex-none" style={{ color: vedette.couleur }} />
             </div>

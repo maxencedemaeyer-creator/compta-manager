@@ -1,0 +1,433 @@
+{
+ "source": "BodyParts3D 4.0, © The Database Center for Life Science, CC BY 4.0 (via github.com/ashemag/human-atlas)",
+ "unite": "mètres, Y vers le haut, Z vers l’avant, X négatif = côté droit de la personne",
+ "min": [
+  -0.3340040147304535,
+  1.3877787807814457e-17,
+  -0.1452392041683197
+ ],
+ "max": [
+  0.332753986120224,
+  1.7194311618804932,
+  0.1467829942703247
+ ],
+ "octets": 5817342,
+ "pieces": [
+  {
+   "groupe": "bassin",
+   "cote": "",
+   "positions": 0,
+   "sommets": 4793,
+   "indices": 28758,
+   "nIndices": 26292
+  },
+  {
+   "groupe": "biceps",
+   "cote": "d",
+   "positions": 133926,
+   "sommets": 1501,
+   "indices": 142932,
+   "nIndices": 3888
+  },
+  {
+   "groupe": "biceps",
+   "cote": "g",
+   "positions": 158484,
+   "sommets": 1489,
+   "indices": 167418,
+   "nIndices": 3924
+  },
+  {
+   "groupe": "brachial",
+   "cote": "d",
+   "positions": 183114,
+   "sommets": 959,
+   "indices": 188868,
+   "nIndices": 2976
+  },
+  {
+   "groupe": "brachial",
+   "cote": "g",
+   "positions": 200772,
+   "sommets": 942,
+   "indices": 206424,
+   "nIndices": 2934
+  },
+  {
+   "groupe": "cartilages",
+   "cote": "d",
+   "positions": 218160,
+   "sommets": 2750,
+   "indices": 234660,
+   "nIndices": 12714
+  },
+  {
+   "groupe": "cartilages",
+   "cote": "g",
+   "positions": 285516,
+   "sommets": 2562,
+   "indices": 300888,
+   "nIndices": 12870
+  },
+  {
+   "groupe": "clavicule",
+   "cote": "d",
+   "positions": 352368,
+   "sommets": 420,
+   "indices": 354888,
+   "nIndices": 2460
+  },
+  {
+   "groupe": "clavicule",
+   "cote": "g",
+   "positions": 364728,
+   "sommets": 426,
+   "indices": 367284,
+   "nIndices": 2478
+  },
+  {
+   "groupe": "cotes",
+   "cote": "d",
+   "positions": 377196,
+   "sommets": 9742,
+   "indices": 435648,
+   "nIndices": 57606
+  },
+  {
+   "groupe": "cotes",
+   "cote": "g",
+   "positions": 666072,
+   "sommets": 9747,
+   "indices": 724554,
+   "nIndices": 57534
+  },
+  {
+   "groupe": "crane",
+   "cote": "",
+   "positions": 954690,
+   "sommets": 50041,
+   "indices": 1254936,
+   "nIndices": 248592
+  },
+  {
+   "groupe": "cubitus",
+   "cote": "d",
+   "positions": 2249304,
+   "sommets": 305,
+   "indices": 2251134,
+   "nIndices": 1446
+  },
+  {
+   "groupe": "cubitus",
+   "cote": "g",
+   "positions": 2256918,
+   "sommets": 283,
+   "indices": 2258616,
+   "nIndices": 1302
+  },
+  {
+   "groupe": "deltoide",
+   "cote": "d",
+   "positions": 2263824,
+   "sommets": 3729,
+   "indices": 2286198,
+   "nIndices": 9600
+  },
+  {
+   "groupe": "deltoide",
+   "cote": "g",
+   "positions": 2324598,
+   "sommets": 3765,
+   "indices": 2347188,
+   "nIndices": 9696
+  },
+  {
+   "groupe": "disques",
+   "cote": "",
+   "positions": 2385972,
+   "sommets": 43215,
+   "indices": 2645262,
+   "nIndices": 128862
+  },
+  {
+   "groupe": "femur",
+   "cote": "d",
+   "positions": 3160710,
+   "sommets": 480,
+   "indices": 3163590,
+   "nIndices": 2790
+  },
+  {
+   "groupe": "femur",
+   "cote": "g",
+   "positions": 3174750,
+   "sommets": 459,
+   "indices": 3177504,
+   "nIndices": 2652
+  },
+  {
+   "groupe": "humerus",
+   "cote": "d",
+   "positions": 3188112,
+   "sommets": 794,
+   "indices": 3192876,
+   "nIndices": 3210
+  },
+  {
+   "groupe": "humerus",
+   "cote": "g",
+   "positions": 3205716,
+   "sommets": 586,
+   "indices": 3209232,
+   "nIndices": 2886
+  },
+  {
+   "groupe": "ischio_jambiers",
+   "cote": "d",
+   "positions": 3220776,
+   "sommets": 2476,
+   "indices": 3235632,
+   "nIndices": 9678
+  },
+  {
+   "groupe": "ischio_jambiers",
+   "cote": "g",
+   "positions": 3274344,
+   "sommets": 2459,
+   "indices": 3289098,
+   "nIndices": 9642
+  },
+  {
+   "groupe": "jambier_anterieur",
+   "cote": "d",
+   "positions": 3327666,
+   "sommets": 1116,
+   "indices": 3334362,
+   "nIndices": 2298
+  },
+  {
+   "groupe": "jambier_anterieur",
+   "cote": "g",
+   "positions": 3343554,
+   "sommets": 1113,
+   "indices": 3350232,
+   "nIndices": 2268
+  },
+  {
+   "groupe": "main",
+   "cote": "d",
+   "positions": 3359304,
+   "sommets": 5833,
+   "indices": 3394302,
+   "nIndices": 27096
+  },
+  {
+   "groupe": "main",
+   "cote": "g",
+   "positions": 3502686,
+   "sommets": 5812,
+   "indices": 3537558,
+   "nIndices": 28794
+  },
+  {
+   "groupe": "mollet",
+   "cote": "d",
+   "positions": 3652734,
+   "sommets": 1921,
+   "indices": 3664260,
+   "nIndices": 7872
+  },
+  {
+   "groupe": "mollet",
+   "cote": "g",
+   "positions": 3695748,
+   "sommets": 1909,
+   "indices": 3707202,
+   "nIndices": 7848
+  },
+  {
+   "groupe": "muscles_avant_bras",
+   "cote": "d",
+   "positions": 3738594,
+   "sommets": 7209,
+   "indices": 3781848,
+   "nIndices": 16908
+  },
+  {
+   "groupe": "muscles_avant_bras",
+   "cote": "g",
+   "positions": 3849480,
+   "sommets": 7174,
+   "indices": 3892524,
+   "nIndices": 16908
+  },
+  {
+   "groupe": "omoplate",
+   "cote": "d",
+   "positions": 3960156,
+   "sommets": 2896,
+   "indices": 3977532,
+   "nIndices": 17268
+  },
+  {
+   "groupe": "omoplate",
+   "cote": "g",
+   "positions": 4046604,
+   "sommets": 3097,
+   "indices": 4065186,
+   "nIndices": 18540
+  },
+  {
+   "groupe": "peau",
+   "cote": "d",
+   "positions": 4139346,
+   "sommets": 2850,
+   "indices": 4156446,
+   "nIndices": 16221
+  },
+  {
+   "groupe": "perone",
+   "cote": "d",
+   "positions": 4221330,
+   "sommets": 162,
+   "indices": 4222302,
+   "nIndices": 894
+  },
+  {
+   "groupe": "perone",
+   "cote": "g",
+   "positions": 4225878,
+   "sommets": 149,
+   "indices": 4226772,
+   "nIndices": 834
+  },
+  {
+   "groupe": "pied",
+   "cote": "d",
+   "positions": 4230108,
+   "sommets": 8490,
+   "indices": 4281048,
+   "nIndices": 40698
+  },
+  {
+   "groupe": "pied",
+   "cote": "g",
+   "positions": 4443840,
+   "sommets": 8352,
+   "indices": 4493952,
+   "nIndices": 41904
+  },
+  {
+   "groupe": "quadriceps",
+   "cote": "d",
+   "positions": 4661568,
+   "sommets": 3625,
+   "indices": 4683318,
+   "nIndices": 13968
+  },
+  {
+   "groupe": "quadriceps",
+   "cote": "g",
+   "positions": 4739190,
+   "sommets": 3613,
+   "indices": 4760868,
+   "nIndices": 13968
+  },
+  {
+   "groupe": "radius",
+   "cote": "d",
+   "positions": 4816740,
+   "sommets": 249,
+   "indices": 4818234,
+   "nIndices": 1224
+  },
+  {
+   "groupe": "radius",
+   "cote": "g",
+   "positions": 4823130,
+   "sommets": 250,
+   "indices": 4824630,
+   "nIndices": 1218
+  },
+  {
+   "groupe": "rotule",
+   "cote": "d",
+   "positions": 4829502,
+   "sommets": 176,
+   "indices": 4830558,
+   "nIndices": 912
+  },
+  {
+   "groupe": "rotule",
+   "cote": "g",
+   "positions": 4834206,
+   "sommets": 177,
+   "indices": 4835268,
+   "nIndices": 912
+  },
+  {
+   "groupe": "sternum",
+   "cote": "",
+   "positions": 4838916,
+   "sommets": 4069,
+   "indices": 4863330,
+   "nIndices": 16698
+  },
+  {
+   "groupe": "tendon_achille",
+   "cote": "d",
+   "positions": 4930122,
+   "sommets": 1937,
+   "indices": 4941744,
+   "nIndices": 4326
+  },
+  {
+   "groupe": "tendon_achille",
+   "cote": "g",
+   "positions": 4959048,
+   "sommets": 1915,
+   "indices": 4970538,
+   "nIndices": 4290
+  },
+  {
+   "groupe": "tibia",
+   "cote": "d",
+   "positions": 4987698,
+   "sommets": 334,
+   "indices": 4989702,
+   "nIndices": 1902
+  },
+  {
+   "groupe": "tibia",
+   "cote": "g",
+   "positions": 4997310,
+   "sommets": 331,
+   "indices": 4999296,
+   "nIndices": 1860
+  },
+  {
+   "groupe": "triceps",
+   "cote": "d",
+   "positions": 5006736,
+   "sommets": 1485,
+   "indices": 5015646,
+   "nIndices": 5310
+  },
+  {
+   "groupe": "triceps",
+   "cote": "g",
+   "positions": 5036886,
+   "sommets": 1490,
+   "indices": 5045826,
+   "nIndices": 5298
+  },
+  {
+   "groupe": "vertebres",
+   "cote": "",
+   "positions": 5067018,
+   "sommets": 29470,
+   "indices": 5243838,
+   "nIndices": 143376
+  }
+ ]
+}

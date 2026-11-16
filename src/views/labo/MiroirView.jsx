@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Camera, ScanFace, ShieldCheck, Target, Trophy } from 'lucide-react'
+import { ArrowLeft, Camera, Hand, RefreshCw, ScanFace, ShieldCheck, Target, Trophy } from 'lucide-react'
 import { DecorLabo } from '../../components/labo/DecorLabo.jsx'
 import { Eclat } from '../../components/labo/CadreJeu.jsx'
 import './labo.css'
@@ -10,7 +10,9 @@ import './labo.css'
 //  La caméra de la tablette détecte le corps de l'élève en direct
 //  (MediaPipe Pose, calcul fait DANS la tablette : aucune image
 //  n'est enregistrée ni envoyée) et dessine son squelette sur lui.
-//  3 modes : rayons X (os, articulations, angles, biceps),
+//  Caméra arrière par défaut : on scanne d'abord sa propre main,
+//  puis un copain. Modes : main (os de la main), rayons X
+//  (os, articulations, angles, biceps),
 //  chasse aux os (toucher l'os demandé sur son propre corps),
 //  missions de mouvement (flexion, extension…).
 //  Attendus 112, 113, 120, 121.
@@ -18,6 +20,35 @@ import './labo.css'
 
 const WASM = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21/wasm'
 const MODELE = 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task'
+const MODELE_MAIN = 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task'
+
+// Missions de la main (21 points MediaPipe : 0 poignet, 1-4 pouce, 5-8 index, 9-12 majeur, 13-16 annulaire, 17-20 auriculaire)
+const MISSIONS_MAIN = [
+  {
+    titre: 'Montre ta main ouverte, doigts bien tendus',
+    test: (h) => h.doigtsTendus >= 4,
+    bravo: '27 os dans une main !',
+    explication: '8 petits os au poignet (les carpes), 5 dans la paume (les métacarpiens) et 14 dans les doigts (les phalanges).',
+  },
+  {
+    titre: 'Plie seulement ton index',
+    test: (h) => h.anglesDoigts[0] < 120 && h.anglesDoigts.slice(1).filter((a) => a > 150).length >= 2,
+    bravo: 'Les phalanges bougent !',
+    explication: 'Chaque doigt a 3 phalanges reliées par des articulations. Le pouce n’en a que 2.',
+  },
+  {
+    titre: 'Fais un poing bien serré',
+    test: (h) => h.anglesDoigts.every((a) => a < 110),
+    bravo: 'Poing fermé !',
+    explication: 'Les muscles qui plient tes doigts sont dans l’avant-bras : ils tirent sur de longs tendons qui vont jusqu’au bout des doigts.',
+  },
+  {
+    titre: 'Touche le bout de ton pouce avec ton petit doigt',
+    test: (h) => h.pouceAuriculaire < h.echelle * 0.28,
+    bravo: 'Pouce opposable !',
+    explication: 'Ton pouce peut toucher chacun de tes doigts : c’est ce qui te permet d’attraper et de tenir les objets.',
+  },
+]
 
 // Points du corps (numérotation MediaPipe). G = gauche de l'élève, D = droite.
 const P = {
@@ -79,6 +110,7 @@ const MISSIONS = [
 ]
 
 const visible = (p) => p && (p.visibility ?? 1) > 0.5
+const v1 = (p) => ({ ...p, visibility: 1 })
 const milieu = (a, b, t = 0.5) => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t, visibility: Math.min(a.visibility ?? 1, b.visibility ?? 1) })
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y)
 function angle(a, b, c) {
@@ -90,20 +122,38 @@ function angle(a, b, c) {
   return Math.round(d)
 }
 
-// ---------- Dessin ----------
+// ---------- Dessin : os anatomiques (diaphyse fine, têtes renflées en deux lobes) ----------
 function os(ctx, a, b, largeur) {
   if (!visible(a) || !visible(b)) return
-  ctx.lineCap = 'round'
-  ctx.lineWidth = largeur
+  const L = dist(a, b) || 1
+  const ux = (b.x - a.x) / L
+  const uy = (b.y - a.y) / L
+  const nx = -uy
+  const ny = ux
+  const tete = largeur * 0.62
+  const corps = largeur * 0.3
+  const pt = (s, k) => [a.x + ux * s + nx * k, a.y + uy * s + ny * k]
+  ctx.save()
+  const g = ctx.createLinearGradient(...pt(0, tete), ...pt(0, -tete))
+  g.addColorStop(0, '#FFF9EA')
+  g.addColorStop(0.45, '#EADFC2')
+  g.addColorStop(1, '#A8966F')
+  ctx.fillStyle = g
   ctx.beginPath()
-  ctx.moveTo(a.x, a.y)
-  ctx.lineTo(b.x, b.y)
-  ctx.stroke()
-  for (const p of [a, b]) {
-    ctx.beginPath()
-    ctx.arc(p.x, p.y, largeur * 0.7, 0, Math.PI * 2)
-    ctx.fill()
+  ctx.moveTo(...pt(tete * 0.6, corps * 1.4))
+  ctx.quadraticCurveTo(...pt(L / 2, corps * 0.8), ...pt(L - tete * 0.6, corps * 1.4))
+  ctx.lineTo(...pt(L - tete * 0.6, -corps * 1.4))
+  ctx.quadraticCurveTo(...pt(L / 2, -corps * 0.8), ...pt(tete * 0.6, -corps * 1.4))
+  ctx.closePath()
+  ctx.fill()
+  for (const [s0, sens] of [[0, 1], [L, -1]]) {
+    for (const k of [tete * 0.42, -tete * 0.42]) {
+      ctx.beginPath()
+      ctx.arc(...pt(s0 + sens * tete * 0.15, k), tete * 0.55, 0, Math.PI * 2)
+      ctx.fill()
+    }
   }
+  ctx.restore()
 }
 
 function osDouble(ctx, a, b, largeur) {
@@ -131,17 +181,63 @@ function texte(ctx, t, x, y, couleur = '#E8ECFF', taille = 14) {
   ctx.restore()
 }
 
+function dessinerMain(ctx, Lm, echelle) {
+  const W = Lm[0]
+  const axe = { x: Lm[9].x - W.x, y: Lm[9].y - W.y }
+  const travers = { x: Lm[5].x - Lm[17].x, y: Lm[5].y - Lm[17].y }
+  const e = echelle
+  // radius (côté pouce) et cubitus (côté auriculaire) qui arrivent au poignet
+  const dirBas = { x: -axe.x / (Math.hypot(axe.x, axe.y) || 1), y: -axe.y / (Math.hypot(axe.x, axe.y) || 1) }
+  for (const k of [0.32, -0.32]) {
+    const base = { x: W.x + travers.x * k, y: W.y + travers.y * k, visibility: 1 }
+    os(ctx, base, { x: base.x + dirBas.x * e * 0.9, y: base.y + dirBas.y * e * 0.9, visibility: 1 }, e * 0.16)
+  }
+  // 8 carpes en deux rangées
+  ctx.save()
+  const g = ctx.createRadialGradient(W.x, W.y, 0, W.x, W.y, e * 0.3)
+  g.addColorStop(0, '#FFF9EA')
+  g.addColorStop(1, '#C9B88E')
+  ctx.fillStyle = g
+  for (const [t, n] of [[0.1, 4], [0.24, 4]]) {
+    for (let i = 0; i < n; i++) {
+      const k = (i / (n - 1) - 0.5) * 0.8
+      ctx.beginPath()
+      ctx.ellipse(W.x + axe.x * t + travers.x * k, W.y + axe.y * t + travers.y * k, e * 0.065, e * 0.055, Math.atan2(axe.y, axe.x), 0, Math.PI * 2)
+      ctx.fill()
+    }
+  }
+  ctx.restore()
+  const v = (p) => ({ ...p, visibility: 1 })
+  // pouce : métacarpien + 2 phalanges
+  os(ctx, v(Lm[1]), v(Lm[2]), e * 0.11)
+  os(ctx, v(Lm[2]), v(Lm[3]), e * 0.09)
+  os(ctx, v(Lm[3]), v(milieu(Lm[3], Lm[4], 0.85)), e * 0.08)
+  // doigts : métacarpien + 3 phalanges
+  for (const [mcp, pip, dip, bout] of [[5, 6, 7, 8], [9, 10, 11, 12], [13, 14, 15, 16], [17, 18, 19, 20]]) {
+    os(ctx, v(milieu(W, Lm[mcp], 0.32)), v(Lm[mcp]), e * 0.09)
+    os(ctx, v(Lm[mcp]), v(Lm[pip]), e * 0.08)
+    os(ctx, v(Lm[pip]), v(Lm[dip]), e * 0.07)
+    os(ctx, v(Lm[dip]), v(milieu(Lm[dip], Lm[bout], 0.85)), e * 0.06)
+  }
+}
+
 export default function MiroirView() {
   const videoRef = useRef(null)
   const canvasRef = useRef(null)
   const detecteurRef = useRef(null)
+  const mainRef = useRef(null)
+  const visionRef = useRef(null)
   const fluxRef = useRef(null)
   const rafRef = useRef(0)
-  const jeuRef = useRef({ mode: 'rayons', cible: 0, maintien: 0, mission: 0, score: 0, debut: 0, termine: false })
+  const jeuRef = useRef({ mode: 'main', cible: 0, maintien: 0, mission: 0, score: 0, debut: 0, termine: false })
 
   const [phase, setPhase] = useState('accueil') // accueil | chargement | jeu | erreur
   const [erreur, setErreur] = useState('')
-  const [mode, setMode] = useState('rayons')
+  const [mode, setMode] = useState('main')
+  const [camera, setCamera] = useState('environment')
+  const [noms, setNoms] = useState(true)
+  const nomsRef = useRef(true)
+  nomsRef.current = noms
   const [infos, setInfos] = useState({ corps: false, maintien: 0, cible: 0, mission: 0, score: 0 })
   const [eclat, setEclat] = useState({ message: '', sous: '', cle: 0 })
 
@@ -151,12 +247,12 @@ export default function MiroirView() {
     setInfos((i) => ({ ...i, cible: 0, mission: 0, score: 0, maintien: 0 }))
   }
 
-  async function demarrer() {
+  async function demarrer(face = camera) {
     setPhase('chargement')
     setErreur('')
     try {
       const flux = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+        video: { facingMode: { ideal: face }, width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: false,
       })
       fluxRef.current = flux
@@ -164,17 +260,22 @@ export default function MiroirView() {
       video.srcObject = flux
       await video.play()
 
-      const { FilesetResolver, PoseLandmarker } = await import('@mediapipe/tasks-vision')
-      const vision = await FilesetResolver.forVisionTasks(WASM)
-      const options = (delegate) => ({
-        baseOptions: { modelAssetPath: MODELE, delegate },
-        runningMode: 'VIDEO',
-        numPoses: 1,
-      })
-      try {
-        detecteurRef.current = await PoseLandmarker.createFromOptions(vision, options('GPU'))
-      } catch {
-        detecteurRef.current = await PoseLandmarker.createFromOptions(vision, options('CPU'))
+      if (!detecteurRef.current) {
+        const { FilesetResolver, PoseLandmarker, HandLandmarker } = await import('@mediapipe/tasks-vision')
+        const vision = await FilesetResolver.forVisionTasks(WASM)
+        visionRef.current = vision
+        const options = (modele, delegate, extra) => ({ baseOptions: { modelAssetPath: modele, delegate }, runningMode: 'VIDEO', ...extra })
+        const creer = async (Classe, modele, extra) => {
+          try {
+            return await Classe.createFromOptions(vision, options(modele, 'GPU', extra))
+          } catch {
+            return Classe.createFromOptions(vision, options(modele, 'CPU', extra))
+          }
+        }
+        ;[detecteurRef.current, mainRef.current] = await Promise.all([
+          creer(PoseLandmarker, MODELE, { numPoses: 1 }),
+          creer(HandLandmarker, MODELE_MAIN, { numHands: 2 }),
+        ])
       }
       jeuRef.current.debut = performance.now()
       setPhase('jeu')
@@ -194,11 +295,30 @@ export default function MiroirView() {
     cancelAnimationFrame(rafRef.current)
     fluxRef.current?.getTracks().forEach((t) => t.stop())
     fluxRef.current = null
-    detecteurRef.current?.close?.()
-    detecteurRef.current = null
   }
 
-  useEffect(() => arreter, [])
+  async function changerCamera() {
+    const face = camera === 'environment' ? 'user' : 'environment'
+    setCamera(face)
+    fluxRef.current?.getTracks().forEach((t) => t.stop())
+    try {
+      const flux = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: face }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false })
+      fluxRef.current = flux
+      videoRef.current.srcObject = flux
+      await videoRef.current.play()
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  useEffect(
+    () => () => {
+      arreter()
+      detecteurRef.current?.close?.()
+      mainRef.current?.close?.()
+    },
+    []
+  )
 
   // Boucle d'analyse et de dessin
   useEffect(() => {
@@ -208,6 +328,7 @@ export default function MiroirView() {
     const ctx = canvas.getContext('2d')
     let derniereVideo = -1
     let points = null
+    let mains = []
     let derniereMaj = 0
     let dernierInstant = performance.now()
 
@@ -227,23 +348,33 @@ export default function MiroirView() {
       const vh = video.videoHeight
       if (!vw || !vh) return
 
-      if (detecteurRef.current && video.currentTime !== derniereVideo) {
+      const modeMain = jeuRef.current.mode === 'main'
+      if (video.currentTime !== derniereVideo) {
         derniereVideo = video.currentTime
         try {
-          const res = detecteurRef.current.detectForVideo(video, maintenant)
-          points = res.landmarks?.[0] || null
+          if (modeMain && mainRef.current) {
+            mains = mainRef.current.detectForVideo(video, maintenant).landmarks || []
+            points = null
+          } else if (detecteurRef.current) {
+            points = detecteurRef.current.detectForVideo(video, maintenant).landmarks?.[0] || null
+            mains = []
+          }
         } catch {
           points = null
+          mains = []
         }
       }
+      const miroir = videoRef.current?.srcObject?.getVideoTracks?.()[0]?.getSettings?.().facingMode === 'user'
 
       // Image de la caméra en miroir, façon radio
       const s = Math.max(W / vw, H / vh)
       const dx = (W - vw * s) / 2
       const dy = (H - vh * s) / 2
       ctx.save()
-      ctx.translate(W, 0)
-      ctx.scale(-1, 1)
+      if (miroir) {
+        ctx.translate(W, 0)
+        ctx.scale(-1, 1)
+      }
       ctx.drawImage(video, dx, dy, vw * s, vh * s)
       ctx.restore()
       // Noir et blanc (mode « saturation », compatible Safari), assombri, teinte bleutée de radio
@@ -257,6 +388,48 @@ export default function MiroirView() {
       ctx.fillRect(0, 0, W, H)
 
       const jeu = jeuRef.current
+      const versEcran = (l) => ({ x: miroir ? W - (l.x * vw * s + dx) : l.x * vw * s + dx, y: l.y * vh * s + dy, visibility: l.visibility ?? 1 })
+
+      // ----- Mode main : les 27 os de la main -----
+      if (modeMain) {
+        let maintienMain = 0
+        const mesures = []
+        for (const brute of mains) {
+          const Lm = brute.map(versEcran)
+          const echelle = dist(Lm[0], Lm[9]) * 1.25 || 100
+          ctx.save()
+          ctx.shadowColor = '#8FF4FF'
+          ctx.shadowBlur = 12
+          dessinerMain(ctx, Lm, echelle)
+          ctx.restore()
+          const anglesDoigts = [[5, 6, 8], [9, 10, 12], [13, 14, 16], [17, 18, 20]].map(([a, b, c]) => angle(v1(Lm[a]), v1(Lm[b]), v1(Lm[c])))
+          mesures.push({ anglesDoigts, doigtsTendus: anglesDoigts.filter((a) => a > 160).length, pouceAuriculaire: dist(Lm[4], Lm[20]), echelle })
+          if (nomsRef.current) {
+            texte(ctx, 'phalanges', Lm[11].x, Lm[11].y - echelle * 0.12, '#FFD27A', 12)
+            texte(ctx, 'métacarpiens', milieu(Lm[0], Lm[9], 0.62).x, milieu(Lm[0], Lm[9], 0.62).y, '#9DFF8A', 12)
+            texte(ctx, 'carpes (poignet)', milieu(Lm[0], Lm[9], 0.17).x, milieu(Lm[0], Lm[9], 0.17).y + echelle * 0.12, '#6FEFFF', 12)
+          }
+        }
+        if (!jeu.termine && mesures.length) {
+          const mission = MISSIONS_MAIN[jeu.mission]
+          const ok = mesures.some((h) => mission.test(h))
+          jeu.maintien = ok ? jeu.maintien + dt : Math.max(0, jeu.maintien - dt * 2)
+          maintienMain = Math.min(1, jeu.maintien / 900)
+          if (jeu.maintien > 900) {
+            jeu.maintien = 0
+            jeu.score += 1
+            setEclat((x) => ({ message: mission.bravo, sous: mission.explication, cle: x.cle + 1 }))
+            if (jeu.mission + 1 >= MISSIONS_MAIN.length) jeu.termine = true
+            else jeu.mission += 1
+          }
+        }
+        if (maintenant - derniereMaj > 120) {
+          derniereMaj = maintenant
+          setInfos({ corps: mains.length > 0, maintien: maintienMain, cible: jeu.cible, mission: jeu.mission, score: jeu.score, termine: jeu.termine })
+        }
+        return
+      }
+
       if (!points) {
         if (maintenant - derniereMaj > 250) {
           derniereMaj = maintenant
@@ -265,11 +438,7 @@ export default function MiroirView() {
         return
       }
 
-      // Coordonnées écran (miroir)
-      const pt = (i) => {
-        const l = points[i]
-        return { x: W - (l.x * vw * s + dx), y: l.y * vh * s + dy, visibility: l.visibility }
-      }
+      const pt = (i) => versEcran(points[i])
       const c = {}
       for (const [nom, i] of Object.entries(P)) c[nom] = pt(i)
       const largeurEpaules = dist(c.epauleG, c.epauleD) || 100
@@ -525,10 +694,10 @@ export default function MiroirView() {
           </div>
 
           <div className="text-center">
-            <h2 className="labo-titre text-2xl font-black text-[#F4F6FF]">Vois ton propre squelette</h2>
+            <h2 className="labo-titre text-2xl font-black text-[#F4F6FF]">Passe-toi aux rayons X</h2>
             <p className="mt-2 text-[15px] leading-relaxed text-[#B9C1E3]">
-              Place-toi face à la caméra, à 2 mètres, pour qu’on te voie en entier. Bouge : tes os, tes articulations et ton biceps
-              bougent avec toi, en direct.
+              Pointe la caméra arrière vers ta main : ses 27 os apparaissent dessus, en direct. Ensuite, scanne un copain debout à
+              2 mètres : son squelette, ses articulations et son biceps bougent avec lui.
             </p>
           </div>
 
@@ -541,7 +710,7 @@ export default function MiroirView() {
 
           <button
             type="button"
-            onClick={demarrer}
+            onClick={() => demarrer()}
             disabled={phase === 'chargement'}
             className="labo-titre flex h-14 items-center justify-center gap-3 rounded-2xl bg-[#6FEFFF] text-base font-bold text-[#04232A] active:scale-[.98] disabled:opacity-60"
           >
@@ -555,7 +724,8 @@ export default function MiroirView() {
   }
 
   const osCible = OS_CHASSE[infos.cible] || OS_CHASSE[0]
-  const mission = MISSIONS[infos.mission] || MISSIONS[0]
+  const listeMissions = mode === 'main' ? MISSIONS_MAIN : MISSIONS
+  const mission = listeMissions[infos.mission] || listeMissions[0]
 
   return (
     <>
@@ -575,6 +745,14 @@ export default function MiroirView() {
           <ArrowLeft size={20} strokeWidth={2.5} />
         </Link>
         <p className="labo-titre flex-1 text-lg font-bold drop-shadow">Miroir à rayons X</p>
+        <button
+          type="button"
+          onClick={changerCamera}
+          aria-label="Changer de caméra"
+          className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/20 bg-black/50 backdrop-blur"
+        >
+          <RefreshCw size={18} />
+        </button>
         {mode !== 'rayons' && (
           <span className="labo-mono flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1.5 text-sm text-[#FFD27A]">
             <Trophy size={14} /> {infos.score}
@@ -584,7 +762,9 @@ export default function MiroirView() {
 
       {!infos.corps && (
         <div className="absolute inset-x-6 top-1/3 rounded-2xl bg-black/70 p-4 text-center text-[#E8ECFF] backdrop-blur">
-          Je ne te vois pas encore… recule un peu et mets-toi face à la caméra.
+          {mode === 'main'
+            ? 'Montre ta main à la caméra, bien à plat, à 30 cm environ.'
+            : 'Je ne vois personne… le copain doit reculer pour être vu en entier, face à la caméra.'}
         </div>
       )}
 
@@ -603,13 +783,13 @@ export default function MiroirView() {
             ) : (
               <>
                 <p className="labo-mono text-[11px] text-[#6FEFFF]">
-                  {mode === 'chasse' ? `OS ${infos.cible + 1} / ${OS_CHASSE.length}` : `MISSION ${infos.mission + 1} / ${MISSIONS.length}`}
+                  {mode === 'chasse' ? `OS ${infos.cible + 1} / ${OS_CHASSE.length}` : `MISSION ${infos.mission + 1} / ${listeMissions.length}`}
                 </p>
                 <p className="labo-titre mt-0.5 text-lg font-bold text-white">
                   {mode === 'chasse' ? (
                     <>
                       <Target size={18} className="mr-1.5 inline text-[#FFD27A]" />
-                      Touche {osCible.nom} avec ton doigt
+                      Le copain touche {osCible.nom} avec son doigt
                     </>
                   ) : (
                     mission.titre
@@ -622,18 +802,25 @@ export default function MiroirView() {
             )}
           </div>
         )}
-        <div className="grid grid-cols-3 gap-2">
+        {mode === 'main' && (
+          <button type="button" onClick={() => setNoms((n) => !n)} className="self-start rounded-xl border border-white/20 bg-black/55 px-3 py-2 text-xs font-bold text-white backdrop-blur">
+            {noms ? 'Masquer les noms des os' : 'Afficher les noms des os'}
+          </button>
+        )}
+        <div className="grid grid-cols-4 gap-1.5">
           {[
-            ['rayons', 'Rayons X'],
-            ['chasse', 'Chasse aux os'],
+            ['main', 'Ma main'],
+            ['rayons', 'Corps'],
+            ['chasse', 'Chasse'],
             ['missions', 'Missions'],
           ].map(([id, nom]) => (
             <button
               key={id}
               type="button"
               onClick={() => choisirMode(id)}
-              className={`h-12 rounded-2xl text-sm font-bold backdrop-blur ${mode === id ? 'bg-[#6FEFFF] text-[#04232A]' : 'border border-white/20 bg-black/55 text-white'}`}
+              className={`flex h-12 items-center justify-center gap-1 rounded-2xl text-[13px] font-bold backdrop-blur ${mode === id ? 'bg-[#6FEFFF] text-[#04232A]' : 'border border-white/20 bg-black/55 text-white'}`}
             >
+              {id === 'main' && <Hand size={14} />}
               {nom}
             </button>
           ))}

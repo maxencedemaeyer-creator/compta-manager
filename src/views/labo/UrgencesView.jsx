@@ -87,31 +87,31 @@ const PATIENTS = [
 
 const sansHtml = (h) => (h || '').replace(/<[^>]*>/g, '').trim()
 
-// Image principale de l'article Wikipédia + licence lue sur Commons
+// Vraie radio : demandée au relais du site (/api/radio), qui interroge
+// Wikipédia et Wikimedia Commons et vérifie la licence libre.
+// En secours, le navigateur fait la même chose lui-même.
 async function chargerRadio(article) {
+  try {
+    const r = await fetch(`/api/radio?article=${article}`)
+    if (r.ok) return await r.json()
+  } catch {
+    // on passe au secours
+  }
   const r = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${article}`)
   if (!r.ok) throw new Error('article')
   const resume = await r.json()
   const source = resume.originalimage?.source || resume.thumbnail?.source
   if (!source) throw new Error('image')
   const morceaux = source.split('/')
-  let fichier = decodeURIComponent(morceaux[morceaux.length - 1])
-  if (source.includes('/thumb/')) fichier = decodeURIComponent(morceaux[morceaux.length - 2])
+  const fichier = decodeURIComponent(source.includes('/thumb/') ? morceaux[morceaux.length - 2] : morceaux[morceaux.length - 1])
   const c = await fetch(
-    `https://commons.wikimedia.org/w/api.php?action=query&titles=File:${encodeURIComponent(fichier)}&prop=imageinfo&iiprop=url|extmetadata&iiurlwidth=1200&format=json&origin=*`
+    `https://commons.wikimedia.org/w/api.php?action=query&titles=File:${encodeURIComponent(fichier)}&prop=imageinfo&iiprop=url|extmetadata&iiurlwidth=1200&format=json&formatversion=2&origin=*`
   )
-  const donnees = await c.json()
-  const page = Object.values(donnees?.query?.pages || {})[0]
-  const info = page?.imageinfo?.[0]
+  const info = (await c.json())?.query?.pages?.[0]?.imageinfo?.[0]
   const meta = info?.extmetadata
   const licence = sansHtml(meta?.LicenseShortName?.value)
   if (!info || !licence || /fair use|non-free/i.test(licence)) throw new Error('licence')
-  return {
-    url: info.thumburl || info.url,
-    auteur: sansHtml(meta?.Artist?.value) || 'auteur inconnu',
-    licence,
-    page: info.descriptionurl,
-  }
+  return { url: info.thumburl || info.url, auteur: sansHtml(meta?.Artist?.value) || 'auteur inconnu', licence, page: info.descriptionurl }
 }
 
 export default function UrgencesView() {

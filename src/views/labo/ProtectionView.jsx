@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
-import { ArrowRight, Footprints, RotateCcw, Shield, Wind, Building2 } from 'lucide-react'
+import { useState } from 'react'
+import { ArrowRight, Footprints, RotateCcw, Shield, Building2 } from 'lucide-react'
 import CadreJeu, { Bouton, Carte, Eclat } from '../../components/labo/CadreJeu.jsx'
-import Squelette, { NOMS_OS } from '../../components/labo/Squelette.jsx'
+import Corps3D from '../../components/labo/Corps3D.jsx'
+import { NOMS } from '../../components/labo/anatomie.js'
 
 // =============================================================
 //  A6 · Mission protection
@@ -28,48 +29,16 @@ const CAS = [
   { os: 'sternum', requis: ['protection'], acceptes: [], organe: 'coeur', explication: 'Le sternum ferme la cage thoracique devant le cœur.' },
 ]
 
-function Organes({ quoi }) {
-  if (quoi === 'cerveau')
-    return (
-      <path
-        d="M84 36 C82 22 96 16 104 20 C114 16 122 26 118 36 C122 44 112 50 104 46 C96 50 84 46 84 36 Z"
-        fill="rgba(255,154,200,.55)"
-        stroke="#FF8AD8"
-        strokeWidth="1"
-        className="labo-pulse"
-      />
-    )
-  if (quoi === 'coeur')
-    return (
-      <path d="M104 128 C104 120 116 118 116 128 C116 136 106 142 103 146 C100 142 92 136 92 128 C92 118 104 120 104 128 Z" fill="rgba(255,90,110,.7)" className="labo-pulse" />
-    )
-  return null
-}
-
 export default function ProtectionView() {
   const [index, setIndex] = useState(0)
   const [choix, setChoix] = useState([])
   const [valide, setValide] = useState(false)
   const [score, setScore] = useState(0)
   const [eclat, setEclat] = useState({ message: '', cle: 0 })
-  const [souffle, setSouffle] = useState(0)
-  const [respire, setRespire] = useState(false)
 
   const fini = index >= CAS.length
   const cas = CAS[Math.min(index, CAS.length - 1)]
   const juste = cas.requis.every((f) => choix.includes(f)) && choix.every((f) => cas.requis.includes(f) || cas.acceptes.includes(f))
-
-  useEffect(() => {
-    if (!respire) return
-    let raf
-    const debut = performance.now()
-    const boucle = (m) => {
-      setSouffle(0.5 - 0.5 * Math.cos(((m - debut) / 4000) * Math.PI * 2))
-      raf = requestAnimationFrame(boucle)
-    }
-    raf = requestAnimationFrame(boucle)
-    return () => cancelAnimationFrame(raf)
-  }, [respire])
 
   function valider() {
     setValide(true)
@@ -98,26 +67,9 @@ export default function ProtectionView() {
           <p className="labo-mono text-[11px] text-[#7CB8FF]">BONUS · LA CAGE QUI RESPIRE</p>
           <p className="mt-1 text-[15px] text-[#E8ECFF]">
             Tes côtes ne font pas que protéger : à chaque inspiration, des muscles les soulèvent et le diaphragme descend. La cage
-            thoracique s’agrandit et l’air entre dans les poumons.
+            thoracique s’agrandit et l’air entre dans les poumons. Pose tes mains sur tes côtes et respire fort : tu le sens !
           </p>
-          <div className="mx-auto mt-3 w-40">
-            <Squelette
-              className="w-full"
-              etats={{ cotes: 'actif', sternum: 'actif' }}
-              caches={['humerus', 'radius', 'cubitus', 'main', 'femur', 'rotule', 'tibia', 'perone', 'pied']}
-              enfants={
-                <ellipse cx={100} cy={150 + souffle * 8} rx={36} ry={4} fill="#FFD27A" opacity=".8">
-                  <title>Diaphragme</title>
-                </ellipse>
-              }
-              style={{ transform: `scale(${1 + souffle * 0.06}, ${1 + souffle * 0.03})`, transformOrigin: '50% 30%' }}
-            />
-            <p className="text-center text-xs text-[#FFD27A]">trait jaune : le diaphragme</p>
-          </div>
-          <Bouton className="mt-3 w-full" couleur="#7CB8FF" onClick={() => setRespire((r) => !r)}>
-            <Wind size={18} /> {respire ? 'Arrêter' : 'Respirer'}
-          </Bouton>
-          <Bouton variante="secondaire" className="mt-2 w-full" onClick={() => { setIndex(0); setScore(0) }}>
+          <Bouton variante="secondaire" className="mt-3 w-full" onClick={() => { setIndex(0); setScore(0) }}>
             <RotateCcw size={16} /> Rejouer
           </Bouton>
         </Carte>
@@ -128,17 +80,15 @@ export default function ProtectionView() {
   return (
     <CadreJeu code="A6" titre="Mission protection" attendus={[115]} couleur="#7CB8FF" droite={<span className="labo-mono text-lg text-[#7CB8FF]">{score}</span>}>
       <Eclat message={eclat.message} cle={eclat.cle} couleur="#7CB8FF" />
-      <div className="flex gap-3">
-        <div className="w-28 flex-none rounded-3xl border border-white/10 bg-[#070B16]/70 p-2">
-          <Squelette className="w-full" etats={{ [cas.os]: 'actif' }} enfants={valide && cas.organe ? <Organes quoi={cas.organe} /> : null} />
-        </div>
-        <Carte couleur="rgba(124,184,255,.45)" className="flex-1">
-          <p className="labo-mono text-[11px] text-[#7CB8FF]">
-            OS {index + 1} / {CAS.length}
-          </p>
-          <p className="labo-titre mt-1 text-2xl font-black text-white">{NOMS_OS[cas.os]}</p>
-          <p className="mt-1 text-sm text-[#B9C1E3]">Quelle(s) mission(s) pour cet os ? Il peut y en avoir plusieurs.</p>
-        </Carte>
+      <Carte couleur="rgba(124,184,255,.45)">
+        <p className="labo-mono text-[11px] text-[#7CB8FF]">
+          OS {index + 1} / {CAS.length}
+        </p>
+        <p className="labo-titre mt-1 text-2xl font-black text-white">{NOMS[cas.os]}</p>
+        <p className="mt-1 text-sm text-[#B9C1E3]">Quelle(s) mission(s) pour cet os ? Il peut y en avoir plusieurs.</p>
+      </Carte>
+      <div className="rounded-3xl border border-white/10 bg-[#070B16]/70">
+        <Corps3D className="h-[34vh] w-full" etats={{ [cas.os]: 'actif', ...(cas.os === 'cotes' ? { cartilages: 'actif' } : {}) }} rotation tourner={!valide} marge={1.05} />
       </div>
 
       <div className="grid gap-2">

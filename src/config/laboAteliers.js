@@ -1,4 +1,4 @@
-import { Activity, Bone, Brain, Dumbbell, HeartPulse, Microscope, PersonStanding, ScanFace, Shield, Siren, Bird, Zap } from 'lucide-react'
+import { Activity, Bone, Brain, Dumbbell, HeartPulse, Microscope, PersonStanding, ScanFace, Shield, Siren, Rotate3d, Zap } from 'lucide-react'
 
 // =============================================================
 //  Le labo de sciences : l'expérience de la semaine et ses paillasses.
@@ -29,14 +29,14 @@ export const ATTENDUS = {
 
 export const PAILLASSES = [
   { id: 'miroir', code: 'A1', titre: 'Le miroir à rayons X', texte: 'Ton propre squelette, en direct', icon: ScanFace, couleur: '#6FEFFF', attendus: [112, 113, 120, 121], vedette: true },
-  { id: 'puzzle', code: 'A2', titre: 'Squelette explosé', texte: 'Remonte les os et les articulations', icon: Bone, couleur: '#9DFF8A', attendus: [112, 113] },
+  { id: 'puzzle', code: 'A2', titre: 'Squelette explosé', texte: 'Un vrai squelette 3D à remonter', icon: Bone, couleur: '#9DFF8A', attendus: [112, 113] },
   { id: 'bras', code: 'A3', titre: 'Le bras mécanique', texte: 'Accroche le muscle, fais bouger le bras', icon: Dumbbell, couleur: '#C9A3FF', attendus: [111, 117, 118, 120] },
-  { id: 'qui-tire', code: 'A4', titre: 'Qui tire ?', texte: 'Trouve le muscle qui travaille', icon: Activity, couleur: '#FFB86B', attendus: [120, 121] },
+  { id: 'qui-tire', code: 'A4', titre: 'Qui tire ?', texte: 'Vrais muscles 3D en mouvement', icon: Activity, couleur: '#FFB86B', attendus: [120, 121] },
   { id: 'pantin', code: 'A5', titre: 'Le pantin du savant fou', texte: 'Place les articulations… et danse', icon: PersonStanding, couleur: '#FF8AD8', attendus: [113, 120] },
   { id: 'protection', code: 'A6', titre: 'Mission protection', texte: 'Soutien, locomotion ou protection ?', icon: Shield, couleur: '#7CB8FF', attendus: [115] },
   { id: 'reflexes', code: 'A7', titre: 'Message express', texte: 'Du cerveau au muscle + test de réflexes', icon: Brain, couleur: '#FFD27A', attendus: [114] },
   { id: 'dissection', code: 'A8', titre: 'Le scalpel', texte: 'Dissèque couche par couche', icon: Microscope, couleur: '#FF8A95', attendus: [119, 120] },
-  { id: 'cousins', code: 'A9', titre: 'Les cousins cachés', texte: 'Mêmes os chez l’oiseau, la baleine…', icon: Bird, couleur: '#9DE7C2', attendus: [112] },
+  { id: 'explorateur', code: 'A9', titre: 'L’explorateur 3D', texte: 'Le vrai corps humain, à faire tourner', icon: Rotate3d, couleur: '#9DE7C2', attendus: [112, 116] },
   { id: 'urgences', code: 'A10', titre: 'Service des urgences', texte: 'De vraies radios de fractures', icon: Siren, couleur: '#FF6B7A', attendus: [112, 115] },
   { id: 'defi', code: 'A11', titre: 'Défi éclair', texte: '60 secondes, tableau des records', icon: Zap, couleur: '#FFE45E', attendus: [112, 113, 116] },
 ]

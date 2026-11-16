@@ -4,7 +4,8 @@ import { Flame, Play, Send, Timer, Trophy } from 'lucide-react'
 import { db } from '../../firebase/config.js'
 import { usePin } from '../../context/PinContext.jsx'
 import CadreJeu, { Bouton, Carte, Eclat, melanger } from '../../components/labo/CadreJeu.jsx'
-import Squelette, { NOMS_ARTICULATIONS, NOMS_OS, OS_REFERENTIEL } from '../../components/labo/Squelette.jsx'
+import Corps3D from '../../components/labo/Corps3D.jsx'
+import { NOMS as NOMS_OS, NOMS_ARTICULATIONS, OS_REFERENTIEL } from '../../components/labo/anatomie.js'
 
 // =============================================================
 //  A11 · Défi éclair
@@ -220,18 +221,17 @@ export default function DefiView() {
         className="rounded-3xl border-2 p-3 transition-colors"
         style={{ borderColor: flash === 'ok' ? '#9DFF8A' : flash === 'non' ? '#FF8A95' : 'rgba(232,236,255,.12)', background: 'rgba(7,11,22,.7)' }}
       >
-        {q.type === 'vf' ? (
-          <p className="labo-titre flex min-h-[200px] items-center justify-center text-center text-xl font-bold text-white">{q.texte}</p>
-        ) : (
-          <>
-            <p className="text-center text-sm text-[#B9C1E3]">{q.type === 'os' ? 'Quel est cet os ?' : 'Quelle est cette articulation ?'}</p>
-            <Squelette
-              className="mx-auto h-[36vh] w-full"
-              etats={q.type === 'os' ? { [q.cible]: 'actif' } : {}}
-              articulations={q.type === 'articulation' ? { [q.cible]: 'actif' } : null}
-            />
-          </>
-        )}
+        {q.type === 'vf' && <p className="labo-titre flex min-h-[200px] items-center justify-center text-center text-xl font-bold text-white">{q.texte}</p>}
+        <div style={{ display: q.type === 'vf' ? 'none' : 'block' }}>
+          <p className="text-center text-sm text-[#B9C1E3]">{q.type === 'os' ? 'Quel est cet os ?' : 'Quelle est cette articulation ?'}</p>
+          <Corps3D
+            className="mx-auto h-[36vh] w-full"
+            credit={false}
+            marge={1.04}
+            etats={q.type === 'os' ? { [q.cible]: 'actif', ...(q.cible === 'cotes' ? { cartilages: 'actif' } : {}) } : {}}
+            marqueurs={q.type === 'articulation' ? ['d', 'g'].map((c) => ({ id: c, pivot: `${q.cible}_${c}`, couleur: '#FFE45E', taille: 0.026 })) : []}
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-2">

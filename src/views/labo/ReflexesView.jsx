@@ -4,7 +4,8 @@ import { Brain, Ear, Eye, RotateCcw, Send } from 'lucide-react'
 import { db } from '../../firebase/config.js'
 import { usePin } from '../../context/PinContext.jsx'
 import CadreJeu, { Bouton, Carte, Eclat, melanger } from '../../components/labo/CadreJeu.jsx'
-import Squelette from '../../components/labo/Squelette.jsx'
+import Corps3D from '../../components/labo/Corps3D.jsx'
+import { OS } from '../../components/labo/anatomie.js'
 
 // =============================================================
 //  A7 · Message express
@@ -38,21 +39,20 @@ function bip(ctx) {
   o.stop(ctx.currentTime + 0.15)
 }
 
-function Trajet({ allumes }) {
-  const a = (id) => allumes.includes(id)
-  return (
-    <g>
-      <path d="M86 34 C84 22 96 16 104 20 C114 16 120 26 116 36 C120 44 110 50 104 46 C96 50 86 46 86 34 Z" fill={a('cerveau') ? '#FF8AD8' : 'rgba(255,138,216,.25)'} />
-      <line x1={100} y1={56} x2={100} y2={200} stroke={a('moelle') ? '#FFD27A' : 'rgba(255,210,122,.25)'} strokeWidth="3" />
-      <path d="M100 110 C80 112 66 120 60 140 L57 160" fill="none" stroke={a('nerf') ? '#FFD27A' : 'rgba(255,210,122,.25)'} strokeWidth="2.2" strokeDasharray={a('nerf') ? '0' : '3 3'} />
-      <ellipse cx={61} cy={138} rx={6} ry={18} fill={a('muscle') ? 'rgba(255,90,110,.9)' : 'rgba(255,90,110,.3)'} transform="rotate(8 61 138)" />
-      {a('muscle') && (
-        <circle r="3" fill="#FFF">
-          <animateMotion dur="1.2s" repeatCount="indefinite" path="M100 40 L100 110 C80 112 66 120 60 140" />
-        </circle>
-      )}
-    </g>
-  )
+// Où s'allume chaque étape du trajet sur le vrai squelette
+function pointsTrajet(outils) {
+  if (!outils) return []
+  const centre = (g) => outils.boite(g)?.getCenter(outils.pivots.epaule_d.clone())
+  const crane = centre('crane')
+  const vert = centre('vertebres')
+  const e = outils.pivots.epaule_d
+  const c = outils.pivots.coude_d
+  return [
+    crane && { id: 'cerveau', point: crane.clone().add({ x: 0, y: 0.03, z: 0 }).toArray(), couleur: '#FF8AD8', taille: 0.045 },
+    vert && { id: 'moelle', point: vert.toArray(), couleur: '#FFD27A', taille: 0.03 },
+    { id: 'nerf', point: e.clone().lerp(c, 0.25).toArray(), noeud: 'epaule_d', couleur: '#FFD27A', taille: 0.022 },
+    { id: 'muscle', point: e.clone().lerp(c, 0.55).add({ x: 0, y: 0, z: 0.03 }).toArray(), noeud: 'epaule_d', couleur: '#FF4D5E', taille: 0.026 },
+  ].filter(Boolean)
 }
 
 export default function ReflexesView() {
@@ -68,6 +68,7 @@ export default function ReflexesView() {
   const [envoye, setEnvoye] = useState(false)
   const [classe, setClasse] = useState([])
   const [eclat, setEclat] = useState({ message: '', cle: 0 })
+  const [outils, setOutils] = useState(null)
   const minuteur = useRef(null)
   const depart = useRef(0)
   const audio = useRef(null)
@@ -158,8 +159,19 @@ export default function ReflexesView() {
             <p className="mt-1 text-[15px] text-[#E8ECFF]">Tu décides de plier le bras. Dans quel ordre le message voyage-t-il ? Touche les étapes dans l’ordre.</p>
           </Carte>
           <div className="flex gap-3">
-            <div className="w-32 flex-none rounded-3xl border border-white/10 bg-[#070B16]/70 p-2">
-              <Squelette className="w-full" etats={{}} caches={['femur', 'rotule', 'tibia', 'perone', 'pied']} enfants={<Trajet allumes={allumes} />} />
+            <div className="w-36 flex-none overflow-hidden rounded-3xl border border-white/10 bg-[#070B16]/70">
+              <Corps3D
+                className="h-[44vh] w-full"
+                credit={false}
+                cadrage="thorax"
+                marge={1.6}
+                afficher={[...OS, 'biceps']}
+                etats={{ biceps: allumes.includes('muscle') ? 'contracte' : 'attenue' }}
+                poses={{ coude_d: allumes.includes('muscle') ? 95 : 0 }}
+                contractions={{ biceps_d: allumes.includes('muscle') ? 1 : 0 }}
+                onPret={setOutils}
+                marqueurs={pointsTrajet(outils).filter((m) => allumes.includes(m.id))}
+              />
             </div>
             <div className="flex flex-1 flex-col gap-2">
               {ordre.map((e) => {
