@@ -21,6 +21,7 @@ import ProjectionView from './views/projection/ProjectionView.jsx'
 import ProjectionPhotoView from './views/projection/ProjectionPhotoView.jsx'
 import ProjectionEcranView from './views/projection/ProjectionEcranView.jsx'
 import ProjectionGalerieView from './views/projection/ProjectionGalerieView.jsx'
+import RequetesView from './views/RequetesView.jsx'
 
 // Chaque espace (/maxence, /julie…) est protégé par le code PIN de son profil
 // (une seule saisie par session), puis attend la connexion anonyme à Firebase.
@@ -83,6 +84,8 @@ export default function App() {
         {/* Accueil et paramètres de chaque profil (/maxence, /julie, /julie/settings…) */}
         <Route path="/:profil" element={<Protege><HomeView /></Protege>} />
         <Route path="/:profil/settings" element={<Protege><SettingsView /></Protege>} />
+        {/* Requêtes : Maxence voit toutes les demandes, les autres profils les leurs */}
+        <Route path="/:profil/requetes" element={<Protege><RequetesView /></Protege>} />
         <Route path="/:profil/setting" element={<Navigate to="../settings" relative="path" replace />} />
         <Route path="/:profil/parametres" element={<Navigate to="../settings" relative="path" replace />} />
 

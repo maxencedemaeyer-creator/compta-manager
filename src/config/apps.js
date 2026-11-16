@@ -1,4 +1,4 @@
-import { BookOpenCheck, GitBranch, Projector, Wallet } from 'lucide-react'
+import { BookOpenCheck, GitBranch, MessageSquarePlus, Projector, Wallet } from 'lucide-react'
 
 // =============================================================
 //  Liste des applications du site (adresses sous /maxence).
@@ -6,6 +6,8 @@ import { BookOpenCheck, GitBranch, Projector, Wallet } from 'lucide-react'
 //  Pour ajouter une application : ajouter un objet ici
 //  (et sa route dans App.jsx). L'ordre et la visibilité se
 //  règlent ensuite directement dans Paramètres.
+//  pourTous: true = l'appli est dans chaque espace, à l'adresse
+//  /<profil>/<id> (ex. /julie/requetes).
 // =============================================================
 export const APPS = [
   {
@@ -40,6 +42,15 @@ export const APPS = [
     icon: Projector,
     couleur: 'from-violet-500 to-amber-400',
   },
+  {
+    id: 'requetes',
+    to: '/maxence/requetes',
+    nom: 'Requêtes',
+    description: 'Demandes de nouvelles applis et idées',
+    icon: MessageSquarePlus,
+    couleur: 'from-fuchsia-500 to-indigo-500',
+    pourTous: true,
+  },
 ]
 
 // Applications dans l'ordre choisi dans Paramètres
@@ -55,6 +66,7 @@ export function appsOrdonnees(ordre = []) {
 export function appsDuProfil(profil, ordre = []) {
   const toutes = appsOrdonnees(ordre)
   if (!profil) return []
-  if (profil.apps === 'toutes') return toutes
-  return toutes.filter((a) => profil.apps.includes(a.id))
+  return toutes
+    .filter((a) => profil.apps === 'toutes' || a.pourTous || profil.apps.includes(a.id))
+    .map((a) => (a.pourTous ? { ...a, to: `/${profil.id}/${a.id}` } : a))
 }
