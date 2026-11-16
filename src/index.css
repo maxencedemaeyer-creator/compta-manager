@@ -70,8 +70,8 @@ form label {
 
 /* ===== Thèmes par profil =====
    Les classes « emerald-… », « bg-creme » et « bg-douceur » utilisent ces variables.
-   PinContext ajoute la classe theme-<profil> sur <html> selon l'espace ouvert. */
-@layer base {
+   PinContext ajoute la classe theme-<profil> sur <html> selon l'espace ouvert.
+   Volontairement hors de @layer : sinon Tailwind supprime ces règles à la compilation. */
   :root {
     --theme-50: 236 253 245;
     --theme-100: 209 250 229;
@@ -114,9 +114,7 @@ form label {
   .theme-julie {
     background-color: rgb(var(--theme-creme));
   }
-}
 
-@layer utilities {
   /* Formes floues de l'arrière-plan : elles flottent doucement chez Julie */
   .theme-julie .blob {
     animation: blob-flotte 18s ease-in-out infinite alternate;
@@ -160,4 +158,3 @@ form label {
   @media (prefers-reduced-motion: reduce) {
     .theme-julie .blob { animation: none; }
   }
-}
