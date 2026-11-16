@@ -22,6 +22,7 @@ import ProjectionPhotoView from './views/projection/ProjectionPhotoView.jsx'
 import ProjectionEcranView from './views/projection/ProjectionEcranView.jsx'
 import ProjectionGalerieView from './views/projection/ProjectionGalerieView.jsx'
 import RequetesView from './views/RequetesView.jsx'
+import JeuxView from './views/JeuxView.jsx'
 
 // Chaque espace (/maxence, /julie…) est protégé par le code PIN de son profil
 // (une seule saisie par session), puis attend la connexion anonyme à Firebase.
@@ -80,6 +81,9 @@ export default function App() {
         <Route path="/maxence/projection/ecran" element={<Protege><ProjectionEcranView /></Protege>} />
         <Route path="/maxence/projection/galerie" element={<Protege><ProjectionGalerieView /></Protege>} />
 
+        {/* Application Jeux (Game Center) */}
+        <Route path="/maxence/jeux" element={<Protege><JeuxView /></Protege>} />
+
         {/* ================= Tous les profils ================= */}
         {/* Accueil et paramètres de chaque profil (/maxence, /julie, /julie/settings…) */}
         <Route path="/:profil" element={<Protege><HomeView /></Protege>} />
@@ -94,6 +98,7 @@ export default function App() {
         <Route path="/genealogie/*" element={<VersMaxence />} />
         <Route path="/francais" element={<VersMaxence />} />
         <Route path="/projection/*" element={<VersMaxence />} />
+        <Route path="/jeux" element={<VersMaxence />} />
         <Route path="/settings" element={<VersMaxence />} />
         <Route path="/setting" element={<Navigate to="/maxence/settings" replace />} />
         <Route path="/parametres" element={<Navigate to="/maxence/settings" replace />} />

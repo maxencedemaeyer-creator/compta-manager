@@ -1,4 +1,4 @@
-import { BookOpenCheck, GitBranch, MessageSquarePlus, Projector, Wallet } from 'lucide-react'
+import { BookOpenCheck, Gamepad2, GitBranch, MessageSquarePlus, Projector, Wallet } from 'lucide-react'
 
 // =============================================================
 //  Liste des applications du site (adresses sous /maxence).
@@ -41,6 +41,14 @@ export const APPS = [
     description: 'Photo prise en classe, projetée au tableau',
     icon: Projector,
     couleur: 'from-violet-500 to-amber-400',
+  },
+  {
+    id: 'jeux',
+    to: '/maxence/jeux',
+    nom: 'Jeux',
+    description: 'Game Center : tous les jeux',
+    icon: Gamepad2,
+    couleur: 'from-fuchsia-500 to-cyan-400',
   },
   {
     id: 'requetes',

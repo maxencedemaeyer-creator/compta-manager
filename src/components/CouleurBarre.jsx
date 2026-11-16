@@ -13,6 +13,7 @@ const FOND_PIN = { maxence: '#047857', julie: '#f6aad2' }
 function couleurPour(pathname, profilId, unlocked) {
   if (!profilId) return CREME.maxence
   if (!unlocked) return FOND_PIN[profilId] || FOND_PIN.maxence
+  if (pathname.includes('/jeux')) return '#07031a'
   if (/\/(genealogie|projection)/.test(pathname)) return '#020617'
   if (pathname.includes('/compta')) return '#ffffff'
   if (pathname.includes('/francais')) return '#f8fafc'
