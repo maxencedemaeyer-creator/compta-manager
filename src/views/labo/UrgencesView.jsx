@@ -91,14 +91,21 @@ const sansHtml = (h) => (h || '').replace(/<[^>]*>/g, '').trim()
 // Wikipédia et Wikimedia Commons et vérifie la licence libre.
 // En secours, le navigateur fait la même chose lui-même.
 async function chargerRadio(article) {
+  let relais = ''
   try {
     const r = await fetch(`/api/radio?article=${article}`)
     if (r.ok) return await r.json()
-  } catch {
-    // on passe au secours
+    relais = `relais ${r.status} ${(await r.text()).slice(0, 120)}`
+  } catch (e) {
+    relais = `relais injoignable (${e?.message || e})`
   }
-  const r = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${article}`)
-  if (!r.ok) throw new Error('article')
+  let r
+  try {
+    r = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${article}`)
+  } catch (e) {
+    throw new Error(`${relais} · Wikipédia injoignable (${e?.message || e})`)
+  }
+  if (!r.ok) throw new Error(`${relais} · Wikipédia ${r.status}`)
   const resume = await r.json()
   const source = resume.originalimage?.source || resume.thumbnail?.source
   if (!source) throw new Error('image')
@@ -130,12 +137,16 @@ export default function UrgencesView() {
   const [loupe, setLoupe] = useState(null)
   const [eclat, setEclat] = useState({ message: '', sous: '', cle: 0 })
   const imageRef = useRef(null)
+  const erreurs = useRef({})
 
   useEffect(() => {
     PATIENTS.forEach((p) => {
       chargerRadio(p.article)
         .then((r) => setRadios((x) => ({ ...x, [p.article]: r })))
-        .catch(() => setRadios((x) => ({ ...x, [p.article]: false })))
+        .catch((e) => {
+          erreurs.current[p.article] = String(e?.message || e)
+          setRadios((x) => ({ ...x, [p.article]: false }))
+        })
     })
   }, [])
 
@@ -213,7 +224,16 @@ export default function UrgencesView() {
       <CadreJeu code="A10" titre="Service des urgences" attendus={[112, 115]} couleur="#FF6B7A">
         <Carte couleur="rgba(255,107,122,.45)" className="text-center">
           {disponibles.length === 0 ? (
-            <p className="text-[#E8ECFF]">Les radios n’ont pas pu être chargées (connexion internet nécessaire). Réessaie un peu plus tard.</p>
+            <>
+              <p className="text-[#E8ECFF]">Les radios n’ont pas pu être chargées. Fais une capture de cet écran pour Claude :</p>
+              <ul className="mt-3 space-y-1 text-left text-[11px] text-[#B9C1E3]">
+                {Object.entries(erreurs.current).map(([a, e]) => (
+                  <li key={a}>
+                    <span className="text-[#FF9AA5]">{a}</span> : {e}
+                  </li>
+                ))}
+              </ul>
+            </>
           ) : (
             <>
               <p className="labo-mono text-[11px] text-[#FF6B7A]">FIN DE LA GARDE</p>
