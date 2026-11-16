@@ -27,6 +27,7 @@ import JeuxView from './views/JeuxView.jsx'
 import CommunosView from './views/jeux/CommunosView.jsx'
 import CommunosProvincesView from './views/jeux/CommunosProvincesView.jsx'
 import CommunosLibreView from './views/jeux/CommunosLibreView.jsx'
+import MotusView from './views/jeux/MotusView.jsx'
 import CoutureGalerieView from './views/couture/CoutureGalerieView.jsx'
 import CoutureArticleView from './views/couture/CoutureArticleView.jsx'
 import CoutureAtelierView from './views/couture/CoutureAtelierView.jsx'
@@ -116,6 +117,7 @@ export default function App() {
         <Route path="/maxence/jeux/communos/libre" element={<Protege><CommunosLibreView /></Protege>} />
         <Route path="/maxence/jeux/communos/provinces" element={<Protege><CommunosProvincesView /></Protege>} />
         <Route path="/maxence/jeux/communos/provinces/:province" element={<Protege><CommunosLibreView /></Protege>} />
+        <Route path="/maxence/jeux/motus" element={<Protege><MotusView /></Protege>} />
 
         {/* ================= Espace Julie ================= */}
         {/* Application Couture : l'atelier (créations + centrale des commandes) */}

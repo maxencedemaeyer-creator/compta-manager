@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Gamepad2, Lock, Trophy, Zap, Flame, Joystick, MapPinned } from 'lucide-react'
+import { ArrowLeft, Gamepad2, Lock, Trophy, Zap, Flame, Joystick, MapPinned, WholeWord } from 'lucide-react'
 import { useCommunos } from '../hooks/useCommunos.js'
 import { dateDuJour, statistiques } from '../utils/communos.js'
 
@@ -20,13 +20,14 @@ const JEUX = [
     to: '/maxence/jeux/communos',
   },
   {
-    id: 'jeu-2',
-    titre: 'Jeu n°2',
-    texte: 'En préparation…',
-    couleur: 'from-cyan-400 via-sky-500 to-blue-600',
-    lueur: 'shadow-cyan-400/40',
-    pret: false,
-    to: null,
+    id: 'motus',
+    titre: 'MOTUS',
+    texte: 'Le mot en 6 essais · parties illimitées',
+    couleur: 'from-lime-300 via-emerald-500 to-sky-600',
+    lueur: 'shadow-lime-400/40',
+    icon: WholeWord,
+    pret: true,
+    to: '/maxence/jeux/motus',
   },
 ]
 
@@ -193,7 +194,7 @@ export default function JeuxView() {
         </div>
         <div className="mt-3 grid grid-cols-2 gap-3 sm:gap-5">
           {JEUX.map((jeu, i) => (
-            <CarteJeu key={jeu.id} jeu={jeu} numero={i + 1} info={jeu.id === 'communos' ? infoCommunos : null} />
+            <CarteJeu key={jeu.id} jeu={jeu} numero={i + 1} info={jeu.id === 'communos' ? infoCommunos : jeu.id === 'motus' ? '● Mots de 5 à 12 lettres' : null} />
           ))}
         </div>
 
