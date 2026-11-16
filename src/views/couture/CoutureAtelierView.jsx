@@ -1,10 +1,20 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Camera, Check, Copy, EyeOff, Inbox, Loader2, Shirt } from 'lucide-react'
-import { StylesCouture } from '../../components/couture/Vichy.jsx'
+import { ArrowLeft, Camera, Check, Copy, EyeOff, Inbox, Loader2, RotateCcw, Settings, Shirt } from 'lucide-react'
+import { StylesCouture, boutonRose, champCouture } from '../../components/couture/Vichy.jsx'
+import Feuille from '../../components/couture/Feuille.jsx'
 import ArticleForm from '../../components/couture/ArticleForm.jsx'
 import CommandesCentrale from '../../components/couture/CommandesCentrale.jsx'
-import { CODE_GALERIE, lienGalerie, lienWhatsApp, useArticlesCouture, useCommandesCouture } from '../../hooks/useCouture.js'
+import {
+  CODE_GALERIE,
+  enregistrerMessagePartage,
+  lienGalerie,
+  lienWhatsApp,
+  messageParDefaut,
+  useArticlesCouture,
+  useCommandesCouture,
+  useMessagePartage,
+} from '../../hooks/useCouture.js'
 
 // Logo WhatsApp (simple, en SVG)
 function IconeWhatsApp({ size = 18 }) {
@@ -12,6 +22,57 @@ function IconeWhatsApp({ size = 18 }) {
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1-.7-.3-1.4-.7-2-1.3-.6-.5-1-1.1-1.4-1.8-.1-.2 0-.4.1-.5l.4-.4.2-.4v-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.6.3-.6.6-.9 1.3-.9 2.1 0 .9.4 1.8.9 2.5 1 1.5 2.3 2.7 3.9 3.5.5.2.9.4 1.4.5.6.2 1.1.2 1.6.1.6-.1 1.5-.6 1.7-1.2.2-.5.2-1 .1-1.1l-.5-.3Z" />
     </svg>
+  )
+}
+
+// Fenêtre pour modifier le message WhatsApp d'invitation
+function MessagePartage({ open, onClose, message }) {
+  const [texte, setTexte] = useState(message)
+  const [envoi, setEnvoi] = useState(false)
+  const [erreur, setErreur] = useState('')
+
+  useEffect(() => {
+    if (open) {
+      setTexte(message)
+      setErreur('')
+    }
+  }, [open, message])
+
+  async function enregistrer() {
+    if (!texte.trim()) return setErreur('Le message ne peut pas être vide.')
+    setEnvoi(true)
+    try {
+      await enregistrerMessagePartage(texte)
+      onClose()
+    } catch (err) {
+      setErreur(err.message || "L'enregistrement a échoué.")
+    } finally {
+      setEnvoi(false)
+    }
+  }
+
+  return (
+    <Feuille open={open} onClose={() => !envoi && onClose()} titre="Mon message">
+      <textarea
+        className={`${champCouture} min-h-[260px] resize-none leading-relaxed`}
+        value={texte}
+        onChange={(e) => setTexte(e.target.value)}
+        aria-label="Message WhatsApp"
+      />
+      <p className="mt-2 text-[11px] text-pink-900/45">
+        Pense à garder le lien et le code ({CODE_GALERIE}) dans ton message.
+      </p>
+      {erreur && <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{erreur}</p>}
+      <button onClick={enregistrer} disabled={envoi} className={`${boutonRose} w-full mt-4 py-4 text-base`}>
+        {envoi && <Loader2 size={18} className="animate-spin" />} Enregistrer
+      </button>
+      <button
+        onClick={() => setTexte(messageParDefaut())}
+        className="mt-2 w-full inline-flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-pink-900/45"
+      >
+        <RotateCcw size={13} /> Remettre le message d’origine
+      </button>
+    </Feuille>
   )
 }
 
@@ -31,6 +92,8 @@ export default function CoutureAtelierView() {
   const { commandes, chargement: chargementCommandes } = useCommandesCouture()
   const [edition, setEdition] = useState({ open: false, article: null, fichiers: null })
   const [copie, setCopie] = useState(false)
+  const [reglageMessage, setReglageMessage] = useState(false)
+  const message = useMessagePartage()
   const camera = useRef(null)
 
   const nouvelles = commandes.filter((c) => c.statut === 'nouvelle').length
@@ -93,14 +156,24 @@ export default function CoutureAtelierView() {
         </h1>
 
         {!vueCommandes && (
-          <a
-            href={lienWhatsApp()}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-4 flex items-center justify-center gap-2 rounded-2xl bg-pink-500 px-4 py-3.5 text-[15px] font-semibold text-white shadow-lg shadow-pink-500/25 active:scale-[0.98] transition"
-          >
-            <IconeWhatsApp /> Partager ma galerie
-          </a>
+          <div className="relative mt-4">
+            <a
+              href={lienWhatsApp(message)}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center justify-center gap-2 rounded-2xl bg-pink-500 px-4 py-3.5 text-[15px] font-semibold text-white shadow-lg shadow-pink-500/25 active:scale-[0.98] transition"
+            >
+              <IconeWhatsApp /> Partager ma galerie
+            </a>
+            <button
+              onClick={() => setReglageMessage(true)}
+              className="absolute top-1/2 -translate-y-1/2 right-1.5 w-10 h-10 rounded-xl text-white/85 hover:bg-white/15 active:bg-white/20 flex items-center justify-center"
+              aria-label="Modifier le message"
+              title="Modifier le message"
+            >
+              <Settings size={18} />
+            </button>
+          </div>
         )}
 
         <div className="mt-5">
@@ -195,6 +268,8 @@ export default function CoutureAtelierView() {
           </button>
         </div>
       </nav>
+
+      <MessagePartage open={reglageMessage} onClose={() => setReglageMessage(false)} message={message} />
 
       <ArticleForm
         open={edition.open}

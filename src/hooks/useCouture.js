@@ -8,6 +8,7 @@ import {
   onSnapshot,
   query,
   serverTimestamp,
+  setDoc,
   updateDoc,
   where,
   writeBatch,
@@ -48,9 +49,9 @@ export const baseGalerie = () => (estSiteGalerie() ? '' : '/couture')
 export const lienGalerie = () => `https://${DOMAINE_GALERIE}`
 export const CODE_GALERIE = 'julie'
 
-// Message WhatsApp d'invitation (lien + code)
-export function lienWhatsApp() {
-  const message =
+// Message WhatsApp d'invitation (lien + code) : texte d'origine
+export function messageParDefaut() {
+  return (
     `Coucou ! 🧵💕\n` +
     `Je t'invite à découvrir ma galerie de créations couture faites main :\n` +
     `👉 ${lienGalerie()}\n` +
@@ -58,7 +59,41 @@ export function lienWhatsApp() {
     `Un modèle te plaît ? Clique sur « J'en veux un ! » et dis-moi tes envies (taille, couleur…) 🎀\n\n` +
     `🤫 Si tu connais d'autres personnes intéressées, demande-leur de m'envoyer un petit message privé sur WhatsApp, ` +
     `mais ne leur donne pas accès directement à la galerie s'il te plaît 🙏`
-  return `https://wa.me/?text=${encodeURIComponent(message)}`
+  )
+}
+
+export function lienWhatsApp(message) {
+  return `https://wa.me/?text=${encodeURIComponent(message || messageParDefaut())}`
+}
+
+// Message personnalisé par Julie (Firebase : utilisateurs/julie/config/couture → messagePartage)
+const refConfigCouture = () => doc(db, 'utilisateurs', PROFIL, 'config', 'couture')
+
+export function useMessagePartage() {
+  const { authReady } = usePin()
+  const [message, setMessage] = useState('')
+
+  useEffect(() => {
+    if (!authReady) return
+    return onSnapshot(
+      refConfigCouture(),
+      (snap) => setMessage(snap.data()?.messagePartage || ''),
+      (err) => console.error('Erreur Firestore (config couture) :', err)
+    )
+  }, [authReady])
+
+  return message || messageParDefaut()
+}
+
+export async function enregistrerMessagePartage(texte) {
+  const propre = texte.trim()
+  await withTimeout(
+    setDoc(
+      refConfigCouture(),
+      { messagePartage: propre === messageParDefaut().trim() ? '' : propre, majLe: serverTimestamp() },
+      { merge: true }
+    )
+  )
 }
 
 export const STATUTS_COMMANDE = [
