@@ -23,6 +23,7 @@ import ProjectionEcranView from './views/projection/ProjectionEcranView.jsx'
 import ProjectionGalerieView from './views/projection/ProjectionGalerieView.jsx'
 import RequetesView from './views/RequetesView.jsx'
 import JeuxView from './views/JeuxView.jsx'
+import CommunosView from './views/jeux/CommunosView.jsx'
 
 // Chaque espace (/maxence, /julie…) est protégé par le code PIN de son profil
 // (une seule saisie par session), puis attend la connexion anonyme à Firebase.
@@ -83,6 +84,7 @@ export default function App() {
 
         {/* Application Jeux (Game Center) */}
         <Route path="/maxence/jeux" element={<Protege><JeuxView /></Protege>} />
+        <Route path="/maxence/jeux/communos" element={<Protege><CommunosView /></Protege>} />
 
         {/* ================= Tous les profils ================= */}
         {/* Accueil et paramètres de chaque profil (/maxence, /julie, /julie/settings…) */}

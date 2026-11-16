@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Gamepad2, Lock, Trophy, Zap, Star, Joystick } from 'lucide-react'
+import { ArrowLeft, Gamepad2, Lock, Trophy, Zap, Flame, Joystick, MapPinned } from 'lucide-react'
+import { useCommunos } from '../hooks/useCommunos.js'
+import { dateDuJour, statistiques } from '../utils/communos.js'
 
 // =============================================================
 //  Application Jeux : le « Game Center » de Maxence
@@ -8,13 +10,14 @@ import { ArrowLeft, Gamepad2, Lock, Trophy, Zap, Star, Joystick } from 'lucide-r
 // =============================================================
 const JEUX = [
   {
-    id: 'jeu-1',
-    titre: 'Jeu n°1',
-    texte: 'En préparation…',
+    id: 'communos',
+    titre: 'COMMUNOS',
+    texte: 'Trouve la commune belge du jour',
     couleur: 'from-fuchsia-500 via-purple-500 to-indigo-600',
     lueur: 'shadow-fuchsia-500/40',
-    pret: false,
-    to: null,
+    icon: MapPinned,
+    pret: true,
+    to: '/maxence/jeux/communos',
   },
   {
     id: 'jeu-2',
@@ -57,7 +60,8 @@ const STYLES = `
 }
 `
 
-function CarteJeu({ jeu, numero }) {
+function CarteJeu({ jeu, numero, info }) {
+  const Icone = jeu.icon || Joystick
   const contenu = (
     <div
       className={`relative h-full rounded-3xl p-[2px] bg-gradient-to-br ${jeu.couleur} shadow-xl ${jeu.lueur} transition-transform duration-200 ${
@@ -83,12 +87,13 @@ function CarteJeu({ jeu, numero }) {
 
         <div className="flex-1 flex items-center justify-center py-8">
           <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${jeu.couleur} flex items-center justify-center shadow-lg ${jeu.lueur} ${jeu.pret ? '' : 'opacity-60'}`}>
-            {jeu.pret ? <Joystick size={38} /> : <Lock size={34} />}
+            {jeu.pret ? <Icone size={38} /> : <Lock size={34} />}
           </div>
         </div>
 
         <p className="font-bold text-lg tracking-tight">{jeu.titre}</p>
         <p className="text-sm text-white/50">{jeu.texte}</p>
+        {info && <p className="mt-2 text-xs font-bold text-cyan-300">{info}</p>}
       </div>
     </div>
   )
@@ -102,6 +107,19 @@ function CarteJeu({ jeu, numero }) {
 
 export default function JeuxView() {
   const prets = JEUX.filter((j) => j.pret).length
+  const { parties } = useCommunos()
+  const aujourdhui = dateDuJour()
+  const stats = statistiques(parties, aujourdhui)
+  const partieDuJour = parties.find((p) => p.id === aujourdhui)
+  const infoCommunos = partieDuJour?.trouve
+    ? `✓ Trouvée en ${(partieDuJour.essais || []).length} essais`
+    : partieDuJour?.abandon
+      ? 'Partie du jour terminée'
+      : partieDuJour
+        ? `En cours · ${(partieDuJour.essais || []).length} essais`
+        : '● Nouvelle commune à trouver'
+  const niveau = 1 + Math.floor(stats.gagnees / 5)
+  const progression = ((stats.gagnees % 5) / 5) * 100
 
   return (
     <div className="min-h-dvh bg-[#07031a] text-white relative overflow-hidden">
@@ -137,14 +155,14 @@ export default function JeuxView() {
                 M
               </div>
               <span className="absolute -bottom-1 -right-1 text-[10px] font-black px-1.5 py-0.5 rounded-md bg-cyan-400 text-slate-950">
-                LV 1
+                LV {niveau}
               </span>
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-bold text-lg leading-tight">Maxence</p>
               <p className="text-xs text-white/50">Joueur principal</p>
               <div className="mt-2 h-2 rounded-full bg-white/10 overflow-hidden">
-                <div className="h-full w-[8%] rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 jx-pulse" />
+                <div className="h-full rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 jx-pulse" style={{ width: `${Math.max(6, progression)}%` }} />
               </div>
             </div>
           </div>
@@ -157,13 +175,13 @@ export default function JeuxView() {
             </div>
             <div className="rounded-2xl bg-white/[0.04] py-2">
               <Trophy size={16} className="mx-auto text-amber-300" />
-              <p className="font-black text-lg mt-0.5">0</p>
+              <p className="font-black text-lg mt-0.5">{stats.gagnees}</p>
               <p className="text-[10px] uppercase tracking-wider text-white/40">Trophées</p>
             </div>
             <div className="rounded-2xl bg-white/[0.04] py-2">
-              <Star size={16} className="mx-auto text-cyan-300" />
-              <p className="font-black text-lg mt-0.5">—</p>
-              <p className="text-[10px] uppercase tracking-wider text-white/40">Record</p>
+              <Flame size={16} className="mx-auto text-orange-400" />
+              <p className="font-black text-lg mt-0.5">{stats.serie}</p>
+              <p className="text-[10px] uppercase tracking-wider text-white/40">Série</p>
             </div>
           </div>
         </div>
@@ -175,7 +193,7 @@ export default function JeuxView() {
         </div>
         <div className="mt-3 grid grid-cols-2 gap-3 sm:gap-5">
           {JEUX.map((jeu, i) => (
-            <CarteJeu key={jeu.id} jeu={jeu} numero={i + 1} />
+            <CarteJeu key={jeu.id} jeu={jeu} numero={i + 1} info={jeu.id === 'communos' ? infoCommunos : null} />
           ))}
         </div>
 
