@@ -39,10 +39,10 @@ export default function CodeAcces({ children }) {
   }
 
   return (
-    <div className="min-h-dvh vichy-doux text-pink-950 flex flex-col">
+    <div className="couture-app min-h-dvh vichy-doux text-pink-950 flex flex-col">
       <StylesCouture />
       <BandeauVichy>
-        <div className="h-[28dvh] min-h-[150px]" />
+        <div className="h-[22dvh] min-h-[130px]" />
       </BandeauVichy>
 
       <div className="flex-1 px-5 -mt-24 pb-10">
@@ -71,12 +71,12 @@ export default function CodeAcces({ children }) {
                 autoCorrect="off"
                 autoComplete="off"
                 spellCheck={false}
-                autoFocus
+                enterKeyHint="go"
               />
             </div>
             {erreur && <p className="mt-2 text-sm text-red-500">Ce n’est pas le bon code 🙈</p>}
 
-            <button type="submit" className={`${boutonRose} w-full mt-4`}>
+            <button type="submit" className={`${boutonRose} w-full mt-4 py-3.5 text-base`}>
               Entrer
             </button>
           </div>

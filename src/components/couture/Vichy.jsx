@@ -1,5 +1,6 @@
 // =============================================================
-//  Habillage de l'application Couture : motif Vichy blanc / rose,
+//  Habillage de l'application Couture : motif Vichy blanc / rose pastel
+//  en fond de toutes les pages (.vichy-doux),
 //  coutures en pointillés, titres en serif italique.
 //  <StylesCouture /> est à placer une fois en haut de chaque page.
 // =============================================================
@@ -7,15 +8,15 @@ const STYLES = `
 .vichy {
   background-color: #fff;
   background-image:
-    linear-gradient(90deg, rgba(244,114,182,.30) 50%, transparent 50%),
-    linear-gradient(rgba(244,114,182,.30) 50%, transparent 50%);
+    linear-gradient(90deg, rgba(244,114,182,.11) 50%, transparent 50%),
+    linear-gradient(rgba(244,114,182,.11) 50%, transparent 50%);
   background-size: 30px 30px;
 }
 .vichy-fin {
   background-color: #fff;
   background-image:
-    linear-gradient(90deg, rgba(244,114,182,.26) 50%, transparent 50%),
-    linear-gradient(rgba(244,114,182,.26) 50%, transparent 50%);
+    linear-gradient(90deg, rgba(244,114,182,.12) 50%, transparent 50%),
+    linear-gradient(rgba(244,114,182,.12) 50%, transparent 50%);
   background-size: 14px 14px;
 }
 .vichy-doux {
@@ -35,12 +36,9 @@ const STYLES = `
 .couture-piqure {
   border: 2px dashed rgba(236,72,153,.35);
 }
-/* Bas du bandeau en festons */
-.couture-festons {
-  height: 14px;
-  background:
-    radial-gradient(circle at 10px 0, transparent 9px, #fffafc 10px) 0 0 / 20px 14px repeat-x;
-}
+/* iPhone : pas de délai ni de zoom au double tap, pas de surlignage gris */
+.couture-app, .couture-app * { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.couture-app img { -webkit-user-drag: none; -webkit-touch-callout: none; user-select: none; }
 @keyframes couture-coeur { 0% { transform: scale(.4); opacity: 0 } 60% { transform: scale(1.15); opacity: 1 } 100% { transform: scale(1) } }
 .couture-coeur { animation: couture-coeur .6s ease-out both; }
 @keyframes couture-apparait { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
@@ -54,14 +52,9 @@ export function StylesCouture() {
   return <style>{STYLES}</style>
 }
 
-// Bandeau Vichy en haut de page, avec titre
+// Haut de page : directement sur le fond Vichy pastel (plus de bandeau vif)
 export function BandeauVichy({ children, className = '' }) {
-  return (
-    <div className={`relative vichy ${className}`}>
-      <div className="relative">{children}</div>
-      <div className="couture-festons absolute -bottom-px left-0 right-0" />
-    </div>
-  )
+  return <div className={`relative ${className}`}>{children}</div>
 }
 
 // Petite étiquette façon « étiquette cousue »

@@ -144,7 +144,7 @@ export async function lirePhotos(ids = []) {
 }
 
 // Création ou modification d'une création.
-// photos : [{ id (photo déjà enregistrée) | fichier (nouvelle photo), src }]
+// photos : [{ id (photo déjà enregistrée) | fichier (nouvelle photo) + prep (réduction en cours), src }]
 export async function enregistrerArticle({ id, nom, description, prix, visible, photos, avant }) {
   const articleId = id || doc(col(ARTICLES)).id
   const batch = writeBatch(db)
@@ -154,7 +154,8 @@ export async function enregistrerArticle({ id, nom, description, prix, visible, 
   for (let i = 0; i < photos.length; i++) {
     const p = photos[i]
     if (p.fichier) {
-      const { image, miniature } = await preparerPhotoCouture(p.fichier)
+      // La photo a souvent déjà été réduite dès qu'elle a été prise (p.prep)
+      const { image, miniature } = await (p.prep || preparerPhotoCouture(p.fichier))
       const pid = doc(col(PHOTOS)).id
       batch.set(ref(PHOTOS, pid), { articleId, data: image })
       photoIds.push(pid)

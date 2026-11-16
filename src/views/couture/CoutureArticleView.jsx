@@ -45,16 +45,16 @@ export default function CoutureArticleView() {
   const images = photos.length ? photos.map((p) => p.src) : article?.couverture ? [article.couverture] : []
 
   return (
-    <div className="min-h-dvh vichy-doux text-pink-950">
+    <div className="couture-app min-h-dvh vichy-doux text-pink-950">
       <StylesCouture />
 
       <div className="max-w-5xl mx-auto px-4 sm:px-8 pt-[max(1rem,env(safe-area-inset-top))] pb-32 sm:pb-16">
         <div className="flex items-center justify-between py-2">
           <Link
             to="/couture"
-            className="inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3.5 py-2 text-sm font-medium text-pink-800 ring-1 ring-pink-100 shadow-sm hover:bg-white"
+            className="inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3.5 h-10 text-sm font-medium text-pink-800 ring-1 ring-pink-100 shadow-sm hover:bg-white"
           >
-            <ArrowLeft size={16} /> Toutes les créations
+            <ArrowLeft size={16} /> Créations
           </Link>
           {disponible && (
             <button
@@ -94,7 +94,9 @@ export default function CoutureArticleView() {
                       key={i}
                       src={src}
                       alt={`${article.nom} — photo ${i + 1}`}
-                      className="w-full h-full shrink-0 snap-center object-cover"
+                      decoding="async"
+                      draggable={false}
+                      className="w-full h-full shrink-0 snap-center snap-always object-cover"
                     />
                   ))}
                 </div>
@@ -160,7 +162,7 @@ export default function CoutureArticleView() {
               </p>
 
               {/* Bouton (fixé en bas sur téléphone) */}
-              <div className="fixed sm:static inset-x-0 bottom-0 z-30 px-4 sm:px-0 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] sm:pb-0 sm:mt-7 bg-gradient-to-t from-[#fffafc] via-[#fffafc]/95 to-transparent sm:bg-none">
+              <div className="fixed sm:static inset-x-0 bottom-0 z-30 px-4 sm:px-0 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] sm:pb-0 sm:mt-7 bg-gradient-to-t from-[#fffafc] via-[#fffafc]/90 to-transparent sm:bg-none">
                 <button onClick={() => setFormulaire(true)} className={`${boutonRose} w-full text-base py-4`}>
                   <Heart size={19} className="fill-white" /> J’en veux un !
                 </button>

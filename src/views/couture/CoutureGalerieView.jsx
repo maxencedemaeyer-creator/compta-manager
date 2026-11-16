@@ -15,29 +15,28 @@ export default function CoutureGalerieView() {
   const { articles, chargement, erreur } = useArticlesCouture({ visiblesSeulement: true })
 
   return (
-    <div className="min-h-dvh vichy-doux text-pink-950">
+    <div className="couture-app min-h-dvh vichy-doux text-pink-950">
       <StylesCouture />
 
       <BandeauVichy>
-        <div className="max-w-5xl mx-auto px-5 sm:px-8 pt-[max(2.5rem,env(safe-area-inset-top))] pb-10 sm:pt-16 sm:pb-14">
-          <div className="mx-auto max-w-md rounded-[2rem] bg-white/90 backdrop-blur p-1.5 shadow-xl shadow-pink-900/10">
-            <div className="couture-piqure rounded-[1.6rem] px-6 py-6 text-center">
-              <span className="mx-auto w-12 h-12 rounded-full bg-pink-500 text-white flex items-center justify-center shadow-md shadow-pink-500/30">
-                <Scissors size={22} />
-              </span>
-              <p className="mt-3 text-xs font-semibold uppercase tracking-[0.25em] text-pink-400">Fait main</p>
-              <h1 className="couture-titre text-[2.6rem] sm:text-5xl leading-[1.05] text-pink-950">
+        <div className="max-w-5xl mx-auto px-4 sm:px-8 pt-[max(1.25rem,env(safe-area-inset-top))] pb-2 sm:pt-14 sm:pb-6">
+          <div className="mx-auto max-w-md rounded-[2rem] bg-white/90 p-1.5 shadow-xl shadow-pink-900/10">
+            <div className="couture-piqure rounded-[1.6rem] px-5 py-5 sm:py-6 text-center">
+              <p className="flex items-center justify-center gap-1.5 text-xs font-semibold uppercase tracking-[0.25em] text-pink-400">
+                <Scissors size={13} /> Fait main
+              </p>
+              <h1 className="couture-titre mt-1 text-[2.15rem] sm:text-5xl leading-[1.05] text-pink-950">
                 Les créations de Julie
               </h1>
               <p className="mt-2 text-sm text-pink-900/60">
-                Un modèle te plaît ? Touche-le et clique sur <strong className="text-pink-600">« J’en veux un ! »</strong>
+                Un modèle te plaît ? Touche-le, puis <strong className="text-pink-600">« J’en veux un ! »</strong>
               </p>
             </div>
           </div>
         </div>
       </BandeauVichy>
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-8 pt-6 pb-16">
+      <main className="max-w-5xl mx-auto px-3 sm:px-8 pt-4 pb-[max(3rem,env(safe-area-inset-bottom))]">
         {chargement ? (
           <div className="py-24 flex flex-col items-center text-pink-400">
             <Loader2 className="animate-spin" size={28} />
@@ -52,15 +51,15 @@ export default function CoutureGalerieView() {
           </div>
         ) : (
           <>
-            <p className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-pink-900/40">
+            <p className="mb-3 px-1 text-xs font-semibold uppercase tracking-[0.2em] text-pink-900/40">
               {articles.length} création{articles.length > 1 ? 's' : ''}
             </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-5">
               {articles.map((a, i) => (
                 <Link
                   key={a.id}
                   to={`/couture/${a.id}`}
-                  className="couture-apparait group block rounded-[1.6rem] bg-white p-1.5 shadow-[0_10px_30px_-18px_rgba(131,24,67,0.45)] ring-1 ring-pink-100 hover:-translate-y-1 transition-transform"
+                  className="couture-apparait group block rounded-[1.6rem] bg-white p-1.5 shadow-[0_10px_30px_-18px_rgba(131,24,67,0.45)] ring-1 ring-pink-100 active:scale-[0.98] sm:hover:-translate-y-1 transition-transform"
                   style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}
                 >
                   <div className="relative aspect-[4/5] overflow-hidden rounded-[1.25rem] bg-pink-50">
@@ -69,6 +68,7 @@ export default function CoutureGalerieView() {
                         src={a.couverture}
                         alt={a.nom}
                         loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                     ) : (

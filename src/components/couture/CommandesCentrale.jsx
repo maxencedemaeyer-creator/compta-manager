@@ -19,7 +19,6 @@ const FILTRES = [
   { id: 'a_traiter', nom: 'À traiter', statuts: ['nouvelle'] },
   { id: 'en_cours', nom: 'En cours', statuts: ['acceptee', 'en_couture', 'prete'] },
   { id: 'terminees', nom: 'Terminées', statuts: ['remise', 'annulee'] },
-  { id: 'toutes', nom: 'Toutes', statuts: null },
 ]
 
 function quand(t) {
@@ -105,24 +104,16 @@ function CarteCommande({ commande, article }) {
             })}
           </div>
 
-          <div className="flex gap-2">
-            {suivant && (
-              <button onClick={() => changer({ statut: suivant.id })} className={`${boutonRose} flex-1 py-2.5`}>
-                {suivant.emoji} {suivant.nom} <ArrowRight size={15} />
-              </button>
-            )}
-            {commande.statut === 'annulee' ? (
-              <button onClick={() => changer({ statut: 'nouvelle' })} className={`${boutonBlanc} flex-1 py-2.5`}>
-                Réactiver
-              </button>
-            ) : (
-              commande.statut !== 'remise' && (
-                <button onClick={() => changer({ statut: 'annulee' })} className={`${boutonBlanc} py-2.5`}>
-                  Annuler
-                </button>
-              )
-            )}
-          </div>
+          {suivant && (
+            <button onClick={() => changer({ statut: suivant.id })} className={`${boutonRose} w-full py-3`}>
+              {suivant.emoji} Passer à « {suivant.nom} » <ArrowRight size={15} />
+            </button>
+          )}
+          {commande.statut === 'annulee' && (
+            <button onClick={() => changer({ statut: 'nouvelle' })} className={`${boutonBlanc} w-full py-3`}>
+              Réactiver la commande
+            </button>
+          )}
 
           {/* Note privée */}
           <label className="block">
@@ -174,12 +165,18 @@ function CarteCommande({ commande, article }) {
               </button>
             </div>
           ) : (
-            <button
-              onClick={() => setConfirmeSuppr(true)}
-              className="inline-flex items-center gap-1.5 text-xs text-pink-900/35 hover:text-red-500"
-            >
-              <Trash2 size={13} /> Supprimer
-            </button>
+            <div className="flex items-center justify-between pt-1">
+              {!terminee ? (
+                <button onClick={() => changer({ statut: 'annulee' })} className="py-2 text-xs text-pink-900/40">
+                  Annuler la commande
+                </button>
+              ) : (
+                <span />
+              )}
+              <button onClick={() => setConfirmeSuppr(true)} className="inline-flex items-center gap-1.5 py-2 text-xs text-pink-900/35">
+                <Trash2 size={13} /> Supprimer
+              </button>
+            </div>
           )}
         </div>
       )}
@@ -254,55 +251,39 @@ export default function CommandesCentrale({ commandes, articles, chargement }) {
   const [ajout, setAjout] = useState(false)
   const parArticle = useMemo(() => Object.fromEntries(articles.map((a) => [a.id, a])), [articles])
 
-  const compte = (f) => (f.statuts ? commandes.filter((c) => f.statuts.includes(c.statut)).length : commandes.length)
+  const compte = (f) => commandes.filter((c) => f.statuts.includes(c.statut)).length
   const actif = FILTRES.find((f) => f.id === filtre)
-  const liste = actif.statuts ? commandes.filter((c) => actif.statuts.includes(c.statut)) : commandes
+  const liste = commandes.filter((c) => actif.statuts.includes(c.statut))
 
-  // Petit résumé en haut
-  const enCouture = commandes.filter((c) => c.statut === 'en_couture').length
-  const pretes = commandes.filter((c) => c.statut === 'prete').length
   const remisesAnnee = commandes.filter(
     (c) => c.statut === 'remise' && new Date(enMs(c.majLe) || Date.now()).getFullYear() === new Date().getFullYear()
   ).length
 
   return (
     <div>
-      <div className="grid grid-cols-3 gap-2 mb-4">
-        {[
-          { n: compte(FILTRES[0]), t: 'nouvelles', e: '💌' },
-          { n: enCouture, t: 'en couture', e: '🧵' },
-          { n: pretes, t: 'à remettre', e: '🎀' },
-        ].map((x) => (
-          <div key={x.t} className="rounded-2xl bg-white ring-1 ring-pink-100 px-3 py-2.5">
-            <p className="text-xl font-semibold text-pink-950">
-              {x.n} <span className="text-base">{x.e}</span>
-            </p>
-            <p className="text-[11px] text-pink-900/50">{x.t}</p>
-          </div>
-        ))}
-      </div>
-
       <div className="flex items-center gap-2 mb-4">
-        <div className="flex gap-1.5 overflow-x-auto no-scrollbar flex-1">
+        <div className="flex-1 grid grid-cols-3 gap-1 rounded-2xl bg-white p-1 ring-1 ring-pink-100">
           {FILTRES.map((f) => {
             const n = compte(f)
             return (
               <button
                 key={f.id}
                 onClick={() => setFiltre(f.id)}
-                className={`shrink-0 rounded-full px-3.5 py-2 text-sm font-medium transition ${
-                  filtre === f.id ? 'bg-pink-500 text-white shadow-sm' : 'bg-white text-pink-900/60 ring-1 ring-pink-100'
+                className={`rounded-xl py-2.5 text-[13px] font-semibold transition ${
+                  filtre === f.id ? 'bg-pink-500 text-white shadow-sm' : 'text-pink-900/55'
                 }`}
               >
                 {f.nom}
-                {n > 0 && <span className={`ml-1.5 text-xs ${filtre === f.id ? 'text-white/80' : 'text-pink-400'}`}>{n}</span>}
+                {n > 0 && f.id !== 'terminees' && (
+                  <span className={`ml-1 text-xs ${filtre === f.id ? 'text-white/80' : 'text-pink-400'}`}>{n}</span>
+                )}
               </button>
             )
           })}
         </div>
         <button
           onClick={() => setAjout(true)}
-          className="w-10 h-10 shrink-0 rounded-full bg-white ring-1 ring-pink-100 text-pink-600 flex items-center justify-center"
+          className="w-12 h-12 shrink-0 rounded-2xl bg-white ring-1 ring-pink-100 text-pink-600 flex items-center justify-center"
           aria-label="Ajouter une commande"
           title="Ajouter une commande"
         >

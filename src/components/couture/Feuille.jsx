@@ -3,7 +3,7 @@ import { X } from 'lucide-react'
 
 // =============================================================
 //  Fenêtre de l'application Couture : monte du bas sur téléphone,
-//  centrée sur ordinateur. Bord supérieur en Vichy.
+//  centrée sur ordinateur, sur le fond Vichy pastel.
 // =============================================================
 export default function Feuille({ open, onClose, titre, children, large = false }) {
   useEffect(() => {
@@ -21,14 +21,14 @@ export default function Feuille({ open, onClose, titre, children, large = false 
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-      <div className="absolute inset-0 bg-pink-950/30 backdrop-blur-[2px]" onClick={onClose} />
+      <div className="absolute inset-0 bg-pink-950/35" onClick={onClose} />
       <div
         className={`couture-apparait relative w-full ${
           large ? 'sm:max-w-xl' : 'sm:max-w-md'
-        } bg-[#fffafc] rounded-t-[2rem] sm:rounded-[2rem] shadow-2xl max-h-[92dvh] overflow-y-auto overscroll-contain`}
+        } vichy-doux rounded-t-[2rem] sm:rounded-[2rem] shadow-2xl max-h-[92dvh] overflow-y-auto overscroll-contain`}
       >
-        <div className="vichy-fin h-3 rounded-t-[2rem]" />
-        <div className="px-5 sm:px-7 pt-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+        <div className="sm:hidden mx-auto mt-2.5 h-1.5 w-10 rounded-full bg-pink-200" />
+        <div className="couture-app px-5 sm:px-7 pt-3 sm:pt-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
           <div className="flex items-center justify-between mb-4 gap-3">
             <h2 className="couture-titre text-3xl text-pink-950 leading-tight">{titre}</h2>
             <button

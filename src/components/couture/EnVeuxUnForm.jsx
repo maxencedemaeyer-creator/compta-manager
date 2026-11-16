@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { Heart, Loader2, Send } from 'lucide-react'
 import Feuille from './Feuille.jsx'
-import { boutonBlanc, boutonRose, champCouture } from './Vichy.jsx'
+import { boutonRose, champCouture } from './Vichy.jsx'
 import { envoyerDemande } from '../../hooks/useCouture.js'
 
 // Raccourcis pour compléter les précisions en un geste
@@ -76,7 +76,7 @@ export default function EnVeuxUnForm({ article, open, onClose }) {
       ) : (
         <form onSubmit={envoyer}>
           {article && (
-            <div className="flex items-center gap-3 rounded-2xl bg-white p-2.5 ring-1 ring-pink-100 mb-5">
+            <div className="flex items-center gap-3 rounded-2xl bg-white p-2.5 ring-1 ring-pink-100 mb-4">
               {article.couverture ? (
                 <img src={article.couverture} alt="" className="w-14 h-14 rounded-xl object-cover" />
               ) : (
@@ -97,6 +97,8 @@ export default function EnVeuxUnForm({ article, open, onClose }) {
               onChange={(e) => setNom(e.target.value)}
               placeholder="Ex. Sophie D."
               autoComplete="name"
+              autoCapitalize="words"
+              enterKeyHint="next"
               maxLength={80}
             />
           </label>
@@ -107,7 +109,7 @@ export default function EnVeuxUnForm({ article, open, onClose }) {
             </span>
             <textarea
               ref={zone}
-              className={`${champCouture} min-h-[120px] resize-y`}
+              className={`${champCouture} min-h-[96px] resize-none`}
               value={details}
               onChange={(e) => setDetails(e.target.value)}
               placeholder="Taille, couleur, tissu, pour quand…"
@@ -120,7 +122,7 @@ export default function EnVeuxUnForm({ article, open, onClose }) {
                 key={r}
                 type="button"
                 onClick={() => ajouterRaccourci(r)}
-                className="rounded-full bg-pink-50 px-3 py-1.5 text-xs font-medium text-pink-700 ring-1 ring-pink-100 hover:bg-pink-100"
+                className="rounded-full bg-pink-50 px-3 py-2 text-xs font-medium text-pink-700 ring-1 ring-pink-100 active:bg-pink-100"
               >
                 + {r.replace(' : ', '')}
               </button>
@@ -129,11 +131,8 @@ export default function EnVeuxUnForm({ article, open, onClose }) {
 
           {erreur && <p className="mb-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{erreur}</p>}
 
-          <div className="flex gap-2">
-            <button type="button" onClick={fermer} className={boutonBlanc}>
-              Annuler
-            </button>
-            <button type="submit" disabled={etat === 'envoi'} className={`${boutonRose} flex-1`}>
+          <div className="flex">
+            <button type="submit" disabled={etat === 'envoi'} className={`${boutonRose} flex-1 py-4 text-base`}>
               {etat === 'envoi' ? <Loader2 size={18} className="animate-spin" /> : <Send size={17} />}
               {etat === 'envoi' ? 'Envoi…' : 'Envoyer à Julie'}
             </button>

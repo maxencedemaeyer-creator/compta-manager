@@ -11,8 +11,8 @@ const CREME = { maxence: '#f4f1ea', julie: '#fcf5f7' }
 const FOND_PIN = { maxence: '#047857', julie: '#f6aad2' }
 
 function couleurPour(pathname, profilId, unlocked) {
-  // Application Couture (galerie publique et atelier de Julie) : bandeau Vichy rose
-  if (pathname.startsWith('/couture') || (unlocked && pathname.startsWith('/julie/couture'))) return '#fbd5e8'
+  // Application Couture (galerie publique et atelier de Julie) : fond Vichy pastel
+  if (pathname.startsWith('/couture') || (unlocked && pathname.startsWith('/julie/couture'))) return '#fffafc'
   if (!profilId) return CREME.maxence
   if (!unlocked) return FOND_PIN[profilId] || FOND_PIN.maxence
   if (pathname.includes('/jeux')) return '#07031a'
