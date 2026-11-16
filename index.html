@@ -3,22 +3,42 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Maxence</title>
+    <title>Accueil</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
 
-    <!-- Icône "M." du site (le ?v=2 force les navigateurs et l'iPhone à oublier l'ancienne icône) -->
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=2" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=2" />
-    <link rel="manifest" href="/site.webmanifest?v=2" />
+    <!-- Icônes du site : une par espace (dossier public/icons/<espace>/).
+         Le script juste en dessous choisit la bonne dès l'ouverture (/julie → J rose,
+         /maxence → M vert, / → accueil) ; ensuite c'est src/components/IconeProfil.jsx
+         qui la change quand on navigue. Le ?v=3 force l'iPhone à oublier les anciennes. -->
+    <link id="icone-svg" rel="icon" type="image/svg+xml" href="/icons/accueil/favicon.svg?v=3" />
+    <link id="icone-png" rel="icon" type="image/png" sizes="32x32" href="/icons/accueil/favicon-32.png?v=3" />
+    <link id="icone-apple" rel="apple-touch-icon" sizes="180x180" href="/icons/accueil/apple-touch-icon.png?v=3" />
+    <link id="icone-manifest" rel="manifest" href="/icons/accueil/site.webmanifest?v=3" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="application-name" content="Maxence" />
-    <meta name="apple-mobile-web-app-title" content="Maxence" />
+    <meta id="nom-appli" name="application-name" content="Accueil" />
+    <meta id="nom-appli-apple" name="apple-mobile-web-app-title" content="Accueil" />
+    <script>
+      // Espaces qui ont leur propre icône (même liste que « icone » dans src/config/profils.js)
+      (function () {
+        var ESPACES = { maxence: 'Maxence', julie: 'Julie', couture: 'Julie' }
+        var DOSSIERS = { couture: 'julie' }
+        var premier = (location.pathname.split('/')[1] || '').toLowerCase()
+        if (!ESPACES[premier]) return
+        var dossier = '/icons/' + (DOSSIERS[premier] || premier) + '/'
+        document.getElementById('icone-svg').href = dossier + 'favicon.svg?v=3'
+        document.getElementById('icone-png').href = dossier + 'favicon-32.png?v=3'
+        document.getElementById('icone-apple').href = dossier + 'apple-touch-icon.png?v=3'
+        document.getElementById('icone-manifest').href = dossier + 'site.webmanifest?v=3'
+        document.getElementById('nom-appli').content = ESPACES[premier]
+        document.getElementById('nom-appli-apple').content = ESPACES[premier]
+        document.title = ESPACES[premier]
+      })()
+    </script>
     <meta name="theme-color" content="#f4f1ea" />
   </head>
   <body>

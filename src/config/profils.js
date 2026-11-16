@@ -11,6 +11,10 @@ import { db } from '../firebase/config.js'
 //  - couleur : dégradé de la pastille sur l'écran de choix.
 //  - theme   : habillage de l'espace (couleurs et polices dans src/index.css).
 //  - fondPin : dégradé de l'écran du code PIN.
+//  - icone   : dossier de son icône dans public/icons/ (onglet du
+//              navigateur + icône sur l'écran d'accueil de l'iPhone).
+//              Sans icône, l'espace prend celle de l'accueil.
+//              (penser aussi à l'ajouter dans le petit script d'index.html)
 //
 //  Données Firebase :
 //  - Maxence : à la racine de la base (comme avant, rien ne bouge).
@@ -25,6 +29,7 @@ export const PROFILS = [
     accent: 'text-emerald-500',
     theme: null,
     fondPin: 'bg-gradient-to-b from-emerald-700 to-emerald-950',
+    icone: 'maxence',
   },
   {
     id: 'julie',
@@ -34,6 +39,7 @@ export const PROFILS = [
     accent: 'text-emerald-400',
     theme: 'julie',
     fondPin: 'bg-gradient-to-br from-emerald-300 via-emerald-500 to-emerald-800',
+    icone: 'julie',
   },
 ]
 
