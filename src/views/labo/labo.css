@@ -1,0 +1,79 @@
+/* =============================================================
+   Le labo de sciences : décor « labo de savant fou »
+   (polices, fumée, fiole qui explose, voyants…)
+   ============================================================= */
+/* Les polices sont chargées par src/components/labo/DecorLabo.jsx (sans bloquer le labo si Google Fonts est bloqué) */
+
+.labo {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  background: #070b16;
+  color: #e8ecff;
+}
+.labo-titre { font-family: 'Unbounded', system-ui, sans-serif; }
+.labo-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+/* Grille hexagonale façon molécules */
+.labo-hex {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='48.5'%3E%3Cpath d='M14 0 L28 8.1 L28 24.3 L14 32.4 L0 24.3 L0 8.1 Z M14 32.4 L14 48.5' fill='none' stroke='%237CFF6B' stroke-width='0.8'/%3E%3C/svg%3E");
+  opacity: 0.12;
+}
+
+@keyframes labo-glow { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+@keyframes labo-led { 0%, 49% { opacity: 1; } 50%, 100% { opacity: .25; } }
+@keyframes labo-fumee {
+  0% { transform: translate(0, 0) scale(.5); opacity: 0; }
+  20% { opacity: .55; }
+  100% { transform: translate(var(--sx, 0px), -110vh) scale(2.6); opacity: 0; }
+}
+@keyframes labo-bouffee {
+  0% { transform: translate(0, 0) scale(.3); opacity: 0; }
+  15% { opacity: .8; }
+  100% { transform: translate(var(--sx, 0px), -90px) scale(1.8); opacity: 0; }
+}
+@keyframes labo-boom {
+  0%, 78% { transform: scale(0); opacity: 0; }
+  80% { transform: scale(.4); opacity: 1; }
+  92%, 100% { transform: scale(2.4); opacity: 0; }
+}
+@keyframes labo-flash { 0%, 79% { opacity: 0; } 81% { opacity: .3; } 90%, 100% { opacity: 0; } }
+@keyframes labo-etincelle {
+  0%, 79% { transform: translate(0, 0) scale(1); opacity: 0; }
+  80% { opacity: 1; }
+  94% { transform: translate(var(--dx), var(--dy)) scale(.3); opacity: 0; }
+  100% { opacity: 0; }
+}
+@keyframes labo-tremble {
+  0%, 66% { transform: rotate(0); }
+  68% { transform: rotate(-6deg); } 70% { transform: rotate(6deg); }
+  72% { transform: rotate(-8deg); } 74% { transform: rotate(8deg); }
+  76% { transform: rotate(-5deg); } 78% { transform: rotate(5deg); }
+  80% { transform: rotate(0) scale(1.08); }
+  84%, 100% { transform: rotate(0) scale(1); }
+}
+@keyframes labo-apparait { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes labo-succes {
+  0% { transform: scale(.6); opacity: 0; }
+  20% { transform: scale(1.05); opacity: 1; }
+  80% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1); opacity: 0; }
+}
+@keyframes labo-onde { from { transform: scale(.2); opacity: .9; } to { transform: scale(3); opacity: 0; } }
+@keyframes labo-scan { from { top: 0; } to { top: 100%; } }
+
+.labo-pulse { animation: labo-glow 2.6s ease-in-out infinite; }
+.labo-led { animation: labo-led 1.4s steps(1) infinite; }
+.labo-fumee { position: absolute; border-radius: 50%; filter: blur(14px); animation: labo-fumee 9s ease-out infinite; pointer-events: none; }
+.labo-bouffee { position: absolute; margin-left: 6px; border-radius: 50%; filter: blur(6px); background: radial-gradient(circle, rgba(200,255,190,.75), rgba(124,255,107,0) 70%); animation: labo-bouffee 2.8s ease-out infinite; pointer-events: none; }
+.labo-boom { position: absolute; margin-left: 7px; border-radius: 50%; animation: labo-boom 7s ease-out infinite; pointer-events: none; }
+.labo-etincelle { position: absolute; margin-left: 8px; width: 6px; height: 6px; border-radius: 50%; animation: labo-etincelle 7s ease-out infinite; pointer-events: none; }
+.labo-tremble { animation: labo-tremble 7s ease-in-out infinite; transform-origin: 50% 90%; }
+.labo-flash { animation: labo-flash 7s ease-out infinite; pointer-events: none; }
+.labo-apparait { animation: labo-apparait .5s ease-out both; }
+.labo-succes { animation: labo-succes 2.4s ease-out both; }
+.labo-onde { animation: labo-onde 1s ease-out both; }
+.labo-scan { position: absolute; left: 0; right: 0; height: 2px; animation: labo-scan 3s ease-in-out infinite alternate; }
+
+@media (prefers-reduced-motion: reduce) {
+  .labo-fumee, .labo-bouffee, .labo-boom, .labo-etincelle, .labo-tremble, .labo-flash, .labo-pulse, .labo-scan { animation: none; }
+  .labo-boom, .labo-etincelle, .labo-flash { opacity: 0; }
+}

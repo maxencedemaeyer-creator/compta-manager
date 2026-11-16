@@ -22,6 +22,7 @@ const PAGES_DE = { couture: 'julie' }
 function choisir(pathname) {
   // Galerie couture sur son adresse à part (couture-julie.vercel.app) → icône de Julie
   const premier = estSiteGalerie() ? 'couture' : (pathname.split('/')[1] || '').toLowerCase()
+  if (premier === 'labo') return { dossier: 'accueil', manifeste: 'accueil', nom: 'Labo de sciences' }
   const profil = trouverProfil(PAGES_DE[premier] || premier)
   if (profil?.icone) {
     return { dossier: profil.icone, manifeste: premier === 'couture' ? 'couture' : profil.icone, nom: profil.nom }

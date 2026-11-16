@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { usePin } from './context/PinContext.jsx'
 import PinLock from './components/PinLock.jsx'
@@ -33,6 +34,28 @@ import CoutureArticleView from './views/couture/CoutureArticleView.jsx'
 import CoutureAtelierView from './views/couture/CoutureAtelierView.jsx'
 import CodeAcces from './components/couture/CodeAcces.jsx'
 import { estSiteGalerie } from './hooks/useCouture.js'
+
+// Le labo de sciences (public, sans PIN) : chargé seulement quand on l'ouvre
+const LaboView = lazy(() => import('./views/labo/LaboView.jsx'))
+const LABO_JEUX = {
+  miroir: lazy(() => import('./views/labo/MiroirView.jsx')),
+  puzzle: lazy(() => import('./views/labo/PuzzleView.jsx')),
+  bras: lazy(() => import('./views/labo/BrasView.jsx')),
+  'qui-tire': lazy(() => import('./views/labo/QuiTireView.jsx')),
+  pantin: lazy(() => import('./views/labo/PantinView.jsx')),
+  protection: lazy(() => import('./views/labo/ProtectionView.jsx')),
+  reflexes: lazy(() => import('./views/labo/ReflexesView.jsx')),
+  dissection: lazy(() => import('./views/labo/DissectionView.jsx')),
+  cousins: lazy(() => import('./views/labo/CousinsView.jsx')),
+  urgences: lazy(() => import('./views/labo/UrgencesView.jsx')),
+  defi: lazy(() => import('./views/labo/DefiView.jsx')),
+}
+
+function Labo({ children }) {
+  return (
+    <Suspense fallback={<div style={{ minHeight: '100dvh', background: '#070b16' }} />}>{children}</Suspense>
+  )
+}
 
 // Chaque espace (/maxence, /julie…) est protégé par le code PIN de son profil
 // (une seule saisie par session), puis attend la connexion anonyme à Firebase.
@@ -86,6 +109,13 @@ export default function App() {
       <Routes>
         {/* Écran d'entrée : choix du profil */}
         <Route path="/" element={<ChoixProfilView />} />
+
+        {/* ================= Le labo de sciences (public, pour les élèves) ================= */}
+        <Route path="/labo" element={<Labo><LaboView /></Labo>} />
+        {Object.entries(LABO_JEUX).map(([id, Jeu]) => (
+          <Route key={id} path={`/labo/${id}`} element={<Labo><Jeu /></Labo>} />
+        ))}
+        <Route path="/labo/*" element={<Navigate to="/labo" replace />} />
 
         {/* ================= Espace Maxence ================= */}
         {/* Application Compta */}
