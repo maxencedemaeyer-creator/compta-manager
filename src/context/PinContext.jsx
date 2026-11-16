@@ -1,11 +1,17 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import { onAuthStateChanged, signInAnonymously } from 'firebase/auth'
-import { getDoc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore'
+import { deleteDoc, getDoc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore'
 import { auth } from '../firebase/config.js'
 import { sha256Hex } from '../utils/hash.js'
 import { withTimeout } from '../utils/withTimeout.js'
-import { PROFIL_PRINCIPAL, docConfig, profilDepuisChemin } from '../config/profils.js'
+import { PROFIL_PRINCIPAL, docConfig, profilDepuisChemin, trouverProfil } from '../config/profils.js'
+import { envoyerMail } from '../config/email.js'
+
+// « PIN oublié » : durée de validité du code reçu par mail, essais autorisés, délai entre deux envois
+const CODE_VALIDITE_MS = 15 * 60000
+const CODE_ESSAIS_MAX = 5
+const CODE_DELAI_RENVOI_MS = 60000
 
 // Chaque profil a son propre déverrouillage (une saisie du PIN par session et par profil)
 const cleSession = (profilId) => `cm_unlocked_${profilId}`
@@ -215,6 +221,64 @@ export function PinProvider({ children }) {
     [profilId]
   )
 
+  // PIN oublié, étape 1 : un code à 6 chiffres est envoyé à l'adresse mail du profil
+  const envoyerCodeReinitialisation = useCallback(async () => {
+    const email = (parametres.email || '').trim()
+    if (!email) throw new Error("Aucune adresse mail n'est enregistrée pour ce profil.")
+    const ref = docConfig(profilId, 'reinitialisation')
+    const precedent = await withTimeout(getDoc(ref))
+    const envoyeLe = precedent.exists() ? precedent.data().envoyeLe || 0 : 0
+    if (Date.now() - envoyeLe < CODE_DELAI_RENVOI_MS) {
+      throw new Error('Un code vient d\'être envoyé. Attends une minute avant d\'en redemander un.')
+    }
+    const nombre = crypto.getRandomValues(new Uint32Array(1))[0] % 1000000
+    const code = String(nombre).padStart(6, '0')
+    await withTimeout(
+      setDoc(ref, {
+        codeHash: await sha256Hex(`${profilId}:${code}`),
+        expireLe: Date.now() + CODE_VALIDITE_MS,
+        envoyeLe: Date.now(),
+        essais: 0,
+      })
+    )
+    await envoyerMail({ email, nom: trouverProfil(profilId)?.nom || '', code })
+  }, [profilId, parametres.email])
+
+  // PIN oublié, étape 2 : vérification du code puis enregistrement du nouveau PIN
+  const reinitialiserPin = useCallback(
+    async (code, nouveauPin) => {
+      const ref = docConfig(profilId, 'reinitialisation')
+      const snap = await withTimeout(getDoc(ref))
+      if (!snap.exists()) throw new Error('Aucun code en cours. Demande un nouveau code.')
+      const { codeHash, expireLe, essais = 0 } = snap.data()
+      if (Date.now() > expireLe) {
+        await deleteDoc(ref)
+        throw new Error('Ce code a expiré. Demande un nouveau code.')
+      }
+      if (essais >= CODE_ESSAIS_MAX) {
+        await deleteDoc(ref)
+        throw new Error('Trop d\'essais. Demande un nouveau code.')
+      }
+      if ((await sha256Hex(`${profilId}:${code}`)) !== codeHash) {
+        await setDoc(ref, { essais: essais + 1 }, { merge: true })
+        const restants = CODE_ESSAIS_MAX - essais - 1
+        throw new Error(
+          restants > 0 ? `Code incorrect (encore ${restants} essai${restants > 1 ? 's' : ''}).` : 'Code incorrect. Demande un nouveau code.'
+        )
+      }
+      await withTimeout(
+        setDoc(docConfig(profilId, 'securite'), {
+          pinHash: await sha256Hex(nouveauPin),
+          updatedAt: serverTimestamp(),
+        })
+      )
+      await deleteDoc(ref)
+      setEtatPin('existe')
+      marquerDeverrouille(profilId, true)
+    },
+    [profilId, marquerDeverrouille]
+  )
+
   const majParametres = useCallback(
     async (changements) => {
       await withTimeout(setDoc(docConfig(profilId, 'site'), changements, { merge: true }))
@@ -265,6 +329,8 @@ export function PinProvider({ children }) {
         etatPin,
         unlock,
         creerPin,
+        envoyerCodeReinitialisation,
+        reinitialiserPin,
         lock,
         changerPin,
         parametres,

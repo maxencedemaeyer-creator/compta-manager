@@ -4,6 +4,7 @@ import { ChevronLeft, Delete, KeyRound, Lock } from 'lucide-react'
 import { usePin } from '../context/PinContext.jsx'
 import { trouverProfil } from '../config/profils.js'
 import Chargement from './Chargement.jsx'
+import PinOublie from './PinOublie.jsx'
 
 const PIN_LENGTH = 4
 
@@ -17,6 +18,7 @@ export default function PinLock() {
   const [messageLocal, setMessageLocal] = useState('')
   const [shake, setShake] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [oubli, setOubli] = useState(false)
   const inputRef = useRef(null)
 
   useEffect(() => {
@@ -103,6 +105,9 @@ export default function PinLock() {
         Profils
       </Link>
 
+      {oubli ? (
+        <PinOublie onRetour={() => setOubli(false)} />
+      ) : (
       <div className="w-full max-w-xs flex flex-col items-center">
         <div className="w-16 h-16 rounded-2xl bg-white/15 flex items-center justify-center mb-6">
           {creation ? <KeyRound size={28} /> : <Lock size={28} />}
@@ -162,7 +167,18 @@ export default function PinLock() {
             )
           )}
         </div>
+
+        {!creation && (
+          <button
+            type="button"
+            onClick={() => setOubli(true)}
+            className="mt-8 text-sm text-white/60 hover:text-white underline-offset-4 hover:underline"
+          >
+            PIN oublié ?
+          </button>
+        )}
       </div>
+      )}
       <style>{`
         @keyframes shake {
           10%, 90% { transform: translateX(-2px); }

@@ -12,6 +12,7 @@ import {
   LayoutGrid,
   Loader2,
   Lock,
+  Mail,
   Timer,
 } from 'lucide-react'
 import { usePin } from '../context/PinContext.jsx'
@@ -114,6 +115,60 @@ function ChangerPin() {
         </button>
         <Message {...msg} />
       </form>
+    </Section>
+  )
+}
+
+// ---------- Adresse mail (pour « PIN oublié ») ----------
+function AdresseMail() {
+  const { parametres, majParametres } = usePin()
+  const [valeur, setValeur] = useState(null) // null = pas encore modifiée
+  const [enCours, setEnCours] = useState(false)
+  const [msg, setMsg] = useState({ type: '', texte: '' })
+  const actuelle = parametres.email || ''
+  const affichee = valeur ?? actuelle
+
+  async function enregistrer(e) {
+    e.preventDefault()
+    const email = affichee.trim()
+    setMsg({ type: '', texte: '' })
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return setMsg({ type: 'erreur', texte: "Cette adresse mail n'a pas l'air valide." })
+    }
+    setEnCours(true)
+    try {
+      await majParametres({ email })
+      setValeur(null)
+      setMsg({ type: 'ok', texte: email ? 'Adresse enregistrée.' : 'Adresse supprimée.' })
+    } catch (err) {
+      setMsg({ type: 'erreur', texte: err.message || "L'enregistrement a échoué." })
+    } finally {
+      setEnCours(false)
+    }
+  }
+
+  return (
+    <Section
+      icon={Mail}
+      titre="Adresse mail"
+      description="Utilisée seulement pour recevoir un code si tu oublies ton PIN."
+    >
+      <form onSubmit={enregistrer} className="flex flex-col sm:flex-row gap-3">
+        <input
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          value={affichee}
+          onChange={(e) => setValeur(e.target.value)}
+          placeholder="prenom@exemple.com"
+          className="flex-1 rounded-xl border border-emerald-900/15 bg-white px-3 py-2.5 text-emerald-950 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+        />
+        <button type="submit" className={boutonPrincipal} disabled={enCours || affichee.trim() === actuelle}>
+          {enCours ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+          Enregistrer
+        </button>
+      </form>
+      <Message {...msg} />
     </Section>
   )
 }
@@ -309,6 +364,7 @@ export default function SettingsView() {
 
         <div className="space-y-4">
           <ChangerPin />
+          <AdresseMail />
           <GererApps />
           <Verrouillage />
           {/* La sauvegarde concerne les données de Maxence (compta, généalogie, programme) */}
