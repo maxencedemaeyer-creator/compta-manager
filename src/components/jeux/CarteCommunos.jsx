@@ -17,22 +17,25 @@ const REPERES = [
 ]
 
 // Fond de carte (toutes les communes) : ne se redessine jamais
-const FondCarte = memo(function FondCarte({ carte }) {
+const FondCarte = memo(function FondCarte({ carte, actives }) {
   return (
     <>
       <g>
-        {carte.communes.map((c) => (
+        {carte.communes.map((c) => {
+          const active = !actives || actives.has(c.id)
+          return (
           <path
             key={c.id}
             d={c.chemin}
-            data-id={c.id}
-            fill="#1a2240"
-            stroke="#2c3a66"
+            data-id={active ? c.id : undefined}
+            fill={active ? (actives ? '#1f2a52' : '#1a2240') : '#080a1c'}
+            stroke={active ? (actives ? '#33437a' : '#2c3a66') : '#10142c'}
             strokeWidth="0.6"
             vectorEffect="non-scaling-stroke"
             strokeLinejoin="round"
           />
-        ))}
+          )
+        })}
       </g>
     </>
   )
@@ -48,14 +51,20 @@ const Contours = memo(function Contours({ carte }) {
   )
 })
 
-export default function CarteCommunos({ carte, essais, cible, statut, dernier, reperes, onToucher, selection }) {
+export default function CarteCommunos({ carte, essais, cible, statut, dernier, reperes, onToucher, selection, cadre, actives, echelle = 200 }) {
   const svgRef = useRef(null)
   const [vue, setVue] = useState({ k: 1, x: 0, y: 0 })
   const [largeurEcran, setLargeurEcran] = useState(360)
   const pointeurs = useRef(new Map())
   const geste = useRef(null)
-  const W = carte.largeur
-  const H = carte.hauteur
+  // Zone affichée : toute la Belgique, ou la boîte d'une province (avec une marge)
+  const [X0, Y0, W, H] = useMemo(() => {
+    if (!cadre) return [0, 0, carte.largeur, carte.hauteur]
+    const [a, b, c, d] = cadre
+    const m = Math.max(c - a, d - b) * 0.06
+    return [a - m, b - m, c - a + 2 * m, d - b + 2 * m]
+  }, [cadre, carte])
+  useEffect(() => setVue({ k: 1, x: 0, y: 0 }), [X0, Y0, W, H])
 
   // Taille réelle de la carte à l'écran (pour garder textes et boutons lisibles)
   useEffect(() => {
@@ -173,9 +182,9 @@ export default function CarteCommunos({ carte, essais, cible, statut, dernier, r
     () =>
       REPERES.map(([n, position]) => {
         const c = carte.communes.find((x) => x.fr === n)
-        return c ? { c, position } : null
+        return c && (!actives || actives.has(c.id)) ? { c, position } : null
       }).filter(Boolean),
-    [carte]
+    [carte, actives]
   )
   const couleurCible = statut === 'trouve' ? COULEUR_TROUVEE : COULEUR_REVELEE
   const montrerCible = statut === 'trouve' || statut === 'abandon'
@@ -186,9 +195,9 @@ export default function CarteCommunos({ carte, essais, cible, statut, dernier, r
     <div className="relative">
       <svg
         ref={svgRef}
-        viewBox={`0 0 ${W} ${H}`}
-        className="w-full h-auto block select-none cursor-grab active:cursor-grabbing"
-        style={{ touchAction: 'none', aspectRatio: `${W} / ${H}` }}
+        viewBox={`${X0} ${Y0} ${W} ${H}`}
+        className="h-auto block select-none cursor-grab active:cursor-grabbing mx-auto"
+        style={{ touchAction: 'none', aspectRatio: `${W} / ${H}`, width: `min(100%, calc(62dvh * ${(W / H).toFixed(4)}))` }}
         onPointerDown={surAppui}
         onPointerMove={surMouvement}
         onPointerUp={surRelache}
@@ -208,8 +217,8 @@ export default function CarteCommunos({ carte, essais, cible, statut, dernier, r
           </filter>
         </defs>
 
-        <g transform={`translate(${vue.x} ${vue.y}) scale(${vue.k})`}>
-          <FondCarte carte={carte} />
+        <g transform={`translate(${X0 + vue.x} ${Y0 + vue.y}) scale(${vue.k}) translate(${-X0} ${-Y0})`}>
+          <FondCarte carte={carte} actives={actives} />
 
           {/* Communes essayées */}
           <g>
@@ -219,7 +228,7 @@ export default function CarteCommunos({ carte, essais, cible, statut, dernier, r
                   key={id}
                   d={c.chemin}
                   data-id={id}
-                  fill={couleurChaleur(km)}
+                  fill={couleurChaleur(km, echelle)}
                   stroke="rgba(15,23,42,0.55)"
                   strokeWidth="0.8"
                   vectorEffect="non-scaling-stroke"

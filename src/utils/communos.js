@@ -248,8 +248,10 @@ function melange(c1, c2, t) {
   const bl = Math.round((a & 255) + ((b & 255) - (a & 255)) * t)
   return `rgb(${r}, ${g}, ${bl})`
 }
-export function couleurChaleur(km) {
-  const t = Math.min(1, Math.sqrt(Math.max(0, km) / 200)) * (PALETTE.length - 1)
+// echelle = distance (km) considérée comme « très loin » : 200 pour la Belgique,
+// plus petite pour une province
+export function couleurChaleur(km, echelle = 200) {
+  const t = Math.min(1, Math.sqrt(Math.max(0, km) / echelle)) * (PALETTE.length - 1)
   const i = Math.min(PALETTE.length - 2, Math.floor(t))
   return melange(PALETTE[i], PALETTE[i + 1], t - i)
 }
@@ -308,5 +310,114 @@ export function statistiques(parties, aujourdhui) {
     moyenne,
     record,
     tranches,
+  }
+}
+
+// =============================================================
+//  Mode « Provinces » (entraînement)
+// =============================================================
+
+// « Province de Namur » → « Namur », « Région de Bruxelles-Capitale » → « Bruxelles-Capitale »
+export function nomCourtProvince(p) {
+  return p.replace(/^Province (de |du |d['’])/, '').replace(/^Région de /, '')
+}
+
+export function slugProvince(p) {
+  return normaliser(nomCourtProvince(p))
+}
+
+// Les 10 provinces + la Région de Bruxelles-Capitale
+export function listeProvinces(carte) {
+  const parNom = new Map()
+  for (const c of carte.communes) {
+    if (!parNom.has(c.prov)) parNom.set(c.prov, [])
+    parNom.get(c.prov).push(c)
+  }
+  return [...parNom.entries()]
+    .map(([nomProv, communes]) => {
+      let a = Infinity, b = Infinity, cc = -Infinity, d = -Infinity
+      for (const c of communes) {
+        a = Math.min(a, c.boite[0]); b = Math.min(b, c.boite[1])
+        cc = Math.max(cc, c.boite[2]); d = Math.max(d, c.boite[3])
+      }
+      const diagonaleKm = Math.hypot(cc - a, d - b) * carte.unite
+      return {
+        nom: nomProv,
+        court: nomCourtProvince(nomProv),
+        slug: slugProvince(nomProv),
+        communes,
+        ids: new Set(communes.map((c) => c.id)),
+        boite: [a, b, cc, d],
+        echelle: Math.max(15, diagonaleKm * 0.75),
+        chemin: communes.map((c) => c.chemin).join(''),
+      }
+    })
+    .sort((x, y) => x.court.localeCompare(y.court, 'fr'))
+}
+
+// Choix d'une commune à trouver : on évite les dernières cibles et on
+// favorise les communes jamais trouvées (pour apprendre toute la province)
+export function tirerCible(province, partiesProvince) {
+  const finies = [...partiesProvince].sort((a, b) => (b.debut || 0) - (a.debut || 0))
+  const recentes = new Set(finies.slice(0, Math.min(6, province.communes.length - 1)).map((p) => p.cible))
+  const trouvees = new Set(finies.filter((p) => p.trouve).map((p) => p.cible))
+  const candidats = province.communes.filter((c) => !recentes.has(c.id))
+  const poids = candidats.map((c) => (trouvees.has(c.id) ? 1 : 3))
+  let r = Math.random() * poids.reduce((s, x) => s + x, 0)
+  for (let i = 0; i < candidats.length; i++) {
+    r -= poids[i]
+    if (r <= 0) return candidats[i]
+  }
+  return candidats[candidats.length - 1] || province.communes[0]
+}
+
+const NIVEAUX = [
+  { min: 95, nom: 'Légende locale', emoji: '👑' },
+  { min: 80, nom: 'Expert', emoji: '🏆' },
+  { min: 60, nom: 'Connaisseur', emoji: '🎓' },
+  { min: 40, nom: 'Habitué', emoji: '🧭' },
+  { min: 20, nom: 'Explorateur', emoji: '🥾' },
+  { min: 0, nom: 'Touriste', emoji: '📸' },
+]
+export function niveauConnaissance(score) {
+  return NIVEAUX.find((n) => score >= n.min)
+}
+
+// Pourcentage de connaissance d'une province (0 à 100) :
+//  40 % « communes connues » : communes différentes déjà proposées (tous modes confondus)
+//  40 % « rapidité »        : à quel point tu trouves vite (10 dernières parties)
+//  20 % « expérience »      : nombre de parties jouées dans la province (max à 15)
+export function connaissanceProvince(province, partiesJour, partiesLibres) {
+  const N = province.communes.length
+  const connues = new Set()
+  for (const p of [...partiesJour, ...partiesLibres]) {
+    for (const id of p.essais || []) if (province.ids.has(id)) connues.add(id)
+  }
+  const jouees = partiesLibres
+    .filter((p) => p.province === province.nom && (p.trouve || p.abandon))
+    .sort((a, b) => (b.debut || 0) - (a.debut || 0))
+  const gagnees = jouees.filter((p) => p.trouve)
+  const attendu = Math.max(4, N * 0.35)
+  const recentes = jouees.slice(0, 10)
+  const rapidite = recentes.length
+    ? recentes.reduce((s, p) => s + (p.trouve ? Math.min(1, Math.max(0, 1 - ((p.essais || []).length - 1) / attendu)) : 0), 0) /
+      recentes.length
+    : 0
+  const couverture = connues.size / N
+  const experience = Math.min(1, jouees.length / 15)
+  const score = Math.round(100 * (0.4 * couverture + 0.4 * rapidite + 0.2 * experience))
+  const essais = gagnees.map((p) => (p.essais || []).length)
+  return {
+    score,
+    niveau: niveauConnaissance(score),
+    couverture,
+    rapidite,
+    experience,
+    connues: connues.size,
+    total: N,
+    jouees: jouees.length,
+    gagnees: gagnees.length,
+    moyenne: essais.length ? essais.reduce((s, n) => s + n, 0) / essais.length : null,
+    record: essais.length ? Math.min(...essais) : null,
   }
 }

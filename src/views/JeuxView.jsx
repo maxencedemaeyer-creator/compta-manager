@@ -12,7 +12,7 @@ const JEUX = [
   {
     id: 'communos',
     titre: 'COMMUNOS',
-    texte: 'Trouve la commune belge du jour',
+    texte: 'Commune du jour + entraînement par province',
     couleur: 'from-fuchsia-500 via-purple-500 to-indigo-600',
     lueur: 'shadow-fuchsia-500/40',
     icon: MapPinned,
