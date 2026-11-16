@@ -24,7 +24,7 @@ import {
 //  - onEnregistrer(nouveauxIds, trouve) / onAbandonner()
 //  - finPartie  : contenu affiché quand la partie est terminée
 // =============================================================
-export default function PartieCommunos({ carte, cle, cible, zone, idsEssaisFirebase, abandonFirebase, onEnregistrer, onAbandonner, finPartie }) {
+export default function PartieCommunos({ carte, cle, cible, zone, idsEssaisFirebase, abandonFirebase, onEnregistrer, onAbandonner, finPartie, infoZone = null }) {
   const [saisie, setSaisie] = useState('')
   const [message, setMessage] = useState(null) // { texte, ton }
   const [tremble, setTremble] = useState(false)
@@ -236,25 +236,20 @@ export default function PartieCommunos({ carte, cle, cible, zone, idsEssaisFireb
       </div>
 
       {/* Options de la carte */}
-      <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+      <div className="mt-3 flex items-center gap-2 text-sm">
         <button
           type="button"
           onClick={() => setReperes((r) => !r)}
-          className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 border transition ${reperes ? 'bg-white/10 border-white/20' : 'bg-transparent border-white/10 text-white/50'}`}
+          className={`shrink-0 inline-flex items-center gap-1.5 rounded-xl px-2.5 py-2 border transition ${reperes ? 'bg-white/10 border-white/20' : 'bg-transparent border-white/10 text-white/50'}`}
         >
           <IconeCarte size={15} />
           Repères
         </button>
-        <button type="button" onClick={() => setFenetre('index')} className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 border bg-white/10 border-white/20">
+        <button type="button" onClick={() => setFenetre('index')} className="shrink-0 inline-flex items-center gap-1.5 rounded-xl px-2.5 py-2 border bg-white/10 border-white/20">
           <BookA size={15} />
           Index
         </button>
-        {!fini && essais.length > 0 && (
-          <button type="button" onClick={() => setFenetre('abandon')} className="ml-auto inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-white/50 hover:text-white/80">
-            <Flag size={15} />
-            Abandonner
-          </button>
-        )}
+        {infoZone && <div className="flex-1 min-w-0 flex justify-end">{infoZone}</div>}
       </div>
 
       {erreurSauvegarde && (
@@ -325,6 +320,16 @@ export default function PartieCommunos({ carte, cle, cible, zone, idsEssaisFireb
           <span className="inline-flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm" style={{ background: COULEUR_REVELEE }} />Révélée</span>
         </div>
       </div>
+
+      {/* Abandonner : rarement utilisé, donc tout en bas */}
+      {!fini && essais.length > 0 && (
+        <div className="mt-6 flex justify-center">
+          <button type="button" onClick={() => setFenetre('abandon')} className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm text-white/40 hover:text-white/75 border border-white/10 hover:border-white/20">
+            <Flag size={14} />
+            Abandonner la partie
+          </button>
+        </div>
+      )}
 
       {fenetre === 'index' && (
         <Index

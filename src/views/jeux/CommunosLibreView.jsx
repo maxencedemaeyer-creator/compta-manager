@@ -81,29 +81,6 @@ export default function CommunosLibreView() {
       </EnTete>
       <OngletsModes actif={province ? 'provinces' : 'belgique'} />
 
-      {/* Carte d'identité de la zone */}
-      <div className="mt-4 flex items-center gap-3 rounded-2xl bg-white/[0.05] border border-white/10 p-3">
-        {connaissance ? (
-          <AnneauConnaissance score={connaissance.score} taille={52} />
-        ) : (
-          <span className="w-[52px] h-[52px] rounded-full bg-white/[0.06] flex items-center justify-center text-2xl">🇧🇪</span>
-        )}
-        <div className="min-w-0 flex-1">
-          <p className="font-black text-lg leading-tight truncate">{province ? province.court : 'Toute la Belgique'}</p>
-          <p className="text-xs text-white/55">
-            {connaissance
-              ? `${connaissance.niveau.emoji} ${connaissance.niveau.nom} · ${connaissance.connues}/${connaissance.total} communes connues`
-              : `${carte.communes.length} communes · partie libre, sans limite`}
-          </p>
-        </div>
-        {province && (
-          <Link to="/maxence/jeux/communos/provinces" className="shrink-0 inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs bg-white/[0.06] border border-white/10 hover:bg-white/10">
-            <LayoutGrid size={14} />
-            Changer
-          </Link>
-        )}
-      </div>
-
       <PartieCommunos
         carte={carte}
         cle={partie.id}
@@ -113,6 +90,31 @@ export default function CommunosLibreView() {
         abandonFirebase={!!doc?.abandon}
         onEnregistrer={(essais, trouve) => enregistrerLibre(partie.id, { ...champsCommuns, essais, trouve, abandon: false })}
         onAbandonner={(essais) => enregistrerLibre(partie.id, { ...champsCommuns, essais, trouve: false, abandon: true })}
+        infoZone={
+          province ? (
+            <Link
+              to="/maxence/jeux/communos/provinces"
+              title="Changer de province"
+              className="max-w-full min-w-0 flex items-center gap-2 rounded-xl pl-1.5 pr-2 py-1 bg-white/[0.06] border border-white/10 hover:bg-white/10"
+            >
+              <AnneauConnaissance score={connaissance.score} taille={32} epaisseur={3.5} />
+              <span className="min-w-0 flex-1 leading-tight">
+                <span className="block font-bold text-[13px] truncate">{province.court}</span>
+                <span className="block text-[10px] text-white/50 truncate">{connaissance.niveau.emoji} {connaissance.niveau.nom} · {connaissance.connues}/{connaissance.total}</span>
+              </span>
+              <LayoutGrid size={14} className="shrink-0 text-white/40" />
+            </Link>
+          ) : (
+            <Link
+              to="/maxence/jeux/communos/provinces"
+              title="Choisir une province"
+              className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-[13px] bg-white/[0.06] border border-white/10 hover:bg-white/10"
+            >
+              🇧🇪 <span className="font-bold">Belgique</span>
+              <LayoutGrid size={14} className="text-white/40" />
+            </Link>
+          )
+        }
         finPartie={({ statut, nbEssais }) => (
           <div className={`cm-apparait mb-4 rounded-3xl p-[2px] bg-gradient-to-r ${statut === 'trouve' ? 'from-emerald-400 via-cyan-400 to-fuchsia-500' : 'from-violet-500 to-fuchsia-500'}`}>
             <div className="rounded-[22px] bg-[#0d0a24] p-4 sm:p-5">
