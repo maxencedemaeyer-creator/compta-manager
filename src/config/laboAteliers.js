@@ -38,8 +38,8 @@ export const PAILLASSES = [
   { id: 'dissection', code: 'A8', titre: 'Le scalpel', texte: 'Dissèque couche par couche', icon: Microscope, couleur: '#FF8A95', attendus: [119, 120] },
   { id: 'explorateur', code: 'A9', titre: 'L’explorateur 3D', texte: 'Le vrai corps humain, à faire tourner', icon: Rotate3d, couleur: '#9DE7C2', attendus: [112, 116] },
   { id: 'urgences', code: 'A10', titre: 'Service des urgences', texte: 'De vraies radios de fractures', icon: Siren, couleur: '#FF6B7A', attendus: [112, 115] },
-  { id: 'cousins', code: 'A12', titre: 'Les cousins cachés', texte: 'Mêmes os chez l’oiseau, la baleine…', icon: Bird, couleur: '#7FE0B5', attendus: [112] },
   { id: 'defi', code: 'A11', titre: 'Défi éclair', texte: '60 secondes, tableau des records', icon: Zap, couleur: '#FFE45E', attendus: [112, 113, 116] },
+  { id: 'cousins', code: 'A12', titre: 'Les cousins cachés', texte: 'Mêmes os chez l’oiseau, la baleine…', icon: Bird, couleur: '#7FE0B5', attendus: [112] },
 ]
 
 export const PAILLASSE = Object.fromEntries(PAILLASSES.map((p) => [p.id, p]))
