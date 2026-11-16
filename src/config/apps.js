@@ -1,4 +1,4 @@
-import { BookOpenCheck, Gamepad2, GitBranch, MessageSquarePlus, Projector, Wallet } from 'lucide-react'
+import { BookOpenCheck, Gamepad2, GitBranch, MessageSquarePlus, Projector, Scissors, Wallet } from 'lucide-react'
 
 // =============================================================
 //  Liste des applications du site (adresses sous /maxence).
@@ -8,6 +8,8 @@ import { BookOpenCheck, Gamepad2, GitBranch, MessageSquarePlus, Projector, Walle
 //  règlent ensuite directement dans Paramètres.
 //  pourTous: true = l'appli est dans chaque espace, à l'adresse
 //  /<profil>/<id> (ex. /julie/requetes).
+//  profils: ['julie'] = appli réservée à ces profils (même si
+//  un profil a apps: 'toutes').
 // =============================================================
 export const APPS = [
   {
@@ -51,6 +53,15 @@ export const APPS = [
     couleur: 'from-fuchsia-500 to-cyan-400',
   },
   {
+    id: 'couture',
+    to: '/julie/couture',
+    nom: 'Couture',
+    description: 'Ma galerie et mes commandes',
+    icon: Scissors,
+    couleur: 'from-pink-300 via-pink-400 to-rose-500',
+    profils: ['julie'],
+  },
+  {
     id: 'requetes',
     to: '/maxence/requetes',
     nom: 'Requêtes',
@@ -75,6 +86,7 @@ export function appsDuProfil(profil, ordre = []) {
   const toutes = appsOrdonnees(ordre)
   if (!profil) return []
   return toutes
+    .filter((a) => !a.profils || a.profils.includes(profil.id))
     .filter((a) => profil.apps === 'toutes' || a.pourTous || profil.apps.includes(a.id))
     .map((a) => (a.pourTous ? { ...a, to: `/${profil.id}/${a.id}` } : a))
 }

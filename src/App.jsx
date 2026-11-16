@@ -26,6 +26,10 @@ import JeuxView from './views/JeuxView.jsx'
 import CommunosView from './views/jeux/CommunosView.jsx'
 import CommunosProvincesView from './views/jeux/CommunosProvincesView.jsx'
 import CommunosLibreView from './views/jeux/CommunosLibreView.jsx'
+import CoutureGalerieView from './views/couture/CoutureGalerieView.jsx'
+import CoutureArticleView from './views/couture/CoutureArticleView.jsx'
+import CoutureAtelierView from './views/couture/CoutureAtelierView.jsx'
+import CodeAcces from './components/couture/CodeAcces.jsx'
 
 // Chaque espace (/maxence, /julie…) est protégé par le code PIN de son profil
 // (une seule saisie par session), puis attend la connexion anonyme à Firebase.
@@ -90,6 +94,15 @@ export default function App() {
         <Route path="/maxence/jeux/communos/libre" element={<Protege><CommunosLibreView /></Protege>} />
         <Route path="/maxence/jeux/communos/provinces" element={<Protege><CommunosProvincesView /></Protege>} />
         <Route path="/maxence/jeux/communos/provinces/:province" element={<Protege><CommunosLibreView /></Protege>} />
+
+        {/* ================= Espace Julie ================= */}
+        {/* Application Couture : l'atelier (créations + centrale des commandes) */}
+        <Route path="/julie/couture" element={<Protege><CoutureAtelierView /></Protege>} />
+        <Route path="/julie/couture/:onglet" element={<Protege><CoutureAtelierView /></Protege>} />
+
+        {/* Galerie couture publique, à partager (pas de PIN, juste le code « julie ») */}
+        <Route path="/couture" element={<CodeAcces><CoutureGalerieView /></CodeAcces>} />
+        <Route path="/couture/:articleId" element={<CodeAcces><CoutureArticleView /></CodeAcces>} />
 
         {/* ================= Tous les profils ================= */}
         {/* Accueil et paramètres de chaque profil (/maxence, /julie, /julie/settings…) */}

@@ -29,7 +29,7 @@ export const PROFILS = [
   {
     id: 'julie',
     nom: 'Julie',
-    apps: [],
+    apps: ['couture'],
     couleur: 'from-pink-400 via-fuchsia-400 to-violet-500',
     accent: 'text-emerald-400',
     theme: 'julie',
