@@ -465,7 +465,7 @@ export default function Corps3D(props) {
         }
         const ecran = pos.clone().project(camera)
         div.style.display = 'block'
-        div.style.transform = `translate(-50%, -50%) translate(${((ecran.x + 1) / 2) * el.clientWidth}px, ${((1 - ecran.y) / 2) * el.clientHeight}px)`
+        div.style.transform = `translate(-50%, -50%) translate(${((ecran.x + 1) / 2) * el.clientWidth + (def.decalage ? -16 : 0)}px, ${((1 - ecran.y) / 2) * el.clientHeight + (def.decalage ? -14 : 0)}px)`
       })
     }
     boucle()
