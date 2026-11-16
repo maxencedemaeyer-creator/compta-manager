@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { addDoc, collection, onSnapshot, query, serverTimestamp, where } from 'firebase/firestore'
-import { Brain, Ear, Eye, RotateCcw, Send } from 'lucide-react'
+import { addDoc, collection, limit, onSnapshot, orderBy, query, serverTimestamp, where } from 'firebase/firestore'
+import { Brain, Ear, Eye, RotateCcw, Send, Trophy } from 'lucide-react'
 import { db } from '../../firebase/config.js'
 import { usePin } from '../../context/PinContext.jsx'
 import CadreJeu, { Bouton, Carte, Eclat, melanger } from '../../components/labo/CadreJeu.jsx'
@@ -67,6 +67,7 @@ export default function ReflexesView() {
   const [pseudo, setPseudo] = useState('')
   const [envoye, setEnvoye] = useState(false)
   const [classe, setClasse] = useState([])
+  const [records, setRecords] = useState({ lumiere: [], son: [] })
   const [eclat, setEclat] = useState({ message: '', cle: 0 })
   const [outils, setOutils] = useState(null)
   const minuteur = useRef(null)
@@ -77,6 +78,19 @@ export default function ReflexesView() {
     if (!authReady) return
     const q = query(collection(db, COLLECTION), where('seance', '==', aujourdhui()))
     return onSnapshot(q, (snap) => setClasse(snap.docs.map((d) => d.data())), () => {})
+  }, [authReady])
+
+  // Records de tous les temps (ils restent d'une séance à l'autre)
+  useEffect(() => {
+    if (!authReady) return
+    const arrets = ['lumiere', 'son'].map((cle) =>
+      onSnapshot(
+        query(collection(db, COLLECTION), orderBy(cle, 'asc'), limit(5)),
+        (snap) => setRecords((r) => ({ ...r, [cle]: snap.docs.map((d) => d.data()).filter((x) => x[cle] > 0) })),
+        () => {}
+      )
+    )
+    return () => arrets.forEach((a) => a())
   }, [authReady])
 
   useEffect(() => () => clearTimeout(minuteur.current), [])
@@ -114,6 +128,11 @@ export default function ReflexesView() {
     }
     if (etat === 'go') {
       const ms = Math.round(performance.now() - depart.current)
+      // Moins de 100 ms : impossible pour un humain, c'est une anticipation
+      if (ms < 100) {
+        setEtat('trop-tot')
+        return
+      }
       const liste = [...temps[stimulus], ms]
       setTemps((t) => ({ ...t, [stimulus]: liste }))
       if (liste.length >= ESSAIS) {
@@ -140,10 +159,47 @@ export default function ReflexesView() {
         createdAt: serverTimestamp(),
       })
       setEnvoye(true)
+      const battu = ['lumiere', 'son'].filter((c) => !records[c][0] || mediane(temps[c]) < records[c][0][c])
+      if (battu.length) setEclat((x) => ({ message: 'NOUVEAU RECORD !', cle: x.cle + 1 }))
     } catch (e) {
       console.error(e)
     }
   }
+
+  const tableauRecords = (
+    <Carte couleur="rgba(255,210,122,.45)">
+      <p className="labo-mono flex items-center gap-1.5 text-[11px] text-[#FFD27A]">
+        <Trophy size={13} /> RECORDS DU LABO · DE TOUS LES TEMPS
+      </p>
+      <div className="mt-2 grid grid-cols-2 gap-3">
+        {[
+          ['lumiere', 'Lumière', Eye],
+          ['son', 'Son', Ear],
+        ].map(([cle, nom, Icone]) => (
+          <div key={cle}>
+            <p className="flex items-center gap-1 text-xs text-[#B9C1E3]">
+              <Icone size={13} /> {nom}
+            </p>
+            {records[cle].length === 0 ? (
+              <p className="mt-1 text-xs text-[#8A93B8]">Pas encore de record</p>
+            ) : (
+              <ol className="mt-1 space-y-1">
+                {records[cle].map((r, i) => (
+                  <li key={i} className="flex justify-between rounded-lg bg-[#070B16]/60 px-2 py-1 text-xs">
+                    <span className="truncate text-[#E8ECFF]">
+                      {`${i + 1}. `}
+                      {r.pseudo}
+                    </span>
+                    <span className="labo-mono text-[#FFD27A]">{r[cle]} ms</span>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
+        ))}
+      </div>
+    </Carte>
+  )
 
   const moyClasse = (cle) => (classe.length ? Math.round(classe.reduce((s, r) => s + (r[cle] || 0), 0) / classe.length) : 0)
   const maxBarre = Math.max(400, ...classe.map((r) => Math.max(r.lumiere, r.son)))
@@ -243,6 +299,7 @@ export default function ReflexesView() {
               <span className="labo-mono text-sm text-[#B9C1E3]">dernier : {temps[stimulus][temps[stimulus].length - 1]} ms</span>
             )}
           </button>
+          {tableauRecords}
         </>
       )}
 
@@ -282,6 +339,7 @@ export default function ReflexesView() {
           ) : (
             <p className="text-center text-sm text-[#9DFF8A]">Résultats envoyés au tableau de la classe.</p>
           )}
+          {tableauRecords}
           <Carte couleur="rgba(255,210,122,.45)">
             <p className="labo-mono text-[11px] text-[#FFD27A]">LA CLASSE AUJOURD’HUI · {classe.length} ÉLÈVE(S) · EN DIRECT</p>
             {classe.length > 0 && (
