@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, ChevronLeft, ChevronRight, Heart, Loader2, Share2 } from 'lucide-react'
 import { StylesCouture, boutonRose } from '../../components/couture/Vichy.jsx'
 import EnVeuxUnForm from '../../components/couture/EnVeuxUnForm.jsx'
-import { useArticleCouture } from '../../hooks/useCouture.js'
+import { baseGalerie, useArticleCouture } from '../../hooks/useCouture.js'
 
 // =============================================================
 //  Page d'une création (/couture/:articleId) : photos en grand,
@@ -51,7 +51,7 @@ export default function CoutureArticleView() {
       <div className="max-w-5xl mx-auto px-4 sm:px-8 pt-[max(1rem,env(safe-area-inset-top))] pb-32 sm:pb-16">
         <div className="flex items-center justify-between py-2">
           <Link
-            to="/couture"
+            to={baseGalerie() || '/'}
             className="inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3.5 h-10 text-sm font-medium text-pink-800 ring-1 ring-pink-100 shadow-sm hover:bg-white"
           >
             <ArrowLeft size={16} /> Créations
@@ -74,7 +74,7 @@ export default function CoutureArticleView() {
         ) : !disponible ? (
           <div className="py-24 text-center">
             <p className="couture-titre text-3xl text-pink-900">Cette création n’est plus disponible</p>
-            <Link to="/couture" className={`${boutonRose} mt-6`}>
+            <Link to={baseGalerie() || '/'} className={`${boutonRose} mt-6`}>
               Voir les autres créations
             </Link>
           </div>

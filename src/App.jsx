@@ -30,6 +30,7 @@ import CoutureGalerieView from './views/couture/CoutureGalerieView.jsx'
 import CoutureArticleView from './views/couture/CoutureArticleView.jsx'
 import CoutureAtelierView from './views/couture/CoutureAtelierView.jsx'
 import CodeAcces from './components/couture/CodeAcces.jsx'
+import { estSiteGalerie } from './hooks/useCouture.js'
 
 // Chaque espace (/maxence, /julie…) est protégé par le code PIN de son profil
 // (une seule saisie par session), puis attend la connexion anonyme à Firebase.
@@ -54,6 +55,24 @@ function VersMaxence() {
 const ANCIENNES_PAGES_COMPTA = ['cours', 'velo', 'etudes', 'medecin', 'perso']
 
 export default function App() {
+  // Adresse neutre de la galerie couture (couture-julie.vercel.app) :
+  // seule la galerie existe, le reste du site est invisible.
+  if (estSiteGalerie()) {
+    return (
+      <>
+        <MiseAJour />
+        <CouleurBarre />
+        <Routes>
+          <Route path="/" element={<CodeAcces><CoutureGalerieView /></CodeAcces>} />
+          <Route path="/couture" element={<Navigate to="/" replace />} />
+          <Route path="/couture/:articleId" element={<CodeAcces><CoutureArticleView /></CodeAcces>} />
+          <Route path="/:articleId" element={<CodeAcces><CoutureArticleView /></CodeAcces>} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </>
+    )
+  }
+
   return (
     <>
       {/* Recharge le site tout seul quand une nouvelle version est déployée */}

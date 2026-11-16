@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { usePin } from '../context/PinContext.jsx'
+import { estSiteGalerie } from '../hooks/useCouture.js'
 
 // =============================================================
 //  Couleur de la barre d'état de l'iPhone (heure, batterie…)
@@ -12,7 +13,7 @@ const FOND_PIN = { maxence: '#047857', julie: '#f6aad2' }
 
 function couleurPour(pathname, profilId, unlocked) {
   // Application Couture (galerie publique et atelier de Julie) : fond Vichy pastel
-  if (pathname.startsWith('/couture') || (unlocked && pathname.startsWith('/julie/couture'))) return '#fffafc'
+  if (estSiteGalerie() || pathname.startsWith('/couture') || (unlocked && pathname.startsWith('/julie/couture'))) return '#fffafc'
   if (!profilId) return CREME.maxence
   if (!unlocked) return FOND_PIN[profilId] || FOND_PIN.maxence
   if (pathname.includes('/jeux')) return '#07031a'

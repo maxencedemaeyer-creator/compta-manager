@@ -21,7 +21,7 @@ function IconeWhatsApp({ size = 18 }) {
 //  « Créations » · bouton appareil photo · « Commandes ».
 //  Le bouton appareil photo ouvre directement la caméra, puis
 //  le formulaire de la nouvelle création.
-//  Lien public à partager : /couture (code d'accès : julie)
+//  Lien public à partager : https://couture-julie.vercel.app (code d'accès : julie)
 // =============================================================
 export default function CoutureAtelierView() {
   const { onglet } = useParams()

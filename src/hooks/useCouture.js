@@ -37,8 +37,15 @@ const ref = (nom, id) => doc(db, 'utilisateurs', PROFIL, nom, id)
 
 export const MAX_PHOTOS = 8
 
+// Adresse « neutre » de la galerie : 2e domaine du même projet Vercel
+// (Vercel → Settings → Domains). Sur cette adresse, seule la galerie existe.
+export const DOMAINE_GALERIE = 'couture-julie.vercel.app'
+export const estSiteGalerie = () => window.location.hostname === DOMAINE_GALERIE
+// Début des adresses de la galerie : '' sur couture-julie.vercel.app, '/couture' sur le site principal
+export const baseGalerie = () => (estSiteGalerie() ? '' : '/couture')
+
 // Lien public à partager aux copines, et son code d'accès (en minuscules)
-export const lienGalerie = () => `${window.location.origin}/couture`
+export const lienGalerie = () => `https://${DOMAINE_GALERIE}`
 export const CODE_GALERIE = 'julie'
 
 // Message WhatsApp d'invitation (lien + code)

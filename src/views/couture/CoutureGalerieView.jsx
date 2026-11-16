@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Heart, Images, Loader2, Scissors } from 'lucide-react'
 import { BandeauVichy, Etiquette, StylesCouture } from '../../components/couture/Vichy.jsx'
-import { enMs, useArticlesCouture } from '../../hooks/useCouture.js'
+import { baseGalerie, enMs, useArticlesCouture } from '../../hooks/useCouture.js'
 
 // Une création est « Nouveau » pendant 21 jours
 const NOUVEAU_MS = 21 * 24 * 3600 * 1000
@@ -58,7 +58,7 @@ export default function CoutureGalerieView() {
               {articles.map((a, i) => (
                 <Link
                   key={a.id}
-                  to={`/couture/${a.id}`}
+                  to={`${baseGalerie()}/${a.id}`}
                   className="couture-apparait group block rounded-[1.6rem] bg-white p-1.5 shadow-[0_10px_30px_-18px_rgba(131,24,67,0.45)] ring-1 ring-pink-100 active:scale-[0.98] sm:hover:-translate-y-1 transition-transform"
                   style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}
                 >
