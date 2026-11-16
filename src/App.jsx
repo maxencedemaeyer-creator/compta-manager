@@ -47,6 +47,7 @@ const LABO_JEUX = {
   reflexes: lazy(() => import('./views/labo/ReflexesView.jsx')),
   dissection: lazy(() => import('./views/labo/DissectionView.jsx')),
   explorateur: lazy(() => import('./views/labo/ExplorateurView.jsx')),
+  cousins: lazy(() => import('./views/labo/CousinsView.jsx')),
   urgences: lazy(() => import('./views/labo/UrgencesView.jsx')),
   defi: lazy(() => import('./views/labo/DefiView.jsx')),
 }
