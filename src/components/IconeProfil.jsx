@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { trouverProfil } from '../config/profils.js'
+import { estSiteGalerie } from '../hooks/useCouture.js'
 
 // =============================================================
 //  Icône du site (onglet du navigateur + écran d'accueil de
@@ -17,7 +18,8 @@ const VERSION = 'v=3'
 const PAGES_DE = { couture: 'julie' }
 
 function choisir(pathname) {
-  const premier = (pathname.split('/')[1] || '').toLowerCase()
+  // Galerie couture sur son adresse à part (couture-julie.vercel.app) → icône de Julie
+  const premier = estSiteGalerie() ? 'couture' : (pathname.split('/')[1] || '').toLowerCase()
   const profil = trouverProfil(PAGES_DE[premier] || premier)
   if (profil?.icone) return { dossier: profil.icone, nom: profil.nom }
   return { dossier: 'accueil', nom: 'Accueil' }

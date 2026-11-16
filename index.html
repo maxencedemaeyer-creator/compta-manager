@@ -28,6 +28,8 @@
         var ESPACES = { maxence: 'Maxence', julie: 'Julie', couture: 'Julie' }
         var DOSSIERS = { couture: 'julie' }
         var premier = (location.pathname.split('/')[1] || '').toLowerCase()
+        // Galerie couture sur son adresse à part (couture-julie.vercel.app) → icône de Julie
+        if (location.hostname === 'couture-julie.vercel.app') premier = 'couture'
         if (!ESPACES[premier]) return
         var dossier = '/icons/' + (DOSSIERS[premier] || premier) + '/'
         document.getElementById('icone-svg').href = dossier + 'favicon.svg?v=3'
