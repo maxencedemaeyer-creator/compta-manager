@@ -37,9 +37,9 @@ function humain() {
 }
 function chauveSouris() {
   return {
-    bras: [['humerus', 22, 0.6, 8]],
-    radius: { dy: 0, seg: ['radius', 36, 2.2] },
-    cubitus: { dy: -0.9, recul: 1, seg: ['cubitus', 10, 1.4] },
+    bras: [['humerus', 22, 1.2, 8]],
+    radius: { dy: 0, seg: ['radius', 36, 1.1] },
+    cubitus: { dy: -0.9, recul: 1, seg: ['cubitus', 10, 0.7] },
     carpes: 0.7,
     doigts: [
       { base: [0.3, 1.2], angle: 55, os: [['mc1', 2.5, 1.0], ['p11', 2.5, 1.0], ['p13', 2, 1.2]] },
