@@ -97,7 +97,7 @@ export default function CoutureAtelierView() {
             href={lienWhatsApp()}
             target="_blank"
             rel="noreferrer"
-            className="mt-4 flex items-center justify-center gap-2 rounded-2xl bg-[#25D366] px-4 py-3.5 text-[15px] font-semibold text-white shadow-md shadow-green-600/20 active:scale-[0.98] transition"
+            className="mt-4 flex items-center justify-center gap-2 rounded-2xl bg-pink-500 px-4 py-3.5 text-[15px] font-semibold text-white shadow-lg shadow-pink-500/25 active:scale-[0.98] transition"
           >
             <IconeWhatsApp /> Partager ma galerie
           </a>
