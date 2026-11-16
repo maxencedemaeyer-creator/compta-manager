@@ -33,7 +33,7 @@ const ENTREES = [
 
 export default function ProjectionView() {
   return (
-    <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
+    <div className="min-h-dvh bg-slate-950 text-white relative overflow-hidden">
       <div className="pointer-events-none absolute -top-40 right-0 w-96 h-96 rounded-full bg-violet-600/25 blur-3xl" />
       <div className="pointer-events-none absolute bottom-0 -left-32 w-80 h-80 rounded-full bg-amber-500/15 blur-3xl" />
 

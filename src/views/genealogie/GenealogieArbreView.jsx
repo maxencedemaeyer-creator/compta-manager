@@ -126,7 +126,7 @@ export default function GenealogieArbreView() {
 
   if (erreur) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center gap-3 p-6 text-center">
+      <div className="min-h-dvh bg-slate-950 text-white flex flex-col items-center justify-center gap-3 p-6 text-center">
         <p className="text-rose-300">Impossible de charger l'arbre.</p>
         <Link to="/maxence/genealogie" className="text-sm text-white/60 underline">
           Retour à mes arbres
@@ -137,7 +137,7 @@ export default function GenealogieArbreView() {
 
   if (meta === false) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center gap-3 p-6">
+      <div className="min-h-dvh bg-slate-950 text-white flex flex-col items-center justify-center gap-3 p-6">
         <p>Cet arbre n'existe plus.</p>
         <Link to="/maxence/genealogie" className="text-sm text-white/60 underline">
           Retour à mes arbres
@@ -148,7 +148,7 @@ export default function GenealogieArbreView() {
 
   if (chargement || !arbre || !racine) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white/60 flex items-center justify-center gap-2 text-sm">
+      <div className="min-h-dvh bg-slate-950 text-white/60 flex items-center justify-center gap-2 text-sm">
         <Loader2 size={18} className="animate-spin" />
         Chargement de l'arbre…
       </div>

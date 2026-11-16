@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { Lock, Plus, Settings, Users } from 'lucide-react'
 import { usePin } from '../context/PinContext.jsx'
 import { appsDuProfil } from '../config/apps.js'
+import Signature from '../components/Signature.jsx'
 import { trouverProfil } from '../config/profils.js'
 
 // =============================================================
@@ -30,12 +31,12 @@ export default function HomeView() {
   })
 
   return (
-    <div className="min-h-screen bg-creme text-emerald-950 relative overflow-hidden">
+    <div className="min-h-dvh bg-creme text-emerald-950 relative overflow-hidden">
       {/* Formes douces en arrière-plan */}
       <div className="blob pointer-events-none absolute -top-32 -right-24 w-80 h-80 sm:w-[30rem] sm:h-[30rem] rounded-full bg-emerald-300/40 blur-3xl" />
       <div className="blob pointer-events-none absolute bottom-0 -left-32 w-80 h-80 rounded-full bg-douceur/50 blur-3xl" />
 
-      <div className="relative max-w-3xl mx-auto px-5 sm:px-8 pt-6 sm:pt-10 pb-16 min-h-screen flex flex-col">
+      <div className="relative max-w-3xl mx-auto px-5 sm:px-8 pt-5 sm:pt-10 pb-6 sm:pb-10 min-h-dvh flex flex-col">
         <div className="flex items-center justify-between">
           <p className="text-sm text-emerald-900/60 first-letter:uppercase">{date}</p>
           <div className="flex items-center gap-2">
@@ -67,53 +68,59 @@ export default function HomeView() {
         </div>
 
         {/* Nom */}
-        <header className="mt-14 sm:mt-20 mb-12 sm:mb-16">
-          <p className="text-lg text-emerald-900/60">{salutation()},</p>
-          <h1 className="nom-profil font-display text-[3.75rem] leading-[0.95] sm:text-8xl font-semibold tracking-tight text-emerald-900">
+        <header className="mt-8 sm:mt-20 mb-7 sm:mb-16">
+          <p className="text-base sm:text-lg text-emerald-900/60">{salutation()},</p>
+          <h1 className="nom-profil font-display text-[3.5rem] leading-[1] sm:text-8xl font-semibold tracking-tight text-emerald-900">
             {profil?.nom}
             <span className={profil?.accent || 'text-emerald-500'}>.</span>
           </h1>
         </header>
 
         {/* Applications */}
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-900/40 mb-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-900/40 mb-3 sm:mb-4">
           Applications
         </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4">
           {apps.map(({ to, nom, description, icon: Icon, couleur }) => (
             <Link
               key={to}
               to={to}
-              className="tuile group flex items-center gap-4 rounded-3xl bg-white/80 backdrop-blur border border-emerald-900/5 p-4 sm:p-5 shadow-[0_1px_2px_rgba(6,78,59,0.04),0_8px_24px_-12px_rgba(6,78,59,0.18)] hover:bg-white hover:-translate-y-0.5 transition-all"
+              className="tuile group flex flex-col items-start sm:flex-row sm:items-center gap-3 sm:gap-4 rounded-3xl bg-white/80 backdrop-blur border border-emerald-900/5 p-4 sm:p-5 shadow-[0_1px_2px_rgba(6,78,59,0.04),0_8px_24px_-12px_rgba(6,78,59,0.18)] hover:bg-white hover:-translate-y-0.5 transition-all"
             >
               <span
-                className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${couleur} flex items-center justify-center text-white shadow-md shrink-0 group-hover:scale-105 transition-transform`}
+                className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br ${couleur} flex items-center justify-center text-white shadow-md shrink-0 group-hover:scale-105 transition-transform`}
               >
-                <Icon size={26} strokeWidth={2} />
+                <Icon size={24} strokeWidth={2} />
               </span>
-              <span className="min-w-0">
-                <span className="block text-lg font-semibold text-emerald-950">{nom}</span>
-                <span className="block text-sm text-emerald-900/55 truncate">{description}</span>
+              <span className="min-w-0 w-full">
+                <span className="block text-base sm:text-lg font-semibold text-emerald-950">{nom}</span>
+                <span className="block text-xs sm:text-sm text-emerald-900/55 line-clamp-2 sm:line-clamp-none sm:truncate">
+                  {description}
+                </span>
               </span>
             </Link>
           ))}
 
-          <div className="tuile tuile-vide flex items-center gap-4 rounded-3xl border-2 border-dashed border-emerald-900/10 p-4 sm:p-5">
-            <span className="w-14 h-14 rounded-2xl bg-emerald-900/5 flex items-center justify-center text-emerald-900/30 shrink-0">
+          <div
+            className={`tuile tuile-vide flex items-center gap-4 rounded-3xl border-2 border-dashed border-emerald-900/10 p-4 sm:p-5 ${
+              apps.length % 2 === 0 ? 'col-span-2 sm:col-span-1' : ''
+            }`}
+          >
+            <span className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-emerald-900/5 flex items-center justify-center text-emerald-900/30 shrink-0">
               <Plus size={24} />
             </span>
             <span>
-              <span className="block text-lg font-semibold text-emerald-900/40">
+              <span className="block text-base sm:text-lg font-semibold text-emerald-900/40">
                 {apps.length === 0 ? 'Ton espace prend forme' : 'Bientôt'}
               </span>
-              <span className="block text-sm text-emerald-900/35">
+              <span className="block text-xs sm:text-sm text-emerald-900/35">
                 {apps.length === 0 ? 'Tes premières applications arrivent bientôt' : 'La prochaine application'}
               </span>
             </span>
           </div>
         </div>
 
-        <p className="mt-auto pt-16 text-center text-xs text-emerald-900/30">{profilId} · espace personnel</p>
+        <Signature className="mt-auto pt-8 sm:pt-16" />
       </div>
     </div>
   )

@@ -97,7 +97,7 @@ export default function LabView() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 sm:px-8 py-6 sm:py-10">
+    <div className="min-h-dvh bg-slate-50 px-4 sm:px-8 py-6 sm:py-10">
       <div className="max-w-5xl mx-auto">
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>

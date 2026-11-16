@@ -19,7 +19,7 @@ export default class ErrorBoundary extends Component {
   render() {
     if (this.state.error) {
       return (
-        <div className="min-h-screen flex items-center justify-center px-6 bg-slate-50">
+        <div className="min-h-dvh flex items-center justify-center px-6 bg-slate-50">
           <div className="max-w-md w-full text-center">
             <p className="text-lg font-semibold text-slate-900 mb-3">
               Une erreur a empêché l'affichage de la page

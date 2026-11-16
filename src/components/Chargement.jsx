@@ -9,7 +9,7 @@ export default function Chargement({ message = 'Chargement…', superpose = fals
   return (
     <div
       className={`${
-        superpose ? 'fixed inset-0 z-[100] bg-creme/95 backdrop-blur-sm' : 'relative min-h-screen bg-creme'
+        superpose ? 'fixed inset-0 z-[100] bg-creme/95 backdrop-blur-sm' : 'relative min-h-dvh bg-creme'
       } flex flex-col items-center justify-center text-emerald-950 overflow-hidden`}
       role="status"
       aria-live="polite"

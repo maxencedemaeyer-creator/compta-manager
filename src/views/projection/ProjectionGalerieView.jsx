@@ -152,7 +152,7 @@ export default function ProjectionGalerieView() {
   const photoOuverte = photos.find((p) => p.id === ouverte)
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-dvh bg-slate-950 text-white">
       {/* Barre du haut (fixe) */}
       <div className="sticky top-0 z-30 bg-slate-950/85 backdrop-blur border-b border-white/5">
         <div className="max-w-6xl mx-auto px-4 sm:px-8 py-3 flex items-center gap-3">

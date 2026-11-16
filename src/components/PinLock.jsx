@@ -97,7 +97,7 @@ export default function PinLock() {
 
   return (
     <div
-      className={`min-h-screen flex flex-col items-center justify-center ${
+      className={`min-h-dvh flex flex-col items-center justify-center ${
         profil?.fondPin || 'bg-gradient-to-b from-emerald-700 to-emerald-950'
       } px-6 text-white safe-bottom relative overflow-hidden`}
     >

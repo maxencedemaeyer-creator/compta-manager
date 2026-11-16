@@ -134,7 +134,9 @@ form label {
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    padding-right: 0.1em;
+    /* L'italique déborde de sa boîte : sans cette marge, le J et le bas des lettres sont coupés */
+    padding: 0 0.12em 0.08em 0.12em;
+    margin-left: -0.12em;
   }
   /* Tuiles façon verre dépoli */
   .theme-julie .tuile {

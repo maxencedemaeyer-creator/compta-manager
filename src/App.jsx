@@ -3,6 +3,7 @@ import { usePin } from './context/PinContext.jsx'
 import PinLock from './components/PinLock.jsx'
 import Chargement from './components/Chargement.jsx'
 import MiseAJour from './components/MiseAJour.jsx'
+import CouleurBarre from './components/CouleurBarre.jsx'
 import AppShell from './components/layout/AppShell.jsx'
 import ChoixProfilView from './views/ChoixProfilView.jsx'
 import HomeView from './views/HomeView.jsx'
@@ -48,6 +49,8 @@ export default function App() {
     <>
       {/* Recharge le site tout seul quand une nouvelle version est déployée */}
       <MiseAJour />
+      {/* Barre d'état de l'iPhone assortie à la page */}
+      <CouleurBarre />
       <Routes>
         {/* Écran d'entrée : choix du profil */}
         <Route path="/" element={<ChoixProfilView />} />

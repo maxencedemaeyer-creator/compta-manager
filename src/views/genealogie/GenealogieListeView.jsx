@@ -41,7 +41,7 @@ export default function GenealogieListeView() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
+    <div className="min-h-dvh bg-slate-950 text-white relative overflow-hidden">
       <div className="pointer-events-none absolute -top-40 right-0 w-96 h-96 rounded-full bg-rose-600/25 blur-3xl" />
 
       <div className="relative max-w-4xl mx-auto px-4 sm:px-8 py-6 sm:py-12">
