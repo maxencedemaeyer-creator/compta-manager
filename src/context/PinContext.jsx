@@ -1,8 +1,8 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import { onAuthStateChanged, signInAnonymously } from 'firebase/auth'
-import { deleteDoc, getDoc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore'
-import { auth } from '../firebase/config.js'
+import { deleteDoc, disableNetwork, enableNetwork, getDoc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore'
+import { auth, db } from '../firebase/config.js'
 import { sha256Hex } from '../utils/hash.js'
 import { withTimeout } from '../utils/withTimeout.js'
 import { PROFILS, PROFIL_PRINCIPAL, docConfig, profilDepuisChemin, trouverProfil } from '../config/profils.js'
@@ -11,6 +11,8 @@ import {
   MEMOIRE_PIN_MINUTES,
   accesEncoreValide,
   lireAcces,
+  lireEmpreintePin,
+  retenirEmpreintePin,
   memoriserEspace,
   noterAcces,
   oublierAcces,
@@ -63,8 +65,39 @@ async function lireHashPin(profilId) {
   await withTimeout(authPrete, 15000, "La connexion à Firebase n'aboutit pas. Vérifie ta connexion et réessaie.")
   const snap = await withTimeout(getDoc(docConfig(profilId, 'securite')))
   const hashFirebase = snap.exists() ? snap.data().pinHash : null
-  if (hashFirebase) return hashFirebase
-  return profilId === PROFIL_PRINCIPAL ? PIN_HASH_DEPART || null : null
+  const hash = hashFirebase || (profilId === PROFIL_PRINCIPAL ? PIN_HASH_DEPART || null : null)
+  retenirEmpreintePin(profilId, hash)
+  return hash
+}
+
+// Après un moment hors de l'appli (iPhone en veille, appli en arrière-plan),
+// la connexion à Firebase est souvent « morte » sans le savoir : les requêtes
+// attendent jusqu'au délai dépassé. On la relance tout de suite au retour.
+const HORS_APPLI_MS = 20000
+let cacheeLe = 0
+let relanceEnCours = null
+function relancerConnexion() {
+  if (relanceEnCours) return relanceEnCours
+  relanceEnCours = disableNetwork(db)
+    .then(() => enableNetwork(db))
+    .catch((err) => console.error('Relance de la connexion Firebase :', err))
+    .finally(() => {
+      relanceEnCours = null
+    })
+  return relanceEnCours
+}
+if (typeof document !== 'undefined') {
+  const surVisibilite = () => {
+    if (document.visibilityState === 'hidden') {
+      cacheeLe = Date.now()
+    } else if (cacheeLe && Date.now() - cacheeLe > HORS_APPLI_MS) {
+      cacheeLe = 0
+      relancerConnexion()
+    }
+  }
+  document.addEventListener('visibilitychange', surVisibilite)
+  // Appli rouverte depuis la mémoire de l'iPhone (sans rechargement)
+  window.addEventListener('pageshow', (e) => e.persisted && relancerConnexion())
 }
 
 function lireDeverrouillages() {
@@ -134,6 +167,8 @@ export function PinProvider({ children }) {
     if (!profilId) return
     if (profilId === PROFIL_PRINCIPAL) {
       setEtatPin('existe')
+      // On prépare la vérification du PIN pendant que le clavier s'affiche
+      if (authReady) lireHashPin(profilId).catch(() => {})
       return
     }
     // Déjà vu sur ce téléphone : le clavier du PIN s'affiche sans attendre Firebase
@@ -181,12 +216,32 @@ export function PinProvider({ children }) {
     async (pin) => {
       if (!profilId) return false
       setError('')
+      const hashTape = await sha256Hex(pin)
+
+      // 1) Vérification immédiate sur le téléphone (sans attendre Firebase)
+      const empreinte = lireEmpreintePin(profilId)
+      if (empreinte && hashTape === empreinte) {
+        marquerDeverrouille(profilId, true)
+        // En arrière-plan : si le PIN a été changé ailleurs entre-temps, on reverrouille
+        lireHashPin(profilId)
+          .then((hash) => hash && hash !== hashTape && marquerDeverrouille(profilId, false))
+          .catch(() => {})
+        return true
+      }
+
+      // 2) Sinon (premier passage sur ce téléphone, ou PIN changé) : on demande à Firebase
       let hashAttendu
       try {
         hashAttendu = await lireHashPin(profilId)
-      } catch (err) {
-        setError(err.message || 'Impossible de vérifier le code PIN.')
-        return false
+      } catch {
+        // Une seconde chance avec une connexion toute neuve
+        try {
+          await relancerConnexion()
+          hashAttendu = await lireHashPin(profilId)
+        } catch (err) {
+          setError(err.message || 'Impossible de vérifier le code PIN.')
+          return false
+        }
       }
       if (!hashAttendu) {
         setError(
@@ -196,7 +251,7 @@ export function PinProvider({ children }) {
         )
         return false
       }
-      if ((await sha256Hex(pin)) === hashAttendu) {
+      if (hashTape === hashAttendu) {
         marquerDeverrouille(profilId, true)
         return true
       }
@@ -217,12 +272,14 @@ export function PinProvider({ children }) {
           setError('Un code PIN existe déjà pour ce profil.')
           return false
         }
+        const nouveauHash = await sha256Hex(pin)
         await withTimeout(
           setDoc(docConfig(profilId, 'securite'), {
-            pinHash: await sha256Hex(pin),
+            pinHash: nouveauHash,
             updatedAt: serverTimestamp(),
           })
         )
+        retenirEmpreintePin(profilId, nouveauHash)
         setEtatPin('existe')
         marquerDeverrouille(profilId, true)
         return true
@@ -241,12 +298,14 @@ export function PinProvider({ children }) {
       if ((await sha256Hex(ancien)) !== hashActuel) {
         throw new Error('Le code PIN actuel est incorrect.')
       }
+      const nouveauHash = await sha256Hex(nouveau)
       await withTimeout(
         setDoc(docConfig(profilId, 'securite'), {
-          pinHash: await sha256Hex(nouveau),
+          pinHash: nouveauHash,
           updatedAt: serverTimestamp(),
         })
       )
+      retenirEmpreintePin(profilId, nouveauHash)
     },
     [profilId]
   )
@@ -296,12 +355,14 @@ export function PinProvider({ children }) {
           restants > 0 ? `Code incorrect (encore ${restants} essai${restants > 1 ? 's' : ''}).` : 'Code incorrect. Demande un nouveau code.'
         )
       }
+      const nouveauHash = await sha256Hex(nouveauPin)
       await withTimeout(
         setDoc(docConfig(profilId, 'securite'), {
-          pinHash: await sha256Hex(nouveauPin),
+          pinHash: nouveauHash,
           updatedAt: serverTimestamp(),
         })
       )
+      retenirEmpreintePin(profilId, nouveauHash)
       await deleteDoc(ref)
       setEtatPin('existe')
       marquerDeverrouille(profilId, true)

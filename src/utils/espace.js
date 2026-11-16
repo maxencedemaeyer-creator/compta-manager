@@ -57,6 +57,18 @@ export function retenirPin(profilId) {
   ecrire(clePin(profilId), 'existe')
 }
 
+// Empreinte du PIN gardée sur le téléphone : le code est vérifié tout de suite,
+// même si la connexion à Firebase est lente (au retour dans l'appli sur iPhone,
+// la première requête peut mettre longtemps). Jamais le PIN lui-même.
+const cleEmpreinte = (profilId) => `cm_pinhash_${profilId}`
+export function lireEmpreintePin(profilId) {
+  return lire(cleEmpreinte(profilId))
+}
+export function retenirEmpreintePin(profilId, hash) {
+  ecrire(cleEmpreinte(profilId), hash || null)
+  if (hash) retenirPin(profilId)
+}
+
 // Nom et habillage de l'espace d'une adresse (pour les écrans de chargement)
 export function espaceDeLaPage() {
   const premier = (window.location.pathname.split('/')[1] || '').toLowerCase()
