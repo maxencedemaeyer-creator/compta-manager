@@ -12,30 +12,50 @@
     <!-- Icônes du site : une par espace (dossier public/icons/<espace>/).
          Le script juste en dessous choisit la bonne dès l'ouverture (/julie → J rose,
          /maxence → M vert, / → accueil) ; ensuite c'est src/components/IconeProfil.jsx
-         qui la change quand on navigue. Le ?v=3 force l'iPhone à oublier les anciennes. -->
-    <link id="icone-svg" rel="icon" type="image/svg+xml" href="/icons/accueil/favicon.svg?v=3" />
-    <link id="icone-png" rel="icon" type="image/png" sizes="32x32" href="/icons/accueil/favicon-32.png?v=3" />
-    <link id="icone-apple" rel="apple-touch-icon" sizes="180x180" href="/icons/accueil/apple-touch-icon.png?v=3" />
-    <link id="icone-manifest" rel="manifest" href="/icons/accueil/site.webmanifest?v=3" />
+         qui la change quand on navigue. Le ?v=4 force l'iPhone à oublier les anciennes. -->
+    <link id="icone-svg" rel="icon" type="image/svg+xml" href="/icons/accueil/favicon.svg?v=4" />
+    <link id="icone-png" rel="icon" type="image/png" sizes="32x32" href="/icons/accueil/favicon-32.png?v=4" />
+    <link id="icone-apple" rel="apple-touch-icon" sizes="180x180" href="/icons/accueil/apple-touch-icon.png?v=4" />
+    <link id="icone-manifest" rel="manifest" href="/icons/accueil/site.webmanifest?v=4" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta id="nom-appli" name="application-name" content="Accueil" />
     <meta id="nom-appli-apple" name="apple-mobile-web-app-title" content="Accueil" />
     <script>
-      // Espaces qui ont leur propre icône (même liste que « icone » dans src/config/profils.js)
       (function () {
+        var galerie = location.hostname === 'couture-julie.vercel.app'
+        var standalone = window.navigator.standalone === true ||
+          (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
+
+        // Icône de l'écran d'accueil de l'iPhone : si elle ouvre l'écran « Qui est là ? »,
+        // on va directement dans l'espace utilisé en dernier sur ce téléphone (/julie, /maxence).
+        // (pas quand on revient soi-même sur « Profils » puis que la page se recharge)
+        try {
+          var nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0]
+          var rechargement = nav && nav.type === 'reload'
+          var dernier = localStorage.getItem('cm_espace')
+          if (!galerie && standalone && !rechargement && location.pathname === '/' &&
+              (dernier === 'maxence' || dernier === 'julie')) {
+            history.replaceState(null, '', '/' + dernier)
+          }
+        } catch (e) {}
+
+        // Espaces qui ont leur propre icône (même liste que « icone » dans src/config/profils.js)
         var ESPACES = { maxence: 'Maxence', julie: 'Julie', couture: 'Julie' }
         var DOSSIERS = { couture: 'julie' }
         var premier = (location.pathname.split('/')[1] || '').toLowerCase()
         // Galerie couture sur son adresse à part (couture-julie.vercel.app) → icône de Julie
-        if (location.hostname === 'couture-julie.vercel.app') premier = 'couture'
+        if (galerie) premier = 'couture'
+        window.__NOM_ESPACE__ = ESPACES[premier] || 'Bienvenue'
         if (!ESPACES[premier]) return
+        if (ESPACES[premier] === 'Julie') document.documentElement.classList.add('espace-julie')
         var dossier = '/icons/' + (DOSSIERS[premier] || premier) + '/'
-        document.getElementById('icone-svg').href = dossier + 'favicon.svg?v=3'
-        document.getElementById('icone-png').href = dossier + 'favicon-32.png?v=3'
-        document.getElementById('icone-apple').href = dossier + 'apple-touch-icon.png?v=3'
-        document.getElementById('icone-manifest').href = dossier + 'site.webmanifest?v=3'
+        document.getElementById('icone-svg').href = dossier + 'favicon.svg?v=4'
+        document.getElementById('icone-png').href = dossier + 'favicon-32.png?v=4'
+        document.getElementById('icone-apple').href = dossier + 'apple-touch-icon.png?v=4'
+        // La galerie a son propre manifeste : son icône rouvre la galerie, pas l'atelier de Julie
+        document.getElementById('icone-manifest').href = '/icons/' + premier + '/site.webmanifest?v=4'
         document.getElementById('nom-appli').content = ESPACES[premier]
         document.getElementById('nom-appli-apple').content = ESPACES[premier]
         document.title = ESPACES[premier]
@@ -54,12 +74,21 @@
         .ecran-depart .nom { position: relative; font-family: Fraunces, Georgia, serif; font-size: 2.25rem; font-weight: 600; letter-spacing: -0.025em; margin: 0; }
         .ecran-depart .roue { position: relative; margin-top: 1.5rem; width: 2rem; height: 2rem; border-radius: 9999px; border: 3px solid rgba(6, 78, 59, 0.15); border-top-color: #047857; animation: tourner 1s linear infinite; }
         .ecran-depart .texte { position: relative; margin-top: 1rem; font-family: Inter, system-ui, sans-serif; font-size: 0.875rem; color: rgba(6, 78, 59, 0.6); }
+        /* Espace de Julie : écran de chargement rose */
+        .espace-julie, .espace-julie body { background: #fcf5f7; }
+        .espace-julie .ecran-depart { background: #fcf5f7; color: #541a40; }
+        .espace-julie .ecran-depart .forme1 { background: rgba(246, 170, 210, 0.45); }
+        .espace-julie .ecran-depart .forme2 { background: rgba(196, 181, 253, 0.4); }
+        .espace-julie .ecran-depart .nom { font-family: 'Instrument Serif', Georgia, serif; font-style: italic; font-weight: 400; }
+        .espace-julie .ecran-depart .roue { border-color: rgba(166, 38, 101, 0.15); border-top-color: #c9347b; }
+        .espace-julie .ecran-depart .texte { color: rgba(122, 32, 82, 0.6); }
         @keyframes tourner { to { transform: rotate(360deg); } }
       </style>
       <div class="ecran-depart">
         <div class="forme1"></div>
         <div class="forme2"></div>
-        <p class="nom">Maxence</p>
+        <p class="nom"></p>
+        <script>document.querySelector('.ecran-depart .nom').textContent = window.__NOM_ESPACE__ || 'Bienvenue'</script>
         <div class="roue"></div>
         <p class="texte">Chargement…</p>
       </div>

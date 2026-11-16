@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { PROFILS } from '../config/profils.js'
 import Signature from '../components/Signature.jsx'
@@ -25,9 +24,12 @@ export default function ChoixProfilView() {
 
         <div className="space-y-3 sm:space-y-4">
           {PROFILS.map((p) => (
-            <Link
+            // Vrai lien (et pas un lien interne) : la page de l'espace est chargée
+            // pour de bon, avec son icône et son nom. Ainsi « Sur l'écran d'accueil »
+            // sur l'iPhone crée bien l'icône qui ouvre directement /julie ou /maxence.
+            <a
               key={p.id}
-              to={`/${p.id}`}
+              href={`/${p.id}`}
               className="group flex items-center gap-4 rounded-3xl bg-white/80 backdrop-blur border border-emerald-900/5 p-4 sm:p-5 shadow-[0_1px_2px_rgba(6,78,59,0.04),0_8px_24px_-12px_rgba(6,78,59,0.18)] hover:bg-white hover:-translate-y-0.5 transition-all"
             >
               <span
@@ -40,7 +42,7 @@ export default function ChoixProfilView() {
                 <span className="block text-sm text-emerald-900/50">/{p.id}</span>
               </span>
               <ChevronRight size={20} className="text-emerald-900/30 group-hover:text-emerald-900/60 transition-colors" />
-            </Link>
+            </a>
           ))}
         </div>
 

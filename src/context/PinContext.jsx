@@ -5,22 +5,40 @@ import { deleteDoc, getDoc, onSnapshot, serverTimestamp, setDoc } from 'firebase
 import { auth } from '../firebase/config.js'
 import { sha256Hex } from '../utils/hash.js'
 import { withTimeout } from '../utils/withTimeout.js'
-import { PROFIL_PRINCIPAL, docConfig, profilDepuisChemin, trouverProfil } from '../config/profils.js'
+import { PROFILS, PROFIL_PRINCIPAL, docConfig, profilDepuisChemin, trouverProfil } from '../config/profils.js'
 import { envoyerMail } from '../config/email.js'
+import {
+  MEMOIRE_PIN_MINUTES,
+  accesEncoreValide,
+  lireAcces,
+  memoriserEspace,
+  noterAcces,
+  oublierAcces,
+  pinConnu,
+  retenirPin,
+} from '../utils/espace.js'
 
 // « PIN oublié » : durée de validité du code reçu par mail, essais autorisés, délai entre deux envois
 const CODE_VALIDITE_MS = 15 * 60000
 const CODE_ESSAIS_MAX = 5
 const CODE_DELAI_RENVOI_MS = 60000
 
-// Chaque profil a son propre déverrouillage (une saisie du PIN par session et par profil)
-const cleSession = (profilId) => `cm_unlocked_${profilId}`
-const ACTIVITE_KEY = 'cm_derniere_activite'
-
-// Ancienne clé (avant les profils) : on la reprend pour ne pas redemander le PIN à Maxence
-if (sessionStorage.getItem('cm_unlocked') === 'true') {
-  sessionStorage.setItem(cleSession(PROFIL_PRINCIPAL), 'true')
+// Chaque profil a son propre déverrouillage. Il est gardé sur le téléphone
+// 30 minutes après la dernière utilisation : on peut fermer l'appli et la
+// rouvrir sans retaper le PIN. Au-delà, le PIN est redemandé.
+// (anciennes clés de session, avant cette mémoire : reprises une dernière fois)
+try {
+  if (sessionStorage.getItem('cm_unlocked') === 'true') noterAcces(PROFIL_PRINCIPAL)
   sessionStorage.removeItem('cm_unlocked')
+  for (const cle of Object.keys(sessionStorage)) {
+    if (cle.startsWith('cm_unlocked_')) {
+      if (sessionStorage.getItem(cle) === 'true') noterAcces(cle.replace('cm_unlocked_', ''))
+      sessionStorage.removeItem(cle)
+    }
+  }
+  sessionStorage.removeItem('cm_derniere_activite')
+} catch {
+  /* rien à reprendre */
 }
 
 // PIN de départ de Maxence (variable Vercel). Dès que le PIN est changé dans Paramètres,
@@ -51,14 +69,15 @@ async function lireHashPin(profilId) {
 
 function lireDeverrouillages() {
   const etat = {}
-  for (let i = 0; i < sessionStorage.length; i++) {
-    const cle = sessionStorage.key(i)
-    if (cle?.startsWith('cm_unlocked_') && sessionStorage.getItem(cle) === 'true') {
-      etat[cle.replace('cm_unlocked_', '')] = true
-    }
+  for (const p of PROFILS) {
+    if (accesEncoreValide(p.id)) etat[p.id] = true
+    else oublierAcces(p.id)
   }
   return etat
 }
+
+const etatPinDepart = (profilId) =>
+  profilId === PROFIL_PRINCIPAL || (profilId && pinConnu(profilId)) ? 'existe' : 'inconnu'
 
 const PinContext = createContext(null)
 
@@ -71,7 +90,7 @@ export function PinProvider({ children }) {
   const [error, setError] = useState('')
   const [parametres, setParametres] = useState(PARAMETRES_PAR_DEFAUT)
   // 'inconnu' (en cours de vérification), 'existe', ou 'absent' (premier passage : PIN à créer)
-  const [etatPin, setEtatPin] = useState('inconnu')
+  const [etatPin, setEtatPin] = useState(() => etatPinDepart(profilId))
   const derniereEcriture = useRef(0)
 
   const unlocked = !!(profilId && deverrouilles[profilId])
@@ -106,6 +125,8 @@ export function PinProvider({ children }) {
     const html = document.documentElement
     html.classList.forEach((c) => c.startsWith('theme-') && html.classList.remove(c))
     if (theme) html.classList.add(`theme-${theme}`)
+    // Espace ouvert en dernier : l'icône de l'écran d'accueil y revient directement
+    memoriserEspace(profilId)
   }, [profilId])
 
   // Le profil a-t-il déjà un PIN ? (sinon : écran de création au premier passage)
@@ -115,11 +136,16 @@ export function PinProvider({ children }) {
       setEtatPin('existe')
       return
     }
+    // Déjà vu sur ce téléphone : le clavier du PIN s'affiche sans attendre Firebase
+    setEtatPin(etatPinDepart(profilId))
     if (!authReady) return
     let annule = false
-    setEtatPin('inconnu')
     lireHashPin(profilId)
-      .then((hash) => !annule && setEtatPin(hash ? 'existe' : 'absent'))
+      .then((hash) => {
+        if (annule) return
+        if (hash) retenirPin(profilId)
+        setEtatPin(hash ? 'existe' : 'absent')
+      })
       .catch((err) => !annule && setError(err.message || 'Impossible de vérifier le code PIN.'))
     return () => {
       annule = true
@@ -139,10 +165,10 @@ export function PinProvider({ children }) {
 
   const marquerDeverrouille = useCallback((id, valeur) => {
     if (valeur) {
-      sessionStorage.setItem(cleSession(id), 'true')
-      sessionStorage.setItem(ACTIVITE_KEY, String(Date.now()))
+      noterAcces(id)
+      retenirPin(id)
     } else {
-      sessionStorage.removeItem(cleSession(id))
+      oublierAcces(id)
     }
     setDeverrouilles((prev) => ({ ...prev, [id]: valeur }))
   }, [])
@@ -290,38 +316,51 @@ export function PinProvider({ children }) {
     [profilId]
   )
 
-  // Verrouillage automatique après X minutes sans activité
+  // Verrouillage automatique :
+  //  - appli ouverte : après X minutes sans toucher l'écran (réglage dans
+  //    Paramètres, « jamais » par défaut) ;
+  //  - appli fermée puis rouverte : PIN redemandé après 30 minutes
+  //    (ou moins si le réglage est plus court).
   useEffect(() => {
+    if (!unlocked || !profilId) return
     const minutes = Number(parametres.verrouillageMinutes) || 0
-    if (!unlocked || minutes <= 0) return
+    const limiteFermee = Math.min(MEMOIRE_PIN_MINUTES, minutes > 0 ? minutes : Infinity)
 
     function noterActivite() {
       const maintenant = Date.now()
       if (maintenant - derniereEcriture.current < 5000) return
       derniereEcriture.current = maintenant
-      sessionStorage.setItem(ACTIVITE_KEY, String(maintenant))
+      noterAcces(profilId, maintenant)
     }
-    function verifier() {
+    function verifier(auRetour = false) {
+      const derniere = lireAcces(profilId)
+      if (!derniere) return lock()
+      const ecart = Date.now() - derniere
       // L'écran de projection reste allumé sans activité en classe : jamais verrouillé
-      if (window.location.pathname.includes('/projection/ecran')) {
-        sessionStorage.setItem(ACTIVITE_KEY, String(Date.now()))
-        return
-      }
-      const derniere = Number(sessionStorage.getItem(ACTIVITE_KEY)) || Date.now()
-      if (Date.now() - derniere > minutes * 60000) lock()
+      if (window.location.pathname.includes('/projection/ecran')) return noterAcces(profilId)
+      if (auRetour && ecart > limiteFermee * 60000) return lock()
+      if (minutes > 0 && ecart > minutes * 60000) return lock()
+      // Réglage « jamais » : tant que l'appli est à l'écran, elle compte comme utilisée
+      if (minutes <= 0 && document.visibilityState === 'visible') noterAcces(profilId)
+    }
+    function changementVisibilite() {
+      if (document.visibilityState === 'visible') verifier(true)
+      else noterAcces(profilId)
     }
 
-    verifier()
+    verifier(true)
     const evenements = ['pointerdown', 'keydown', 'scroll', 'touchstart']
     evenements.forEach((e) => window.addEventListener(e, noterActivite, { passive: true }))
-    document.addEventListener('visibilitychange', verifier)
-    const intervalle = setInterval(verifier, 20000)
+    document.addEventListener('visibilitychange', changementVisibilite)
+    window.addEventListener('pageshow', changementVisibilite)
+    const intervalle = setInterval(() => document.visibilityState === 'visible' && verifier(), 20000)
     return () => {
       evenements.forEach((e) => window.removeEventListener(e, noterActivite))
-      document.removeEventListener('visibilitychange', verifier)
+      document.removeEventListener('visibilitychange', changementVisibilite)
+      window.removeEventListener('pageshow', changementVisibilite)
       clearInterval(intervalle)
     }
-  }, [unlocked, parametres.verrouillageMinutes, lock])
+  }, [unlocked, profilId, parametres.verrouillageMinutes, lock])
 
   return (
     <PinContext.Provider
