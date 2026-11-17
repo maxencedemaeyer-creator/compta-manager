@@ -53,6 +53,15 @@ const LABO_JEUX = {
   'locomoteur/cousins': lazy(() => import('./views/labo/CousinsView.jsx')),
   'locomoteur/urgences': lazy(() => import('./views/labo/UrgencesView.jsx')),
   'locomoteur/defi': lazy(() => import('./views/labo/DefiView.jsx')),
+  'electricite/banc': lazy(() => import('./views/labo/electricite/BancView.jsx')),
+  'electricite/testeur': lazy(() => import('./views/labo/electricite/TesteurView.jsx')),
+  'electricite/interrupteur': lazy(() => import('./views/labo/electricite/InterrupteurView.jsx')),
+  'electricite/schemas': lazy(() => import('./views/labo/electricite/SchemasView.jsx')),
+  'electricite/depanneur': lazy(() => import('./views/labo/electricite/DepanneurView.jsx')),
+  'electricite/maison': lazy(() => import('./views/labo/electricite/MaisonView.jsx')),
+  'electricite/danger': lazy(() => import('./views/labo/electricite/DangerView.jsx')),
+  'electricite/defi': lazy(() => import('./views/labo/electricite/DefiElecView.jsx')),
+  'electricite/ampoule': lazy(() => import('./views/labo/electricite/AmpouleView.jsx')),
 }
 
 function Labo({ children }) {

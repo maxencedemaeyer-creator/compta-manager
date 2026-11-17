@@ -15,11 +15,11 @@ export function useRetourSalle() {
   return morceaux.length > 3 ? morceaux.slice(0, -1).join('/') : '/labo'
 }
 
-export default function CadreJeu({ code, titre, attendus = [], couleur = '#7CFF6B', droite, children, large = false }) {
+export default function CadreJeu({ code, titre, attendus = [], couleur = '#7CFF6B', droite, children, large = false, rgb, rgb2 }) {
   const retour = useRetourSalle()
   return (
     <div className="labo relative min-h-[100dvh] overflow-x-hidden">
-      <DecorLabo flash={false} />
+      <DecorLabo flash={false} rgb={rgb} rgb2={rgb2} />
       <div className={`relative mx-auto flex min-h-[100dvh] flex-col gap-4 px-4 pb-10 pt-[max(16px,env(safe-area-inset-top))] ${large ? 'max-w-5xl' : 'max-w-xl'}`}>
         <header className="flex items-center gap-3">
           <Link
