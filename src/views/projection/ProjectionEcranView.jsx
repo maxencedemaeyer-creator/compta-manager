@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Camera, Images, Maximize, Minimize, X } from 'lucide-react'
-import { masquer, useEcranProjection } from '../../hooks/useProjection.js'
+import { ArrowLeft, Camera, Images, Loader2, Maximize, Minimize, RotateCcw, RotateCw, X } from 'lucide-react'
+import { masquer, pivoterPhoto, useEcranProjection } from '../../hooks/useProjection.js'
 
 // =============================================================
 //  Projection — écran de la classe (ordinateur relié au TBI)
@@ -67,6 +67,21 @@ export default function ProjectionEcranView() {
     document.addEventListener('fullscreenchange', maj)
     return () => document.removeEventListener('fullscreenchange', maj)
   }, [])
+
+  // Rotation de la photo projetée (enregistrée : la galerie suit aussi)
+  const [rotation, setRotation] = useState('')
+  async function pivoter(sens) {
+    if (!photoId || rotation) return
+    setRotation(sens > 0 ? 'droite' : 'gauche')
+    try {
+      await pivoterPhoto(photoId, sens)
+    } catch (err) {
+      console.error(err)
+      window.alert(err.message || 'La rotation a échoué.')
+    } finally {
+      setRotation('')
+    }
+  }
 
   function basculerPleinEcran() {
     if (document.fullscreenElement) document.exitFullscreen?.()
@@ -140,6 +155,30 @@ export default function ProjectionEcranView() {
         <button type="button" onClick={basculerPleinEcran} className={bouton} title="Plein écran">
           {pleinEcran ? <Minimize size={20} /> : <Maximize size={20} />}
         </button>
+        {photoId && image && (
+          <>
+            <button
+              type="button"
+              onClick={() => pivoter(-1)}
+              disabled={Boolean(rotation)}
+              className={`${bouton} disabled:opacity-60`}
+              title="Pivoter vers la gauche"
+              aria-label="Pivoter vers la gauche"
+            >
+              {rotation === 'gauche' ? <Loader2 size={20} className="animate-spin" /> : <RotateCcw size={20} />}
+            </button>
+            <button
+              type="button"
+              onClick={() => pivoter(1)}
+              disabled={Boolean(rotation)}
+              className={`${bouton} disabled:opacity-60`}
+              title="Pivoter vers la droite"
+              aria-label="Pivoter vers la droite"
+            >
+              {rotation === 'droite' ? <Loader2 size={20} className="animate-spin" /> : <RotateCw size={20} />}
+            </button>
+          </>
+        )}
       </div>
 
       {photoId && (
