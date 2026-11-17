@@ -1,5 +1,8 @@
 {
   "id": "/labo",
+  "description": "Le labo de sciences : expériences interactives pour la classe",
+  "lang": "fr",
+  "orientation": "any",
   "name": "Le labo de sciences",
   "short_name": "Le labo",
   "start_url": "/labo",

@@ -23,7 +23,7 @@ const PAGES_DE = { couture: 'julie' }
 function choisir(pathname) {
   // Galerie couture sur son adresse à part (couture-julie.vercel.app) → icône de Julie
   const premier = estSiteGalerie() ? 'couture' : (pathname.split('/')[1] || '').toLowerCase()
-  if (premier === 'labo') return { dossier: 'labo', manifeste: 'labo', nom: 'Le labo' }
+  if (premier === 'labo') return { dossier: 'labo', manifeste: 'labo', nom: 'Le labo', theme: '#070b16', version: 'v=5' }
   const profil = trouverProfil(PAGES_DE[premier] || premier)
   if (profil?.icone) {
     return { dossier: profil.icone, manifeste: premier === 'couture' ? 'couture' : profil.icone, nom: profil.nom }
@@ -38,18 +38,29 @@ function changer(id, attribut, valeur) {
 
 export default function IconeProfil() {
   const { pathname } = useLocation()
-  const { dossier, manifeste, nom } = choisir(pathname)
+  const { dossier, manifeste, nom, theme = '#f4f1ea', version = VERSION } = choisir(pathname)
 
   useEffect(() => {
     const base = `/icons/${dossier}/`
-    changer('icone-svg', 'href', `${base}favicon.svg?${VERSION}`)
-    changer('icone-png', 'href', `${base}favicon-32.png?${VERSION}`)
-    changer('icone-apple', 'href', `${base}apple-touch-icon.png?${VERSION}`)
-    changer('icone-manifest', 'href', `/icons/${manifeste}/site.webmanifest?${VERSION}`)
+    changer('icone-svg', 'href', `${base}favicon.svg?${version}`)
+    changer('icone-png', 'href', `${base}favicon-32.png?${version}`)
+    changer('icone-192', 'href', `${base}icon-192.png?${version}`)
+    changer('icone-apple', 'href', `${base}apple-touch-icon.png?${version}`)
+    changer('couleur-theme', 'content', theme)
     changer('nom-appli', 'content', nom)
     changer('nom-appli-apple', 'content', nom)
     document.title = nom
-  }, [dossier, manifeste, nom])
+    // Android/Chrome relit mieux un nouveau lien « manifest » qu'un lien modifié : on le remplace
+    const href = `/icons/${manifeste}/site.webmanifest?${version}`
+    const ancien = document.getElementById('icone-manifest')
+    if (ancien && ancien.getAttribute('href') !== href) {
+      const neuf = document.createElement('link')
+      neuf.id = 'icone-manifest'
+      neuf.rel = 'manifest'
+      neuf.href = href
+      ancien.replaceWith(neuf)
+    }
+  }, [dossier, manifeste, nom, theme, version])
 
   return null
 }

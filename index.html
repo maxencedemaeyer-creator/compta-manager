@@ -15,6 +15,8 @@
          qui la change quand on navigue. Le ?v=4 force l'iPhone à oublier les anciennes. -->
     <link id="icone-svg" rel="icon" type="image/svg+xml" href="/icons/accueil/favicon.svg?v=4" />
     <link id="icone-png" rel="icon" type="image/png" sizes="32x32" href="/icons/accueil/favicon-32.png?v=4" />
+    <!-- grande icône : utilisée par Android (raccourci écran d'accueil, onglets) -->
+    <link id="icone-192" rel="icon" type="image/png" sizes="192x192" href="/icons/accueil/icon-192.png?v=4" />
     <link id="icone-apple" rel="apple-touch-icon" sizes="180x180" href="/icons/accueil/apple-touch-icon.png?v=4" />
     <link id="icone-manifest" rel="manifest" href="/icons/accueil/site.webmanifest?v=4" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -22,6 +24,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta id="nom-appli" name="application-name" content="Accueil" />
     <meta id="nom-appli-apple" name="apple-mobile-web-app-title" content="Accueil" />
+    <meta id="couleur-theme" name="theme-color" content="#f4f1ea" />
     <script>
       (function () {
         var galerie = location.hostname === 'couture-julie.vercel.app'
@@ -53,10 +56,12 @@
           window.__NOM_ESPACE__ = 'Le labo'
           document.documentElement.classList.add('espace-labo')
           document.title = 'Le labo'
-          document.getElementById('icone-svg').href = '/icons/labo/favicon.svg?v=4'
-          document.getElementById('icone-png').href = '/icons/labo/favicon-32.png?v=4'
-          document.getElementById('icone-apple').href = '/icons/labo/apple-touch-icon.png?v=4'
-          document.getElementById('icone-manifest').href = '/icons/labo/site.webmanifest?v=4'
+          document.getElementById('icone-svg').href = '/icons/labo/favicon.svg?v=5'
+          document.getElementById('icone-png').href = '/icons/labo/favicon-32.png?v=5'
+          document.getElementById('icone-192').href = '/icons/labo/icon-192.png?v=5'
+          document.getElementById('icone-apple').href = '/icons/labo/apple-touch-icon.png?v=5'
+          document.getElementById('icone-manifest').href = '/icons/labo/site.webmanifest?v=5'
+          document.getElementById('couleur-theme').content = '#070b16'
           document.getElementById('nom-appli').content = 'Le labo'
           document.getElementById('nom-appli-apple').content = 'Le labo'
           return
@@ -66,6 +71,7 @@
         var dossier = '/icons/' + (DOSSIERS[premier] || premier) + '/'
         document.getElementById('icone-svg').href = dossier + 'favicon.svg?v=4'
         document.getElementById('icone-png').href = dossier + 'favicon-32.png?v=4'
+        document.getElementById('icone-192').href = dossier + 'icon-192.png?v=4'
         document.getElementById('icone-apple').href = dossier + 'apple-touch-icon.png?v=4'
         // La galerie a son propre manifeste : son icône rouvre la galerie, pas l'atelier de Julie
         document.getElementById('icone-manifest').href = '/icons/' + premier + '/site.webmanifest?v=4'
@@ -74,7 +80,6 @@
         document.title = ESPACES[premier]
       })()
     </script>
-    <meta name="theme-color" content="#f4f1ea" />
   </head>
   <body>
     <div id="root">
