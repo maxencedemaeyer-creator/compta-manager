@@ -621,7 +621,7 @@ export function Ambiance({ lumiere = 0, courtCircuit = false }) {
   const l = Math.min(1, lumiere)
   return (
     <>
-      <div className="pointer-events-none fixed inset-0 z-30 transition-[background] duration-700" style={{ background: `rgba(1,2,8,${0.5 * (1 - l)})` }} />
+      <div className="pointer-events-none fixed inset-0 z-30 transition-[background] duration-700" style={{ background: `rgba(1,2,8,${0.18 * (1 - l)})` }} />
       <div
         className="pointer-events-none fixed inset-0 z-30 transition-opacity duration-700"
         style={{ opacity: l, background: 'radial-gradient(ellipse at 50% 35%, rgba(255,214,120,.22), rgba(255,190,80,.06) 55%, transparent 75%)', mixBlendMode: 'screen' }}
