@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Bone, Brain, Droplet, HeartPulse, Waves } from 'lucide-react'
 import { Carte } from '../../../components/labo/CadreJeu.jsx'
 import Circulation3D from '../../../components/labo/circulation/Circulation3D.jsx'
-import { NOMS, sangRiche } from '../../../components/labo/circulation/modele.js'
+import { COULEUR_PART, COULEUR_REVIENT, NOMS, fluxSens, sangRiche } from '../../../components/labo/circulation/modele.js'
 import { FICHES, NATURES } from '../../../components/labo/circulation/fiches.js'
 import { BLEU_SANG, PageCirc, ROUGE_SANG } from './commun.jsx'
 
@@ -23,6 +23,11 @@ const CALQUES = [
 export default function ExplorateurCircView() {
   const [calques, setCalques] = useState(['coeur', 'artere', 'veine', 'os'])
   const [choisi, setChoisi] = useState(null)
+  const [sens, setSens] = useState('aucun') // aucun | tout | artere | veine
+  const [outils, setOutils] = useState(null)
+  const flux = useMemo(() => (outils && sens !== 'aucun' ? fluxSens(outils.modele, { type: sens }) : []), [outils, sens])
+  // En mode « sens du sang » : on montre seulement les vaisseaux concernés
+  const etatsSens = sens === 'artere' ? { veine: 'attenue' } : sens === 'veine' ? { artere: 'attenue' } : {}
 
   const basculer = (c) => {
     setCalques((l) => (l.includes(c) ? l.filter((x) => x !== c) : [...l, c]))
@@ -49,6 +54,42 @@ export default function ExplorateurCircView() {
         })}
       </div>
 
+      <div className="rounded-2xl border border-white/12 bg-[#0B1122]/90 p-2">
+        <p className="labo-mono px-1 text-[10px] tracking-[.08em] text-[#B9C1E3]">VOIR LE SENS DU SANG</p>
+        <div className="mt-1 grid grid-cols-4 gap-1">
+          {[
+            ['aucun', 'Non'],
+            ['tout', 'Tout'],
+            ['artere', 'Part du cœur'],
+            ['veine', 'Revient au cœur'],
+          ].map(([v, n]) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => setSens(v)}
+              className="min-h-[40px] rounded-xl px-1 text-[12px] font-bold leading-tight"
+              style={sens === v ? { background: v === 'artere' ? COULEUR_PART : v === 'veine' ? COULEUR_REVIENT : '#FF4D6D', color: '#140A0C' } : { color: '#B9C1E3' }}
+            >
+              {n}
+            </button>
+          ))}
+        </div>
+        {sens !== 'aucun' && (
+          <p className="labo-apparait mt-2 px-1 text-[13px] leading-snug text-[#E8ECFF]">
+            {sens !== 'veine' && (
+              <>
+                <b style={{ color: COULEUR_PART }}>● Globules jaunes</b> : le sang <b>part du cœur</b>, dans les <b>artères</b>.{' '}
+              </>
+            )}
+            {sens !== 'artere' && (
+              <>
+                <b style={{ color: COULEUR_REVIENT }}>● Globules bleu clair</b> : le sang <b>revient au cœur</b>, dans les <b>veines</b>.
+              </>
+            )}
+          </p>
+        )}
+      </div>
+
       <Carte couleur="rgba(255,77,109,.45)">
         {choisi ? (
           <>
@@ -72,7 +113,11 @@ export default function ExplorateurCircView() {
           className="h-[68vh] max-h-[760px] w-full"
           rotation
           afficher={calques}
-          etats={choisi ? { [`${choisi.groupe}_${choisi.cote}`]: 'actif' } : {}}
+          etats={{ ...etatsSens, ...(choisi ? { [`${choisi.groupe}_${choisi.cote}`]: 'actif' } : {}) }}
+          flux={flux}
+          fluxCle={`${sens}-${outils ? 1 : 0}`}
+          tailleFlux={8}
+          onPret={setOutils}
           onChoisir={(groupe, cote, nature) => setChoisi(groupe ? { groupe, cote, nature } : null)}
         />
       </div>

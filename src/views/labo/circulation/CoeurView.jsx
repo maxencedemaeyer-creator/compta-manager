@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Eye, Footprints, HeartPulse, Pause, Play, Scissors, SkipForward, Target, Volume2, VolumeX } from 'lucide-react'
 import { Bouton, Carte, Eclat, melanger } from '../../../components/labo/CadreJeu.jsx'
 import Circulation3D from '../../../components/labo/circulation/Circulation3D.jsx'
-import { BLEU, NOMS, ROUGE, construireChemin, longueurs, pointSur, sangRiche } from '../../../components/labo/circulation/modele.js'
+import { BLEU, COULEUR_PART, COULEUR_REVIENT, NOMS, ROUGE, construireChemin, fluxSens, longueurs, pointSur, sangRiche } from '../../../components/labo/circulation/modele.js'
 import { FICHES } from '../../../components/labo/circulation/fiches.js'
 import { Onglets, PageCirc, boumTac } from './commun.jsx'
 
@@ -15,7 +15,7 @@ import { Onglets, PageCirc, boumTac } from './commun.jsx'
 //  - Mission : retrouver les parties demandées
 //  Son « boum-tac » synthétisé. Attendus 66, 70.
 // =============================================================
-const VAISSEAUX_COEUR = ['coeur', 'aorte', 'tronc_pulmonaire', 'arteres_pulmonaires', 'veines_pulmonaires', 'veine_cave_sup', 'veine_cave_inf', 'tronc_brachiocephalique', 'carotide', 'sous_claviere_a', 'veines_brachiocephaliques']
+const VAISSEAUX_COEUR = ['coeur', 'aorte', 'tronc_pulmonaire', 'arteres_pulmonaires', 'veines_pulmonaires', 'veine_cave_sup', 'veine_cave_inf', 'tronc_brachiocephalique', 'carotide', 'sous_claviere_a', 'veines_brachiocephaliques', 'jugulaire', 'sous_claviere_v']
 const CADRAGE = { groupes: ['paroi_ventricules', 'paroi_oreillette_d', 'paroi_oreillette_g', 'tronc_pulmonaire', 'veine_cave_sup', 'aorte'] }
 const CADRAGE_SERRE = { groupes: ['paroi_ventricules', 'paroi_oreillette_d', 'paroi_oreillette_g', 'tronc_pulmonaire', 'veine_cave_sup'] }
 
@@ -33,15 +33,16 @@ const ETAPES = [
   ['L:crosse_aorte', 'aorte', '… vers tout le corps. C’est le grand voyage (paillasse C2) !'],
 ]
 
+// Vaisseaux autour du cœur où l'on montre le sens du sang
+const LIGNES_COEUR = ['veine_cave_sup', 'veine_cave_inf_haut', 'aorte_ascendante', 'crosse_aorte', 'tronc_pulmonaire', 'artere_pulmonaire_g', 'artere_pulmonaire_d', 'veine_pulmonaire_g', 'veine_pulmonaire_d', 'carotide_commune', 'jugulaire_interne', 'sous_claviere_a', 'sous_claviere_v', 'brachiocephalique_v']
+
 const MISSIONS = [
   { texte: 'le ventricule gauche', bons: ['cavite_ventricule_g'] },
   { texte: 'le ventricule droit', bons: ['cavite_ventricule_d'] },
   { texte: 'l’oreillette droite', bons: ['cavite_oreillette_d'] },
   { texte: 'l’oreillette gauche', bons: ['cavite_oreillette_g'] },
   { texte: 'l’aorte', bons: ['aorte'] },
-  { texte: 'l’artère pulmonaire', bons: ['tronc_pulmonaire', 'arteres_pulmonaires'] },
   { texte: 'une veine cave', bons: ['veine_cave_sup', 'veine_cave_inf'] },
-  { texte: 'une veine pulmonaire', bons: ['veines_pulmonaires'] },
 ]
 const CHOISISSABLES_MISSION = ['cavite_ventricule_g', 'cavite_ventricule_d', 'cavite_oreillette_d', 'cavite_oreillette_g', 'aorte', 'tronc_pulmonaire', 'arteres_pulmonaires', 'veine_cave_sup', 'veine_cave_inf', 'veines_pulmonaires', 'valvule_tricuspide', 'valvule_mitrale', 'valvule_pulmonaire', 'valvule_aortique', 'tronc_brachiocephalique', 'carotide', 'sous_claviere_a', 'veines_brachiocephaliques']
 
@@ -56,6 +57,7 @@ export default function CoeurView() {
   const [mode, setMode] = useState('explorer')
   const [bpm, setBpm] = useState(70)
   const [son, setSon] = useState(false)
+  const [voirSens, setVoirSens] = useState(true)
   const [choisi, setChoisi] = useState(null)
   const [outils, setOutils] = useState(null)
   const [etape, setEtape] = useState(0)
@@ -84,6 +86,9 @@ export default function CoeurView() {
     const debuts = reperes.map((r) => cumul[r.index] / total)
     return { points, cumul, debuts, poumon: debuts[5] }
   }, [outils])
+
+  // Globules qui montrent le sens du sang (mode Explorer)
+  const flux = useMemo(() => (outils && mode === 'explorer' && voirSens ? fluxSens(outils.modele, { lignes: LIGNES_COEUR, vitesse: 0.05 }) : []), [outils, mode, voirSens])
 
   // Animation de la goutte (mode « suivre le sang »)
   useEffect(() => {
@@ -184,6 +189,9 @@ export default function CoeurView() {
             etiquettes={mode === 'ouvrir' ? ETIQUETTES_CAVITES : []}
             onChoisir={choisir}
             onPret={setOutils}
+            flux={flux}
+            fluxCle={`${mode}-${voirSens}-${outils ? 1 : 0}`}
+            tailleFlux={10}
           />
           <div className="pointer-events-none absolute left-3 top-3 rounded-xl bg-black/55 px-2 py-1 text-[11px] leading-tight text-[#B9C1E3]">
             Vu de face : le côté <b className="text-white">droit</b> de la personne
@@ -219,6 +227,24 @@ export default function CoeurView() {
               ))}
             </div>
           </Carte>
+
+          {mode === 'explorer' && (
+            <Carte couleur="rgba(255,255,255,.14)">
+              <div className="flex items-center justify-between gap-2">
+                <p className="labo-mono text-[11px] text-[#B9C1E3]">LE SENS DU SANG</p>
+                <button type="button" onClick={() => setVoirSens((v) => !v)} className="h-9 rounded-xl border border-white/15 px-3 text-[12px] font-bold" style={voirSens ? { background: '#FF4D6D', color: '#1A0508' } : {}}>
+                  {voirSens ? 'Visible' : 'Caché'}
+                </button>
+              </div>
+              {voirSens && (
+                <p className="mt-1.5 text-[13px] leading-snug text-[#E8ECFF]">
+                  <b style={{ color: COULEUR_PART }}>● Jaune</b> : le sang <b>part du cœur</b> (artères).
+                  <br />
+                  <b style={{ color: COULEUR_REVIENT }}>● Bleu clair</b> : le sang <b>revient au cœur</b> (veines).
+                </p>
+              )}
+            </Carte>
+          )}
 
           {mode === 'explorer' && (
             <Carte couleur="rgba(255,77,109,.35)">

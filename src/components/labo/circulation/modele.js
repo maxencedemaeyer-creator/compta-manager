@@ -194,3 +194,39 @@ export function pointSur(points, cumul, u, cible = new THREE.Vector3()) {
   const k = b > a ? (d - a) / (b - a) : 0
   return cible.copy(points[i - 1]).lerp(points[i], k)
 }
+
+// Type de chaque ligne centrale : artère (le sang PART du cœur) ou veine (le sang REVIENT au cœur)
+export const TYPE_LIGNES = {
+  aorte_ascendante: 'artere', crosse_aorte: 'artere', aorte_descendante: 'artere', tronc_pulmonaire: 'artere',
+  artere_pulmonaire_g: 'artere', artere_pulmonaire_d: 'artere', carotide_commune: 'artere', carotide_interne: 'artere',
+  sous_claviere_a: 'artere', axillaire_a: 'artere', humerale_a: 'artere', radiale_a: 'artere',
+  iliaque_commune_a: 'artere', iliaque_externe_a: 'artere', femorale_a: 'artere', poplitee_a: 'artere', tibiale_a: 'artere',
+  mesenterique_a: 'artere', renale_a: 'artere',
+  veine_pulmonaire_g: 'veine', veine_pulmonaire_d: 'veine', veine_cave_sup: 'veine', veine_cave_inf_haut: 'veine', veine_cave_inf_bas: 'veine',
+  jugulaire_interne: 'veine', brachiocephalique_v: 'veine', radiale_v: 'veine', humerale_v: 'veine', axillaire_v: 'veine', sous_claviere_v: 'veine',
+  tibiale_v: 'veine', poplitee_v: 'veine', femorale_v: 'veine', iliaque_externe_v: 'veine', iliaque_commune_v: 'veine',
+  mesenterique_v: 'veine', porte: 'veine', hepatique_v: 'veine', renale_v: 'veine',
+}
+
+// Couleurs des globules qui montrent le SENS : jaune = part du cœur, cyan = revient au cœur
+export const COULEUR_PART = '#FFD27A'
+export const COULEUR_REVIENT = '#7FE8FF'
+
+// Globules qui circulent dans le vrai sens dans les lignes demandées
+// (artère : du cœur vers l'extérieur ; veine : vers le cœur).
+// type : 'tout' | 'artere' | 'veine' ; lignes : liste de lignes (sinon toutes) ; vitesse en m/s
+export function fluxSens(modele, { type = 'tout', lignes = null, vitesse = 0.12 } = {}) {
+  const coeur = new THREE.Vector3(...modele.points.coeur)
+  return (lignes || Object.keys(TYPE_LIGNES))
+    .filter((nom) => modele.lignes[nom] && (type === 'tout' || TYPE_LIGNES[nom] === type))
+    .map((nom) => {
+      let pts = modele.lignes[nom].map((p) => new THREE.Vector3(...p))
+      const debutPres = pts[0].distanceTo(coeur) < pts[pts.length - 1].distanceTo(coeur)
+      const artere = TYPE_LIGNES[nom] === 'artere'
+      if (artere !== debutPres) pts = pts.reverse()
+      const cumul = longueurs(pts)
+      const L = cumul[cumul.length - 1] || 0.01
+      // vitesse constante en mètres par seconde, un globule tous les 2,5 cm environ
+      return { points: pts, avant: artere ? COULEUR_PART : COULEUR_REVIENT, nombre: Math.max(3, Math.round(L / 0.025)), vitesse: vitesse / L }
+    })
+}

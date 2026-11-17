@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ArrowRight, RotateCcw, TriangleAlert } from 'lucide-react'
+import { ArrowRight, RotateCcw } from 'lucide-react'
 import * as THREE from 'three'
 import { Bouton, Carte, Eclat, melanger } from '../../../components/labo/CadreJeu.jsx'
 import Circulation3D from '../../../components/labo/circulation/Circulation3D.jsx'
@@ -11,8 +11,8 @@ import { Consigne, PageCirc } from './commun.jsx'
 //  Tout le réseau est gris : un vaisseau s'allume et des globules
 //  y circulent DANS LE VRAI SENS du sang. S'éloignent-ils du cœur
 //  (artère) ou y reviennent-ils (veine) ? Puis on révèle la couleur.
-//  Pièges : l'artère pulmonaire (sang pauvre en dioxygène) et la
-//  veine pulmonaire (sang riche) : c'est le SENS qui compte.
+//  Les vaisseaux des poumons sont volontairement laissés de côté
+//  (choix pédagogique : on travaille seulement le sens du sang).
 //  Attendus 66, 70.
 // =============================================================
 const VAISSEAUX = [
@@ -21,8 +21,6 @@ const VAISSEAUX = [
   { ligne: 'aorte_descendante', groupe: 'aorte', cote: '', type: 'artere', cadre: 'corps', nom: 'Aorte' },
   { ligne: 'veine_cave_inf_bas', groupe: 'veine_cave_inf', cote: '', type: 'veine', cadre: 'ventre', nom: 'Veine cave inférieure' },
   { ligne: 'veine_cave_sup', groupe: 'veine_cave_sup', cote: '', type: 'veine', cadre: 'thorax', nom: 'Veine cave supérieure' },
-  { ligne: 'tronc_pulmonaire', groupe: 'tronc_pulmonaire', cote: '', type: 'artere', cadre: 'thorax', nom: 'Artère pulmonaire', piege: 'Piège ! Son sang est pauvre en dioxygène (il va se recharger dans les poumons)… mais elle PART du cœur : c’est bien une artère.' },
-  { ligne: 'veine_pulmonaire_g', groupe: 'veines_pulmonaires', cote: 'g', type: 'veine', cadre: 'thorax', nom: 'Veine pulmonaire', piege: 'Piège ! Son sang est riche en dioxygène (il revient des poumons)… mais il REVIENT au cœur : c’est bien une veine.' },
   { ligne: 'humerale_a', groupe: 'artere_humerale', cote: 'g', type: 'artere', cadre: 'bras', nom: 'Artère humérale' },
   { ligne: 'radiale_a', groupe: 'artere_radiale', cote: 'g', type: 'artere', cadre: 'bras', nom: 'Artère radiale' },
   { ligne: 'axillaire_v', groupe: 'axillaire_v', cote: 'g', type: 'veine', cadre: 'bras', nom: 'Veine axillaire' },
@@ -35,10 +33,10 @@ const VAISSEAUX = [
 const N = 8
 
 function tirage() {
-  // toujours au moins un des deux pièges pulmonaires
-  const pieges = VAISSEAUX.filter((v) => v.piege)
-  const autres = VAISSEAUX.filter((v) => !v.piege)
-  return melanger([melanger(pieges)[0], ...melanger(autres).slice(0, N - 1)])
+  // autant d'artères que de veines
+  const a = melanger(VAISSEAUX.filter((v) => v.type === 'artere')).slice(0, N / 2)
+  const v = melanger(VAISSEAUX.filter((x) => x.type === 'veine')).slice(0, N / 2)
+  return melanger([...a, ...v])
 }
 
 export default function ArtereVeineView() {
@@ -67,7 +65,7 @@ export default function ArtereVeineView() {
     setReponse(type)
     if (bon) {
       setScore((s) => s + 1)
-      setEclat((x) => ({ message: v.piege ? 'Piège déjoué !' : 'Exact !', cle: x.cle + 1 }))
+      setEclat((x) => ({ message: 'Exact !', cle: x.cle + 1 }))
     }
   }
 
@@ -153,11 +151,6 @@ export default function ArtereVeineView() {
                 <Carte couleur={reponse === v.type ? '#9DFF8A' : '#FF6B7A'} className="labo-apparait">
                   <p className="labo-titre text-lg font-bold text-white">{v.nom}</p>
                   <p className="mt-1 text-[14px] leading-snug text-[#DDE2F7]">{FICHES[v.groupe]}</p>
-                  {v.piege && (
-                    <p className="mt-2 flex gap-2 rounded-xl bg-[#FFD27A]/10 p-2 text-[13px] leading-snug text-[#FFE3A8]">
-                      <TriangleAlert size={16} className="mt-0.5 flex-none" /> {v.piege}
-                    </p>
-                  )}
                   <Bouton className="mt-3 w-full" couleur="#4DA3FF" onClick={suivant}>
                     Suivant <ArrowRight size={17} />
                   </Bouton>
