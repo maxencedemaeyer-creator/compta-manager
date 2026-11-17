@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Check, CheckSquare, Images, Loader2, MonitorPlay, Square, Trash2, X } from 'lucide-react'
-import { lireImage, projeter, useGalerieProjection } from '../../hooks/useProjection.js'
+import { ArrowLeft, Check, CheckSquare, Images, Loader2, MonitorPlay, RotateCcw, RotateCw, Square, Trash2, X } from 'lucide-react'
+import { lireImage, pivoterPhoto, projeter, useGalerieProjection } from '../../hooks/useProjection.js'
 
 // =============================================================
 //  Projection — galerie des photos envoyées
@@ -53,6 +53,19 @@ function Apercu({ photo, projetee, onFermer, onSupprimer }) {
     }
   }, [photo.id, onFermer])
 
+  async function pivoter(sens) {
+    if (action) return
+    setAction(sens > 0 ? 'droite' : 'gauche')
+    try {
+      setImage(await pivoterPhoto(photo.id, sens))
+    } catch (err) {
+      console.error(err)
+      window.alert(err.message || 'La rotation a échoué.')
+    } finally {
+      setAction('')
+    }
+  }
+
   async function lancer() {
     setAction('projection')
     try {
@@ -78,10 +91,30 @@ function Apercu({ photo, projetee, onFermer, onSupprimer }) {
           className={`max-w-full max-h-full object-contain rounded-xl ${image ? '' : 'blur-sm'}`}
         />
       </div>
-      <div className="p-4 flex justify-center gap-3" onClick={(e) => e.stopPropagation()}>
+      <div className="p-4 flex flex-wrap justify-center gap-3" onClick={(e) => e.stopPropagation()}>
+        <div className="flex gap-2">
+          <button
+            onClick={() => pivoter(-1)}
+            disabled={!image || Boolean(action)}
+            className="w-12 h-12 rounded-2xl bg-white/10 hover:bg-white/20 flex items-center justify-center disabled:opacity-40 transition-colors"
+            title="Pivoter vers la gauche"
+            aria-label="Pivoter vers la gauche"
+          >
+            {action === 'gauche' ? <Loader2 size={20} className="animate-spin" /> : <RotateCcw size={20} />}
+          </button>
+          <button
+            onClick={() => pivoter(1)}
+            disabled={!image || Boolean(action)}
+            className="w-12 h-12 rounded-2xl bg-white/10 hover:bg-white/20 flex items-center justify-center disabled:opacity-40 transition-colors"
+            title="Pivoter vers la droite"
+            aria-label="Pivoter vers la droite"
+          >
+            {action === 'droite' ? <Loader2 size={20} className="animate-spin" /> : <RotateCw size={20} />}
+          </button>
+        </div>
         <button
           onClick={lancer}
-          disabled={projetee || action}
+          disabled={projetee || Boolean(action)}
           className="h-12 px-5 rounded-2xl bg-gradient-to-r from-violet-500 to-indigo-600 font-medium inline-flex items-center gap-2 disabled:opacity-60"
         >
           {action === 'projection' ? <Loader2 size={18} className="animate-spin" /> : projetee ? <Check size={18} /> : <MonitorPlay size={18} />}

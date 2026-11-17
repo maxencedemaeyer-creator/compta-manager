@@ -34,7 +34,16 @@ export function compresserPhoto(file, taille = 360, qualite = 0.82) {
 // =============================================================
 const LIMITE_FIREBASE = 900000 // caractères, marge sous la limite de 1 Mo
 
-function chargerImage(file) {
+// Lit la photo en respectant le sens dans lequel le téléphone était tenu
+// (paysage / portrait), enregistré dans les informations de la photo.
+async function chargerImage(file) {
+  if (typeof createImageBitmap === 'function') {
+    try {
+      return await createImageBitmap(file, { imageOrientation: 'from-image' })
+    } catch {
+      /* navigateur trop ancien : méthode classique ci-dessous */
+    }
+  }
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file)
     const img = new Image()
@@ -89,6 +98,58 @@ export async function preparerPhotoProjection(file) {
 
   const miniature = encoder(dessiner(img, 360), 0.75)
 
+  return {
+    image,
+    miniature,
+    largeur: canvas.width,
+    hauteur: canvas.height,
+    taille: image.length + miniature.length,
+  }
+}
+
+// =============================================================
+//  Rotation d'une photo de projection (quart de tour)
+//  sens = 1 → sens des aiguilles d'une montre, -1 → sens inverse
+//  L'image elle-même est tournée : elle s'affiche donc pivotée
+//  partout (galerie, écran de la classe).
+// =============================================================
+function chargerDepuisUrl(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => resolve(img)
+    img.onerror = () => reject(new Error('Impossible de lire la photo.'))
+    img.src = src
+  })
+}
+
+function tourner(img, sens, coteMax = Infinity) {
+  const echelle = Math.min(1, coteMax / Math.max(img.width, img.height))
+  const l = Math.round(img.width * echelle)
+  const h = Math.round(img.height * echelle)
+  const canvas = document.createElement('canvas')
+  canvas.width = h
+  canvas.height = l
+  const ctx = canvas.getContext('2d')
+  ctx.imageSmoothingQuality = 'high'
+  ctx.translate(h / 2, l / 2)
+  ctx.rotate((sens * Math.PI) / 2)
+  ctx.drawImage(img, -l / 2, -h / 2, l, h)
+  return canvas
+}
+
+export async function pivoterImage(dataUrl, sens = 1) {
+  const img = await chargerDepuisUrl(dataUrl)
+  const canvas = tourner(img, sens)
+  let image = null
+  for (const q of [0.92, 0.88, 0.8, 0.72]) {
+    const essai = encoder(canvas, q)
+    if (essai.length <= LIMITE_FIREBASE) {
+      image = essai
+      break
+    }
+  }
+  if (!image) throw new Error('Impossible de pivoter cette photo.')
+  const miniature = encoder(tourner(img, sens, 360), 0.75)
   return {
     image,
     miniature,

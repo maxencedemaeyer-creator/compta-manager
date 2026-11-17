@@ -94,6 +94,14 @@ function Protege({ children }) {
   return children
 }
 
+// Pages ouvertes sans code PIN (ex. écran et galerie de projection sur
+// l'ordinateur de la classe) : on attend seulement la connexion à Firebase.
+function SansPin({ children }) {
+  const { authReady, error } = usePin()
+  if (!authReady) return <Chargement message={error || 'Connexion à la base de données…'} />
+  return children
+}
+
 // Anciennes adresses (avant les profils) : /compta/velo → /maxence/compta/velo, etc.
 function VersMaxence() {
   const { pathname, search, hash } = useLocation()
@@ -165,10 +173,10 @@ export default function App() {
         <Route path="/maxence/francais" element={<Protege><LabView /></Protege>} />
 
         {/* Application Projection (photo du téléphone → écran de la classe) */}
-        <Route path="/maxence/projection" element={<Protege><ProjectionView /></Protege>} />
+        <Route path="/maxence/projection" element={<SansPin><ProjectionView /></SansPin>} />
         <Route path="/maxence/projection/photo" element={<Protege><ProjectionPhotoView /></Protege>} />
-        <Route path="/maxence/projection/ecran" element={<Protege><ProjectionEcranView /></Protege>} />
-        <Route path="/maxence/projection/galerie" element={<Protege><ProjectionGalerieView /></Protege>} />
+        <Route path="/maxence/projection/ecran" element={<SansPin><ProjectionEcranView /></SansPin>} />
+        <Route path="/maxence/projection/galerie" element={<SansPin><ProjectionGalerieView /></SansPin>} />
 
         {/* Application Jeux (Game Center) */}
         <Route path="/maxence/jeux" element={<Protege><JeuxView /></Protege>} />
