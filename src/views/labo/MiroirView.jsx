@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Camera, Hand, RefreshCw, ScanFace, ShieldCheck, Target, Trophy } from 'lucide-react'
 import { DecorLabo } from '../../components/labo/DecorLabo.jsx'
-import { Eclat } from '../../components/labo/CadreJeu.jsx'
+import { Eclat, useRetourSalle } from '../../components/labo/CadreJeu.jsx'
 import './labo.css'
 
 // =============================================================
@@ -222,6 +222,7 @@ function dessinerMain(ctx, Lm, echelle) {
 }
 
 export default function MiroirView() {
+  const retour = useRetourSalle()
   const videoRef = useRef(null)
   const canvasRef = useRef(null)
   const detecteurRef = useRef(null)
@@ -679,7 +680,7 @@ export default function MiroirView() {
         <DecorLabo flash={false} />
         <div className="relative mx-auto flex min-h-[100dvh] max-w-xl flex-col gap-5 px-5 pb-10 pt-[max(16px,env(safe-area-inset-top))]">
           <header className="flex items-center gap-3">
-            <Link to="/labo" aria-label="Retour au labo" className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/15">
+            <Link to={retour} aria-label="Retour au labo" className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/15">
               <ArrowLeft size={20} strokeWidth={2.5} />
             </Link>
             <div>
@@ -737,7 +738,7 @@ export default function MiroirView() {
 
       <div className="absolute inset-x-0 top-0 flex items-center gap-3 px-4 pt-[max(12px,env(safe-area-inset-top))]">
         <Link
-          to="/labo"
+          to={retour}
           onClick={arreter}
           aria-label="Quitter le miroir"
           className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/20 bg-black/50 backdrop-blur"

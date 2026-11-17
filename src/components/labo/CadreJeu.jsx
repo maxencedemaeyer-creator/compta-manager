@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { DecorLabo } from './DecorLabo.jsx'
 import '../../views/labo/labo.css'
@@ -8,15 +8,23 @@ import '../../views/labo/labo.css'
 //  Cadre commun à toutes les paillasses du labo :
 //  décor, bouton retour, titre, attendus du référentiel, score.
 // =============================================================
+// Adresse de la salle de l'expérience : /labo/locomoteur/miroir → /labo/locomoteur
+export function useRetourSalle() {
+  const { pathname } = useLocation()
+  const morceaux = pathname.replace(/\/+$/, '').split('/')
+  return morceaux.length > 3 ? morceaux.slice(0, -1).join('/') : '/labo'
+}
+
 export default function CadreJeu({ code, titre, attendus = [], couleur = '#7CFF6B', droite, children, large = false }) {
+  const retour = useRetourSalle()
   return (
     <div className="labo relative min-h-[100dvh] overflow-x-hidden">
       <DecorLabo flash={false} />
       <div className={`relative mx-auto flex min-h-[100dvh] flex-col gap-4 px-4 pb-10 pt-[max(16px,env(safe-area-inset-top))] ${large ? 'max-w-5xl' : 'max-w-xl'}`}>
         <header className="flex items-center gap-3">
           <Link
-            to="/labo"
-            aria-label="Retour au labo"
+            to={retour}
+            aria-label="Retour à l’expérience"
             className="flex h-11 w-11 flex-none items-center justify-center rounded-2xl border border-white/15 text-[#E8ECFF] active:scale-95"
           >
             <ArrowLeft size={20} strokeWidth={2.5} />

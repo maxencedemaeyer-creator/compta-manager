@@ -34,22 +34,25 @@ import CoutureArticleView from './views/couture/CoutureArticleView.jsx'
 import CoutureAtelierView from './views/couture/CoutureAtelierView.jsx'
 import CodeAcces from './components/couture/CodeAcces.jsx'
 import { estSiteGalerie } from './hooks/useCouture.js'
+import { ANCIENNES_ADRESSES } from './config/laboAteliers.js'
 
 // Le labo de sciences (public, sans PIN) : chargé seulement quand on l'ouvre
 const LaboView = lazy(() => import('./views/labo/LaboView.jsx'))
+const SalleView = lazy(() => import('./views/labo/SalleView.jsx'))
+// Les jeux de chaque expérience : clé « expérience/paillasse »
 const LABO_JEUX = {
-  miroir: lazy(() => import('./views/labo/MiroirView.jsx')),
-  puzzle: lazy(() => import('./views/labo/PuzzleView.jsx')),
-  bras: lazy(() => import('./views/labo/BrasView.jsx')),
-  'qui-tire': lazy(() => import('./views/labo/QuiTireView.jsx')),
-  pantin: lazy(() => import('./views/labo/PantinView.jsx')),
-  protection: lazy(() => import('./views/labo/ProtectionView.jsx')),
-  reflexes: lazy(() => import('./views/labo/ReflexesView.jsx')),
-  dissection: lazy(() => import('./views/labo/DissectionView.jsx')),
-  explorateur: lazy(() => import('./views/labo/ExplorateurView.jsx')),
-  cousins: lazy(() => import('./views/labo/CousinsView.jsx')),
-  urgences: lazy(() => import('./views/labo/UrgencesView.jsx')),
-  defi: lazy(() => import('./views/labo/DefiView.jsx')),
+  'locomoteur/miroir': lazy(() => import('./views/labo/MiroirView.jsx')),
+  'locomoteur/puzzle': lazy(() => import('./views/labo/PuzzleView.jsx')),
+  'locomoteur/bras': lazy(() => import('./views/labo/BrasView.jsx')),
+  'locomoteur/qui-tire': lazy(() => import('./views/labo/QuiTireView.jsx')),
+  'locomoteur/pantin': lazy(() => import('./views/labo/PantinView.jsx')),
+  'locomoteur/protection': lazy(() => import('./views/labo/ProtectionView.jsx')),
+  'locomoteur/reflexes': lazy(() => import('./views/labo/ReflexesView.jsx')),
+  'locomoteur/dissection': lazy(() => import('./views/labo/DissectionView.jsx')),
+  'locomoteur/explorateur': lazy(() => import('./views/labo/ExplorateurView.jsx')),
+  'locomoteur/cousins': lazy(() => import('./views/labo/CousinsView.jsx')),
+  'locomoteur/urgences': lazy(() => import('./views/labo/UrgencesView.jsx')),
+  'locomoteur/defi': lazy(() => import('./views/labo/DefiView.jsx')),
 }
 
 function Labo({ children }) {
@@ -113,9 +116,14 @@ export default function App() {
 
         {/* ================= Le labo de sciences (public, pour les élèves) ================= */}
         <Route path="/labo" element={<Labo><LaboView /></Labo>} />
-        {Object.entries(LABO_JEUX).map(([id, Jeu]) => (
-          <Route key={id} path={`/labo/${id}`} element={<Labo><Jeu /></Labo>} />
+        {Object.entries(LABO_JEUX).map(([cle, Jeu]) => (
+          <Route key={cle} path={`/labo/${cle}`} element={<Labo><Jeu /></Labo>} />
         ))}
+        {/* anciennes adresses (QR codes déjà imprimés) → système locomoteur */}
+        {ANCIENNES_ADRESSES.map((id) => (
+          <Route key={id} path={`/labo/${id}`} element={<Navigate to={`/labo/locomoteur/${id}`} replace />} />
+        ))}
+        <Route path="/labo/:experience" element={<Labo><SalleView /></Labo>} />
         <Route path="/labo/*" element={<Navigate to="/labo" replace />} />
 
         {/* ================= Espace Maxence ================= */}

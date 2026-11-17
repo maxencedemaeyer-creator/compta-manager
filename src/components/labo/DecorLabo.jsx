@@ -23,19 +23,19 @@ const FUMEES = [
   { sx: '-20px', left: '52%', taille: 200, couleur: '124,255,107', alpha: 0.28, delai: '1.5s' },
 ]
 
-export function DecorLabo({ flash = true }) {
+export function DecorLabo({ flash = true, rgb = '124,255,107', rgb2 = '181,123,255' }) {
   return (
     <div aria-hidden="true" className="pointer-events-none fixed inset-0 overflow-hidden">
       <div
         className="labo-pulse absolute -left-32 -top-20 h-[420px] w-[420px] rounded-full"
-        style={{ background: 'radial-gradient(circle, rgba(124,255,107,.22), rgba(124,255,107,0) 65%)' }}
+        style={{ background: `radial-gradient(circle, rgba(${rgb},.22), rgba(${rgb},0) 65%)` }}
       />
       <div
         className="labo-pulse absolute -right-40 top-64 h-[420px] w-[420px] rounded-full"
-        style={{ background: 'radial-gradient(circle, rgba(181,123,255,.22), rgba(181,123,255,0) 65%)', animationDelay: '1.3s' }}
+        style={{ background: `radial-gradient(circle, rgba(${rgb2},.22), rgba(${rgb2},0) 65%)`, animationDelay: '1.3s' }}
       />
       <div className="labo-hex absolute inset-0" />
-      {FUMEES.map((f, i) => (
+      {FUMEES.map((f) => ({ ...f, couleur: f.couleur === "124,255,107" ? rgb : f.couleur === "181,123,255" ? rgb2 : f.couleur })).map((f, i) => (
         <span
           key={i}
           className="labo-fumee"

@@ -1,18 +1,17 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight, Rotate3d, Sparkles } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { DecorLabo, Fiole } from '../../components/labo/DecorLabo.jsx'
-import { EXPERIENCE, PAILLASSES } from '../../config/laboAteliers.js'
-import Corps3D from '../../components/labo/Corps3D.jsx'
+import VisuelExperience from '../../components/labo/VisuelExperience.jsx'
+import { EXPERIENCES } from '../../config/laboAteliers.js'
 import './labo.css'
 
 // =============================================================
-//  Le labo de sciences : accueil public (sans code PIN), ouvert
-//  aux élèves. Affiche l'expérience de la semaine et ses paillasses.
+//  Le hall du labo de sciences (/labo) : public, sans code PIN.
+//  Une grande porte par expérience (un chapitre du cours).
+//  Toutes les expériences sont ouvertes : les élèves peuvent
+//  revenir rejouer un ancien chapitre quand ils veulent.
 // =============================================================
 export default function LaboView() {
-  const vedette = PAILLASSES.find((p) => p.vedette)
-  const autres = PAILLASSES.filter((p) => !p.vedette)
-
   return (
     <div className="labo relative min-h-[100dvh] overflow-x-hidden">
       <DecorLabo />
@@ -27,7 +26,7 @@ export default function LaboView() {
 
         <div className="flex items-end gap-3">
           <div className="flex-1">
-            <p className="labo-mono mb-1.5 text-xs text-[#B57BFF]">// expériences en cours</p>
+            <p className="labo-mono mb-1.5 text-xs text-[#B57BFF]">// choisis ton expérience</p>
             <h1 className="labo-titre text-[40px] font-black leading-[.98] tracking-tight text-[#F4F6FF] sm:text-6xl">
               Le labo
               <br />
@@ -37,88 +36,48 @@ export default function LaboView() {
           <Fiole />
         </div>
 
-        <section className="labo-apparait rounded-3xl border border-[#7CFF6B]/35 bg-[#121A30]/85 p-4">
-          <div className="flex items-center justify-between">
-            <span className="labo-mono text-[11px] tracking-[.1em] text-[#7CFF6B]">EXPÉRIENCE N° {EXPERIENCE.numero}</span>
-            <span className="text-xs text-[#8A93B8]">{PAILLASSES.length} paillasses</span>
-          </div>
-          <div className="mt-3 flex gap-4">
-            <Link
-              to="/labo/explorateur"
-              aria-label="Explorer le corps humain en 3D"
-              className="relative h-44 w-28 flex-none overflow-hidden rounded-2xl border border-[#7CFF6B]/40 bg-[#070B16]/70 active:scale-[.97]"
-            >
-              <Corps3D className="pointer-events-none h-full w-full" tourner credit={false} marge={1.02} />
-              <span className="labo-mono absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-[#7CFF6B]/90 py-1 text-[10px] font-bold text-[#06210A]">
-                <Rotate3d size={12} /> EXPLORER
-              </span>
-            </Link>
-            <div className="flex min-w-0 flex-col justify-between">
-              <div>
-                <h2 className="labo-titre text-[22px] font-bold leading-tight text-[#F4F6FF]">{EXPERIENCE.titre}</h2>
-                <p className="mt-1.5 text-sm leading-snug text-[#B9C1E3]">{EXPERIENCE.accroche}</p>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                <span className="rounded-full bg-[#7CFF6B]/15 px-2 py-1 text-[11px] text-[#9DFF8A]">206 os</span>
-                <span className="rounded-full bg-[#B57BFF]/15 px-2 py-1 text-[11px] text-[#D2B4FF]">plus de 600 muscles</span>
-                <span className="rounded-full bg-white/5 px-2 py-1 text-[11px] text-[#B9C1E3]">Attendus {EXPERIENCE.attendus}</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {vedette && (
-          <Link
-            to={`/labo/${vedette.id}`}
-            className="labo-apparait group relative overflow-hidden rounded-3xl border-2 p-4 active:scale-[.98]"
-            style={{ borderColor: vedette.couleur, background: 'rgba(12,20,40,.9)' }}
-          >
-            <span className="labo-scan opacity-60" style={{ background: vedette.couleur }} />
-            <div className="relative flex items-center gap-4">
-              <div className="flex h-14 w-14 flex-none items-center justify-center rounded-2xl" style={{ background: `${vedette.couleur}22`, color: vedette.couleur }}>
-                <vedette.icon size={30} strokeWidth={1.8} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="labo-mono flex items-center gap-1.5 text-[11px] tracking-[.1em]" style={{ color: vedette.couleur }}>
-                  <Sparkles size={12} /> PAILLASSE VEDETTE · {vedette.code}
-                </p>
-                <p className="labo-titre text-lg font-bold text-[#F4F6FF]">{vedette.titre}</p>
-                <p className="text-sm text-[#B9C1E3]">Scanne ta main, puis un copain : leurs os apparaissent en direct.</p>
-              </div>
-              <ArrowRight className="flex-none" style={{ color: vedette.couleur }} />
-            </div>
-          </Link>
-        )}
-
         <div className="flex items-baseline justify-between">
-          <h3 className="labo-titre text-[15px] font-medium text-[#F4F6FF]">Les paillasses</h3>
-          <span className="labo-mono text-[11px] text-[#8A93B8]">5 à 10 min chacune</span>
+          <h2 className="labo-titre text-[15px] font-medium text-[#F4F6FF]">Les expériences</h2>
+          <span className="labo-mono text-[11px] text-[#8A93B8]">{EXPERIENCES.length} chapitres</span>
         </div>
 
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
-          {autres.map((p, i) => (
-            <Link
-              key={p.id}
-              to={`/labo/${p.id}`}
-              className="labo-apparait flex min-h-[44px] flex-col gap-2 rounded-[18px] border p-3 active:scale-[.97]"
-              style={{ borderColor: `${p.couleur}66`, background: 'rgba(18,26,48,.85)', animationDelay: `${i * 40}ms` }}
-            >
-              <div className="flex items-center justify-between">
-                <span className="labo-mono text-[11px]" style={{ color: p.couleur }}>
-                  {p.code}
-                </span>
-                <span className="labo-mono text-[10px] text-[#8A93B8]">{p.attendus.join('·')}</span>
-              </div>
-              <p.icon size={30} strokeWidth={1.6} style={{ color: p.couleur }} />
-              <span className="text-sm font-bold leading-tight text-[#E8ECFF]">{p.titre}</span>
-              <span className="text-xs leading-snug text-[#8A93B8]">{p.texte}</span>
-            </Link>
-          ))}
+        <div className="grid gap-3 md:grid-cols-2">
+          {EXPERIENCES.map((e, i) => {
+            const prets = e.paillasses.filter((p) => p.pret !== false).length
+            return (
+              <Link
+                key={e.id}
+                to={`/labo/${e.id}`}
+                className="labo-apparait group relative flex overflow-hidden rounded-3xl border-2 active:scale-[.98]"
+                style={{ borderColor: `${e.couleur}88`, background: 'rgba(14,20,40,.9)', animationDelay: `${i * 80}ms` }}
+              >
+                <span className="labo-scan opacity-40" style={{ background: e.couleur }} />
+                <div className="relative h-44 w-32 flex-none" style={{ background: `radial-gradient(circle at 50% 45%, rgba(${e.rgb},.18), transparent 70%)` }}>
+                  <VisuelExperience type={e.visuel} className="h-full w-full" />
+                </div>
+                <div className="relative flex min-w-0 flex-1 flex-col justify-between gap-2 p-4 pl-1">
+                  <div>
+                    <p className="labo-mono text-[11px] tracking-[.1em]" style={{ color: e.couleur }}>
+                      EXPÉRIENCE {e.numero} · {e.niveau}
+                    </p>
+                    <h3 className="labo-titre mt-1 text-[21px] font-bold leading-tight text-[#F4F6FF]">{e.titre}</h3>
+                    <p className="mt-1 text-sm leading-snug text-[#B9C1E3]">{e.accroche}</p>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="rounded-full px-2.5 py-1 text-[11px]" style={{ background: `rgba(${e.rgb},.15)`, color: e.couleur }}>
+                      {prets > 0 ? `${prets} paillasses` : `${e.paillasses.length} paillasses en préparation`}
+                    </span>
+                    <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full transition group-hover:translate-x-0.5" style={{ background: e.couleur, color: '#070B16' }}>
+                      <ArrowRight size={20} strokeWidth={2.5} />
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            )
+          })}
         </div>
 
-        <p className="text-center text-xs leading-relaxed text-[#8A93B8]">
-          Référentiel P3-P4 · Les forces de l’appareil moteur · Schémas et radios : sources affichées dans chaque paillasse.
-        </p>
+        <p className="text-center text-xs leading-relaxed text-[#8A93B8]">Toutes les expériences restent ouvertes : reviens rejouer quand tu veux.</p>
       </div>
     </div>
   )
