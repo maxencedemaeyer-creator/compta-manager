@@ -1,0 +1,23 @@
+{
+  "id": "/maxence/projection",
+  "name": "Projection",
+  "short_name": "Projection",
+  "description": "Une photo prise en classe, aussitôt au tableau",
+  "lang": "fr",
+  "start_url": "/maxence/projection/ecran",
+  "scope": "/maxence/projection",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#000000",
+  "theme_color": "#0f0a1f",
+  "icons": [
+    { "src": "/icons/projection/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/projection/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/projection/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Écran de projection", "url": "/maxence/projection/ecran", "icons": [{ "src": "/icons/projection/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Galerie", "url": "/maxence/projection/galerie", "icons": [{ "src": "/icons/projection/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Prendre une photo", "url": "/maxence/projection/photo", "icons": [{ "src": "/icons/projection/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

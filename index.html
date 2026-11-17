@@ -51,6 +51,21 @@
         // Galerie couture sur son adresse à part (couture-julie.vercel.app) → icône de Julie
         if (galerie) premier = 'couture'
         window.__NOM_ESPACE__ = ESPACES[premier] || 'Bienvenue'
+        // Application Projection (/maxence/projection…) : sa propre icône et son propre
+        // manifeste, pour l'installer comme une appli (Edge / Chrome sur Windows, iPhone…)
+        if (/^\/maxence\/projection(\/|$)/i.test(location.pathname)) {
+          window.__NOM_ESPACE__ = 'Projection'
+          document.title = 'Projection'
+          document.getElementById('icone-svg').href = '/icons/projection/favicon.svg?v=1'
+          document.getElementById('icone-png').href = '/icons/projection/favicon-32.png?v=1'
+          document.getElementById('icone-192').href = '/icons/projection/icon-192.png?v=1'
+          document.getElementById('icone-apple').href = '/icons/projection/apple-touch-icon.png?v=1'
+          document.getElementById('icone-manifest').href = '/icons/projection/site.webmanifest?v=1'
+          document.getElementById('couleur-theme').content = '#0f0a1f'
+          document.getElementById('nom-appli').content = 'Projection'
+          document.getElementById('nom-appli-apple').content = 'Projection'
+          return
+        }
         // Le labo de sciences (élèves) : écran de départ sombre, nom « Le labo »
         if (premier === 'labo') {
           window.__NOM_ESPACE__ = 'Le labo'

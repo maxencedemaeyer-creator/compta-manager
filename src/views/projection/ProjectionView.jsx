@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Camera, ChevronRight, Images, MonitorPlay, Projector } from 'lucide-react'
+import { ArrowLeft, Camera, ChevronRight, Images, MonitorPlay } from 'lucide-react'
 
 // =============================================================
 //  Application Projection : page d'accueil
@@ -44,9 +44,7 @@ export default function ProjectionView() {
         </Link>
 
         <div className="mt-8 mb-8 flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 via-fuchsia-500 to-amber-400 flex items-center justify-center shadow-lg shrink-0">
-            <Projector size={28} />
-          </div>
+          <img src="/icons/projection/favicon.svg" alt="" className="w-14 h-14 sm:w-16 sm:h-16 shadow-lg rounded-[22%] shrink-0" />
           <div>
             <h1 className="text-2xl sm:text-4xl font-bold tracking-tight">Projection</h1>
             <p className="text-white/60 text-sm mt-1">Une photo prise en classe, aussitôt au tableau.</p>

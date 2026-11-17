@@ -9,6 +9,7 @@ import { estSiteGalerie } from '../hooks/useCouture.js'
 //    /          → icône de l'accueil (les deux ronds)
 //    /maxence   → « M. » vert
 //    /julie     → « J. » rose
+//    /maxence/projection → photo projetée violet-ambre (appli Projection)
 //    /labo      → fiole d'Erlenmeyer fluo (labo de sciences)
 //    /couture et couture-julie.vercel.app (galerie) → « J. » rose aussi,
 //    mais l'icône posée sur l'écran d'accueil ouvre la galerie, pas l'atelier
@@ -23,6 +24,10 @@ const PAGES_DE = { couture: 'julie' }
 function choisir(pathname) {
   // Galerie couture sur son adresse à part (couture-julie.vercel.app) → icône de Julie
   const premier = estSiteGalerie() ? 'couture' : (pathname.split('/')[1] || '').toLowerCase()
+  // Application Projection : icône et manifeste à part (installable comme appli)
+  if (/^\/maxence\/projection(\/|$)/i.test(pathname)) {
+    return { dossier: 'projection', manifeste: 'projection', nom: 'Projection', theme: '#0f0a1f', version: 'v=1' }
+  }
   if (premier === 'labo') return { dossier: 'labo', manifeste: 'labo', nom: 'Le labo', theme: '#070b16', version: 'v=5' }
   const profil = trouverProfil(PAGES_DE[premier] || premier)
   if (profil?.icone) {
