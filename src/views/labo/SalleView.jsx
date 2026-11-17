@@ -5,6 +5,7 @@ import { DecorLabo } from '../../components/labo/DecorLabo.jsx'
 import VisuelExperience from '../../components/labo/VisuelExperience.jsx'
 import { EXPERIENCE } from '../../config/laboAteliers.js'
 import './labo.css'
+import PiedLabo from '../../components/labo/PiedLabo.jsx'
 
 // =============================================================
 //  La salle d'une expérience (/labo/:experience) : le chapitre,
@@ -153,6 +154,7 @@ export default function SalleView() {
         <p className="text-center text-xs leading-relaxed text-[#8A93B8]">
           Référentiel {e.niveau} · {e.chapitre} · Sources affichées dans chaque paillasse.
         </p>
+        <PiedLabo className="pt-2" />
       </div>
 
       {apercu && (

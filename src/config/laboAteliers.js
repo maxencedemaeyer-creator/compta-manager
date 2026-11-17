@@ -14,6 +14,8 @@ import {
   SearchCheck,
   Shield,
   Siren,
+  Tags,
+  Megaphone,
   ToggleLeft,
   TriangleAlert,
   Wrench,
@@ -58,6 +60,8 @@ export const EXPERIENCES = [
       { id: 'cousins', code: 'A9', titre: 'Les cousins cachés', texte: 'Mêmes os 3D chez l’oiseau, la baleine…', icon: Bird, couleur: '#9DE7C2', attendus: [112] },
       { id: 'urgences', code: 'A10', titre: 'Service des urgences', texte: 'De vraies radios de fractures', icon: Siren, couleur: '#FF6B7A', attendus: [112, 115] },
       { id: 'defi', code: 'A11', titre: 'Défi éclair', texte: '60 secondes, tableau des records', icon: Zap, couleur: '#FFE45E', attendus: [112, 113, 116] },
+      { id: 'jacques', code: 'A12', titre: 'Jacques a dit !', texte: 'Les mots du corps, avec la caméra', icon: Megaphone, couleur: '#6FEFFF', attendus: [] },
+      { id: 'etiqueteuse', code: 'A13', titre: 'L’étiqueteuse', texte: 'Écris les mots, colle-les sur ta photo', icon: Tags, couleur: '#FFB86B', attendus: [] },
     ],
   },
   {

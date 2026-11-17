@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { DecorLabo } from './DecorLabo.jsx'
 import '../../views/labo/labo.css'
+import PiedLabo from './PiedLabo.jsx'
 
 // =============================================================
 //  Cadre commun à toutes les paillasses du labo :
@@ -39,6 +40,7 @@ export default function CadreJeu({ code, titre, attendus = [], couleur = '#7CFF6
           {droite}
         </header>
         {children}
+        <PiedLabo />
       </div>
     </div>
   )

@@ -4,6 +4,7 @@ import { ArrowLeft, Camera, Hand, RefreshCw, ScanFace, ShieldCheck, Target, Trop
 import { DecorLabo } from '../../components/labo/DecorLabo.jsx'
 import { Eclat, useRetourSalle } from '../../components/labo/CadreJeu.jsx'
 import './labo.css'
+import PiedLabo from '../../components/labo/PiedLabo.jsx'
 
 // =============================================================
 //  A1 · Le miroir à rayons X
@@ -718,6 +719,7 @@ export default function MiroirView() {
             <Camera size={22} />
             {phase === 'chargement' ? 'Allumage du scanner…' : 'Allumer le miroir'}
           </button>
+          <PiedLabo />
         </div>
       </div>
       </>

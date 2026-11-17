@@ -4,6 +4,7 @@ import { DecorLabo, Fiole } from '../../components/labo/DecorLabo.jsx'
 import VisuelExperience from '../../components/labo/VisuelExperience.jsx'
 import { EXPERIENCES } from '../../config/laboAteliers.js'
 import './labo.css'
+import PiedLabo from '../../components/labo/PiedLabo.jsx'
 
 // =============================================================
 //  Le hall du labo de sciences (/labo) : public, sans code PIN.
@@ -78,6 +79,7 @@ export default function LaboView() {
         </div>
 
         <p className="text-center text-xs leading-relaxed text-[#8A93B8]">Toutes les expériences restent ouvertes : reviens rejouer quand tu veux.</p>
+        <PiedLabo className="pt-2" />
       </div>
     </div>
   )
