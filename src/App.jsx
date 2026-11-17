@@ -64,6 +64,15 @@ const LABO_JEUX = {
   'electricite/danger': lazy(() => import('./views/labo/electricite/DangerView.jsx')),
   'electricite/defi': lazy(() => import('./views/labo/electricite/DefiElecView.jsx')),
   'electricite/ampoule': lazy(() => import('./views/labo/electricite/AmpouleView.jsx')),
+  'circulation/explorateur': lazy(() => import('./views/labo/circulation/ExplorateurCircView.jsx')),
+  'circulation/coeur': lazy(() => import('./views/labo/circulation/CoeurView.jsx')),
+  'circulation/voyage': lazy(() => import('./views/labo/circulation/VoyageView.jsx')),
+  'circulation/artere-veine': lazy(() => import('./views/labo/circulation/ArtereVeineView.jsx')),
+  'circulation/pouls': lazy(() => import('./views/labo/circulation/PoulsView.jsx')),
+  'circulation/livreur': lazy(() => import('./views/labo/circulation/LivreurView.jsx')),
+  'circulation/pompe': lazy(() => import('./views/labo/circulation/PompeView.jsx')),
+  'circulation/animaux': lazy(() => import('./views/labo/circulation/AnimauxView.jsx')),
+  'circulation/defi': lazy(() => import('./views/labo/circulation/DefiCircView.jsx')),
 }
 
 function Labo({ children }) {

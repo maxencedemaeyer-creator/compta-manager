@@ -1,12 +1,26 @@
 import Corps3D from './Corps3D.jsx'
+import Circulation3D from './circulation/Circulation3D.jsx'
 
 // =============================================================
 //  Le visuel animé de chaque expérience (hall et salle) :
-//  le vrai squelette 3D qui tourne, ou l'ampoule qui s'allume.
+//  le vrai squelette 3D qui tourne, l'ampoule qui s'allume
+//  ou le vrai cœur 3D qui bat.
 // =============================================================
 export default function VisuelExperience({ type, className = '' }) {
   if (type === 'squelette') return <Corps3D className={`pointer-events-none ${className}`} tourner credit={false} marge={1.02} />
   if (type === 'ampoule') return <Ampoule className={className} />
+  if (type === 'coeur')
+    return (
+      <Circulation3D
+        className={`pointer-events-none ${className}`}
+        tourner
+        credit={false}
+        marge={1.04}
+        cadrage={{ groupes: ['paroi_ventricules', 'paroi_oreillette_d', 'paroi_oreillette_g', 'tronc_pulmonaire', 'veine_cave_sup'] }}
+        battement={66}
+        afficher={['coeur', 'aorte', 'tronc_pulmonaire', 'veine_cave_sup', 'veine_cave_inf', 'tronc_brachiocephalique', 'carotide', 'sous_claviere_a', 'veines_brachiocephaliques']}
+      />
+    )
   return null
 }
 

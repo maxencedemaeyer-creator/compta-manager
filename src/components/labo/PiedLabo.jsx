@@ -48,13 +48,14 @@ export default function PiedLabo({ className = '' }) {
               <div>
                 <p className="labo-mono text-[11px] tracking-[.1em] text-[#6FEFFF]">VIE PRIVÉE</p>
                 <p className="mt-1">
-                  Pas de compte, pas de publicité. Les images de la caméra sont analysées directement sur l’appareil : elles ne sont jamais enregistrées ni envoyées. Seuls les tableaux des records conservent un surnom et un score.
+                  Pas de compte, pas de publicité. Les images de la caméra sont analysées directement sur l’appareil : elles ne sont jamais enregistrées ni envoyées. Seuls les tableaux des records (un surnom et un score) et la synthèse du rythme cardiaque de la classe (un surnom et trois nombres) sont conservés.
                 </p>
               </div>
               <div>
                 <p className="labo-mono text-[11px] tracking-[.1em] text-[#FFE45E]">SOURCES ET CRÉDITS</p>
                 <ul className="mt-1 space-y-1 text-[13px] text-[#B9C1E3]">
-                  <li>Modèles 3D du corps : BodyParts3D, © DBCLS, licence CC BY 4.0.</li>
+                  <li>Modèles 3D du corps (os, muscles, cœur, vaisseaux sanguins) : BodyParts3D, © DBCLS, licence CC BY 4.0.</li>
+                  <li>Rythmes cardiaques des animaux : Goldbogen et al., PNAS, 2019 (baleine bleue) ; Jürgens et al., 1996 (musaraigne étrusque) ; manuels de physiologie.</li>
                   <li>Radiographies : jeu de données FracAtlas (Abedeen et al., Scientific Data, 2023), licence CC BY 4.0.</li>
                   <li>Détection du corps et des mains : MediaPipe (Google), licence Apache 2.0.</li>
                   <li>Affichage 3D : three.js (licence MIT). Icônes : Lucide (licence ISC).</li>
