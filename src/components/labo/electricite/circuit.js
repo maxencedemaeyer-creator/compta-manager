@@ -201,7 +201,7 @@ function gauss(A0, b0) {
 export function fonctionne(res, id) {
   const r = res.composants[id]
   if (!r || res.courtCircuit) return false
-  return (r.eclat ?? 0) > 0.3 || Math.abs(r.vitesse ?? 0) > 0.3 || !!r.sonne || !!r.allumee
+  return (r.eclat ?? 0) > 0.08 || Math.abs(r.vitesse ?? 0) > 0.3 || !!r.sonne || !!r.allumee
 }
 
 // Le récepteur marche quand on ferme l'interrupteur (ou presse le bouton) et s'arrête quand on l'ouvre
