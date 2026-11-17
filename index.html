@@ -52,7 +52,13 @@
         if (premier === 'labo') {
           window.__NOM_ESPACE__ = 'Le labo'
           document.documentElement.classList.add('espace-labo')
-          document.title = 'Labo de sciences'
+          document.title = 'Le labo'
+          document.getElementById('icone-svg').href = '/icons/labo/favicon.svg?v=4'
+          document.getElementById('icone-png').href = '/icons/labo/favicon-32.png?v=4'
+          document.getElementById('icone-apple').href = '/icons/labo/apple-touch-icon.png?v=4'
+          document.getElementById('icone-manifest').href = '/icons/labo/site.webmanifest?v=4'
+          document.getElementById('nom-appli').content = 'Le labo'
+          document.getElementById('nom-appli-apple').content = 'Le labo'
           return
         }
         if (!ESPACES[premier]) return

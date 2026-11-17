@@ -9,6 +9,7 @@ import { estSiteGalerie } from '../hooks/useCouture.js'
 //    /          → icône de l'accueil (les deux ronds)
 //    /maxence   → « M. » vert
 //    /julie     → « J. » rose
+//    /labo      → fiole d'Erlenmeyer fluo (labo de sciences)
 //    /couture et couture-julie.vercel.app (galerie) → « J. » rose aussi,
 //    mais l'icône posée sur l'écran d'accueil ouvre la galerie, pas l'atelier
 //  Les fichiers sont dans public/icons/<dossier>/.
@@ -22,7 +23,7 @@ const PAGES_DE = { couture: 'julie' }
 function choisir(pathname) {
   // Galerie couture sur son adresse à part (couture-julie.vercel.app) → icône de Julie
   const premier = estSiteGalerie() ? 'couture' : (pathname.split('/')[1] || '').toLowerCase()
-  if (premier === 'labo') return { dossier: 'accueil', manifeste: 'accueil', nom: 'Labo de sciences' }
+  if (premier === 'labo') return { dossier: 'labo', manifeste: 'labo', nom: 'Le labo' }
   const profil = trouverProfil(PAGES_DE[premier] || premier)
   if (profil?.icone) {
     return { dossier: profil.icone, manifeste: premier === 'couture' ? 'couture' : profil.icone, nom: profil.nom }
