@@ -1,15 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Camera, Check, Delete, Download, ImagePlus, Languages, Lightbulb, RefreshCw, RotateCcw, ShieldCheck, Volume2 } from 'lucide-react'
+import { Camera, Check, Delete, Download, ImagePlus, Languages, Lightbulb, RefreshCw, RotateCcw, ShieldCheck, Tags, Volume2 } from 'lucide-react'
 import CadreJeu, { Bouton, Carte, Eclat, melanger } from '../../components/labo/CadreJeu.jsx'
 import { COULEUR_GENRE, LANGUES, MOTS, avecArticle, parler, zones } from '../../components/labo/vocabulaire/corps.js'
 import { creerPose, messageErreurCamera, ouvrirCamera } from '../../components/labo/vocabulaire/pose.js'
+import PlateauCorps from '../../components/labo/vocabulaire/PlateauCorps.jsx'
+import { cadreDe } from '../../components/labo/vocabulaire/zonesCorps.js'
 
 // =============================================================
 //  A13 · L'étiqueteuse (écrire les mots du corps, élèves allophones)
-//  On prend une photo de soi (ou d'un copain) : la machine repère le
-//  corps. Une partie s'allume, l'élève écrit son nom ; chaque mot juste
-//  sort de l'étiqueteuse et se colle sur la photo. À la fin, l'affiche
-//  « mon corps » est prête à imprimer.
+//  Jacques, le VRAI squelette 3D (os de BodyParts3D), a perdu ses
+//  étiquettes. Une partie s'allume (la caméra zoome dessus) : l'élève
+//  écrit son nom ; chaque mot juste sort de l'étiqueteuse et se colle
+//  sur Jacques. À la fin, l'affiche « le corps » est prête à imprimer.
+//  Option : le faire avec une photo de soi (ou d'un copain).
 //  Niveaux : 1 lettres à toucher · 2 clavier · 3 dictée (on écoute, on écrit).
 //  La photo reste sur la tablette : rien n'est enregistré ni envoyé.
 // =============================================================
@@ -60,6 +63,8 @@ function dymo(ctx, x, y, texte, couleur, taille = 15) {
 
 export default function EtiqueteuseView() {
   const [phase, setPhase] = useState('accueil') // accueil | camera | analyse | jeu | fin | erreur
+  const [mode, setMode] = useState('os') // os : le vrai squelette · photo : ma photo
+  const capturerRef = useRef(null)
   const [niveau, setNiveau] = useState(1)
   const [langue, setLangue] = useState('')
   const [erreur, setErreur] = useState('')
@@ -169,6 +174,7 @@ export default function EtiqueteuseView() {
       const L = brut.map((l) => ({ x: l.x * cv.width, y: l.y * cv.height, visibility: l.visibility ?? 1 }))
       const z = zones(L)
       const possibles = MOTS.filter((m) => (z[m.id] || []).length)
+      setMode('photo')
       setImage(cv)
       setPoints(L)
       commencer(possibles)
@@ -177,6 +183,13 @@ export default function EtiqueteuseView() {
       setErreur('Impossible d’analyser la photo sur cet appareil.')
       setPhase('erreur')
     }
+  }
+
+  function jouerSquelette() {
+    setMode('os')
+    setImage(null)
+    setPoints(null)
+    commencer(MOTS)
   }
 
   function commencer(possibles) {
@@ -344,11 +357,12 @@ export default function EtiqueteuseView() {
   }, [image, phase, faits, mot, revele, placement])
 
   function telecharger() {
-    canvasRef.current?.toBlob((b) => {
+    const cible = mode === 'os' ? capturerRef.current?.() : canvasRef.current
+    cible?.toBlob((b) => {
       if (!b) return
       const a = document.createElement('a')
       a.href = URL.createObjectURL(b)
-      a.download = 'mon-corps.png'
+      a.download = mode === 'os' ? 'le-corps-etiquete.png' : 'mon-corps.png'
       a.click()
       setTimeout(() => URL.revokeObjectURL(a.href), 2000)
     })
@@ -362,10 +376,10 @@ export default function EtiqueteuseView() {
       <CadreJeu code="A13" titre="L’étiqueteuse" couleur={ORANGE} large>
         <Carte couleur={`${ORANGE}66`}>
           <p className="text-[15px] leading-snug text-[#DDE2F7]">
-            Prends une photo de toi (ou d’un copain). Une partie du corps s’allume : <b>écris son nom</b>. Chaque mot juste sort de l’étiqueteuse et se colle sur la photo. À la fin, ton affiche est prête&nbsp;!
+            <b>Jacques</b>, le squelette, a perdu ses étiquettes ! Une partie de son corps s’allume : <b>écris son nom</b>. Chaque mot juste sort de l’étiqueteuse et se colle sur Jacques. À la fin, l’affiche est prête&nbsp;!
           </p>
           <p className="mt-2 flex items-center gap-1.5 text-[12px] text-[#9DFF8A]">
-            <ShieldCheck size={14} /> La photo reste sur la tablette : rien n’est enregistré ni envoyé.
+            <ShieldCheck size={14} /> Rien n’est enregistré ni envoyé.
           </p>
         </Carte>
         <div className="grid gap-2 sm:grid-cols-3">
@@ -404,16 +418,22 @@ export default function EtiqueteuseView() {
           </div>
         </Carte>
         {phase === 'erreur' && <p className="rounded-xl bg-[#FF6B7A]/15 px-3 py-2 text-[14px] text-[#FFC2C8]">{erreur}</p>}
-        <div className="grid gap-2 sm:grid-cols-2">
-          <Bouton couleur={ORANGE} onClick={() => ouvrir()}>
-            <Camera size={18} /> Prendre la photo
-          </Bouton>
-          <Bouton variante="secondaire" onClick={() => fichierRef.current?.click()}>
-            <ImagePlus size={18} /> Choisir une photo
-          </Bouton>
-        </div>
+        <Bouton couleur={ORANGE} onClick={jouerSquelette}>
+          <Tags size={18} /> Jouer avec Jacques le squelette
+        </Bouton>
+        <Carte couleur="rgba(255,255,255,.12)">
+          <p className="text-[13px] font-bold text-[#E8ECFF]">Ou avec une vraie photo de toi (ou d’un copain)</p>
+          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+            <Bouton variante="secondaire" onClick={() => ouvrir()}>
+              <Camera size={18} /> Prendre la photo
+            </Bouton>
+            <Bouton variante="secondaire" onClick={() => fichierRef.current?.click()}>
+              <ImagePlus size={18} /> Choisir une photo
+            </Bouton>
+          </div>
+          <p className="mt-2 text-[12px] text-[#8A93B8]">Conseil : debout, en entier sur la photo, bras un peu écartés. La photo reste sur la tablette.</p>
+        </Carte>
         <input ref={fichierRef} type="file" accept="image/*" className="hidden" onChange={importer} />
-        <p className="text-center text-[12px] text-[#8A93B8]">Conseil : debout, en entier sur la photo, bras un peu écartés.</p>
       </CadreJeu>
     )
 
@@ -468,7 +488,20 @@ export default function EtiqueteuseView() {
     >
       <Eclat message={eclat.message} sousTitre={eclat.sous} cle={eclat.cle} couleur={ORANGE} />
       <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_360px]">
-        <canvas ref={canvasRef} className="block h-[52dvh] w-full rounded-3xl border border-[#FFB86B]/40 bg-black md:h-[78dvh]" />
+        {mode === 'os' ? (
+          <PlateauCorps
+            ruban
+            titreAffiche="LE CORPS HUMAIN"
+            capturerRef={capturerRef}
+            className="h-[56dvh] w-full rounded-3xl border border-[#FFB86B]/40 bg-[radial-gradient(circle_at_50%_38%,#2A2140,#070B16_75%)] md:h-[78dvh]"
+            cadre={phase === 'fin' || !mot ? 'corps' : cadreDe(mot.id)}
+            trouves={faits.map((f) => f.id)}
+            actif={phase === 'jeu' && mot && revele && !faits.some((f) => f.id === mot.id) ? mot.id : null}
+            anneaux={phase === 'jeu' && mot && revele && !faits.some((f) => f.id === mot.id) ? [{ id: mot.id, couleur: '#FFE45E' }] : []}
+          />
+        ) : (
+          <canvas ref={canvasRef} className="block h-[52dvh] w-full rounded-3xl border border-[#FFB86B]/40 bg-black md:h-[78dvh]" />
+        )}
 
         {phase === 'fin' ? (
           <Carte couleur={`${ORANGE}88`} className="text-center">
@@ -483,14 +516,15 @@ export default function EtiqueteuseView() {
               <Bouton
                 variante="secondaire"
                 onClick={() => {
+                  if (mode === 'os') return jouerSquelette()
                   const z = zones(points)
                   commencer(MOTS.filter((m) => (z[m.id] || []).length))
                 }}
               >
-                <RotateCcw size={18} /> Rejouer avec cette photo
+                <RotateCcw size={18} /> {mode === 'os' ? 'Rejouer avec d’autres mots' : 'Rejouer avec cette photo'}
               </Bouton>
               <Bouton variante="secondaire" onClick={() => setPhase('accueil')}>
-                <Camera size={18} /> Nouvelle photo
+                <Camera size={18} /> {mode === 'os' ? 'Changer de niveau' : 'Nouvelle photo'}
               </Bouton>
             </div>
           </Carte>

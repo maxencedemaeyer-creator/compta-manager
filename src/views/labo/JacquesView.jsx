@@ -1,34 +1,34 @@
 import { useEffect, useRef, useState } from 'react'
-import { Camera, Languages, Play, RefreshCw, RotateCcw, ShieldCheck, Volume2 } from 'lucide-react'
+import { Languages, Play, RotateCcw, ShieldCheck, Volume2 } from 'lucide-react'
 import CadreJeu, { Bouton, Carte, Eclat, melanger } from '../../components/labo/CadreJeu.jsx'
-import { BAS_DU_CORPS, COULEUR_GENRE, LANGUES, MOT, avecArticle, mainsJointes, parler, partieTouchee, zones } from '../../components/labo/vocabulaire/corps.js'
-import { creerPose, etiquette, messageErreurCamera, ouvrirCamera } from '../../components/labo/vocabulaire/pose.js'
+import { COULEUR_GENRE, LANGUES, MOT, avecArticle, parler } from '../../components/labo/vocabulaire/corps.js'
+import PlateauCorps from '../../components/labo/vocabulaire/PlateauCorps.jsx'
+import { cadreDe, estJuste } from '../../components/labo/vocabulaire/zonesCorps.js'
 
 // =============================================================
 //  A12 · Jacques a dit ! (vocabulaire du corps, élèves allophones)
-//  La tablette DIT et ÉCRIT la consigne (« Touche ton nez ») ;
-//  la caméra vérifie que l'élève touche la bonne partie de SON
-//  corps. Chaque mot trouvé se colle en étiquette sur lui, en
-//  direct. Niveau 3 : le vrai « Jacques a dit » avec des pièges.
-//  Rien n'est enregistré : l'image reste sur la tablette.
+//  Jacques est un vrai squelette 3D (os de BodyParts3D). La tablette
+//  DIT et ÉCRIT la consigne (« Touche ton nez ») : on touche la bonne
+//  partie de Jacques. La caméra zoome sur la tête ou la main quand il
+//  le faut, le mot se colle sur Jacques, et Jacques fait une petite
+//  danse quand c'est juste. Niveau 3 : le vrai « Jacques a dit », avec
+//  des pièges. Sans caméra : rien n'est enregistré ni envoyé.
 // =============================================================
 const CYAN = '#6FEFFF'
 const TOURS = 10
-const MAINTIEN = 450
+const TOUS = ['tete', 'yeux', 'nez', 'bouche', 'oreille', 'cou', 'epaule', 'bras', 'coude', 'main', 'doigt', 'ventre', 'jambe', 'genou', 'pied']
 const NIVEAUX = [
   { n: 1, titre: 'Ma tête', texte: 'tête, yeux, nez, bouche, oreille, cou, épaule', ids: ['tete', 'yeux', 'nez', 'bouche', 'oreille', 'cou', 'epaule'] },
-  {
-    n: 2,
-    titre: 'Tout mon corps',
-    texte: '+ bras, coude, main, ventre, jambe, genou, pied',
-    ids: ['tete', 'yeux', 'nez', 'bouche', 'oreille', 'cou', 'epaule', 'bras', 'coude', 'main', 'ventre', 'jambe', 'genou', 'pied'],
-  },
-  {
-    n: 3,
-    titre: 'Jacques a dit !',
-    texte: 'Attention : sans « Jacques a dit », on ne bouge pas !',
-    ids: ['tete', 'yeux', 'nez', 'bouche', 'oreille', 'cou', 'epaule', 'bras', 'coude', 'main', 'ventre', 'jambe', 'genou', 'pied'],
-  },
+  { n: 2, titre: 'Tout le corps', texte: '+ bras, coude, main, doigt, ventre, jambe, genou, pied', ids: TOUS },
+  { n: 3, titre: 'Jacques a dit !', texte: 'Attention : sans « Jacques a dit », on ne touche pas !', ids: TOUS },
+]
+
+// Petites danses de Jacques quand la réponse est juste (angles en degrés)
+const DANSES = [
+  (o) => ({ epaule_d: { abd: 145 + 15 * o }, epaule_g: { abd: 145 - 15 * o }, coude_d: 12, coude_g: 12 }),
+  (o) => ({ epaule_g: { abd: 150 }, coude_g: 35 + 35 * o, epaule_d: { abd: 8 } }),
+  (o) => ({ hanche_d: Math.max(0, o) * 55, genou_d: Math.max(0, o) * 75, hanche_g: Math.max(0, -o) * 55, genou_g: Math.max(0, -o) * 75, epaule_d: { abd: 12 }, epaule_g: { abd: 12 } }),
+  (o) => ({ epaule_d: { abd: 95 + 45 * o }, epaule_g: { abd: 95 - 45 * o }, coude_d: 25, coude_g: 25 }),
 ]
 
 function tirage(ids) {
@@ -37,274 +37,143 @@ function tirage(ids) {
   return l.slice(0, TOURS)
 }
 
+function nouvellePartie(niveau) {
+  const n = NIVEAUX.find((x) => x.n === niveau)
+  return { niveau, liste: tirage(n.ids), tour: 0, score: 0, collees: [], statut: 'consigne', erreurs: 0, indice: false, touche: null, piege: false, cible: null, depart: 0 }
+}
+
+function preparerTour(j, i) {
+  const cible = j.liste[i]
+  const piege = j.niveau === 3 && i > 0 && Math.random() < 0.3
+  return { ...j, tour: i, cible, piege, statut: 'consigne', erreurs: 0, indice: false, touche: null, depart: Date.now() }
+}
+
+const texteConsigne = (j) => (j.niveau === 3 && !j.piege ? `Jacques a dit : ${MOT[j.cible].consigne.toLowerCase()}\u00A0!` : `${MOT[j.cible].consigne}\u00A0!`)
+
 export default function JacquesView() {
   const [phase, setPhase] = useState('accueil')
   const [niveau, setNiveau] = useState(1)
   const [langue, setLangue] = useState('')
-  const [face, setFace] = useState('user')
-  const [erreur, setErreur] = useState('')
-  const [infos, setInfos] = useState({ tour: 0, score: 0, cible: 'tete', piege: false, statut: 'consigne', touche: null, maintien: 0, recule: false, corps: false, termine: false })
+  const [j, setJ] = useState(null)
   const [eclat, setEclat] = useState({ message: '', sous: '', cle: 0 })
-  const videoRef = useRef(null)
-  const canvasRef = useRef(null)
-  const fluxRef = useRef(null)
-  const poseRef = useRef(null)
-  const rafRef = useRef(0)
-  const jeu = useRef(null)
+  const [t, setT] = useState(0)
+  const jRef = useRef(null)
+  jRef.current = j
 
-  const consigne = (j) => (j.niveau === 3 && !j.piege ? `Jacques a dit : ${MOT[j.cible].consigne.toLowerCase()} !` : `${MOT[j.cible].consigne} !`)
-
-  function nouveauTour(j, i) {
-    j.tour = i
-    j.cible = j.liste[i]
-    j.piege = j.niveau === 3 && i > 0 && Math.random() < 0.3
-    j.debut = performance.now()
-    j.maintien = 0
-    j.statut = 'consigne'
-    j.finStatut = 0
-    setTimeout(() => parler(consigne(j)), 250)
-  }
-
-  async function demarrer(f = face) {
+  function demarrer() {
+    const p = preparerTour(nouvellePartie(niveau), 0)
+    setJ(p)
+    setPhase('jeu')
     parler('C’est parti !')
-    setPhase('chargement')
-    try {
-      const flux = await ouvrirCamera(f)
-      fluxRef.current = flux
-      videoRef.current.srcObject = flux
-      await videoRef.current.play()
-      if (!poseRef.current) poseRef.current = await creerPose('VIDEO')
-      const n = NIVEAUX.find((x) => x.n === niveau)
-      jeu.current = { niveau, ids: n.ids, liste: tirage(n.ids), score: 0, collees: new Set(), termine: false }
-      nouveauTour(jeu.current, 0)
-      setPhase('jeu')
-    } catch (e) {
-      console.error(e)
-      arreter()
-      setErreur(messageErreurCamera(e))
-      setPhase('erreur')
-    }
   }
 
-  function arreter() {
-    cancelAnimationFrame(rafRef.current)
-    fluxRef.current?.getTracks().forEach((t) => t.stop())
-    fluxRef.current = null
-  }
-
-  async function changerCamera() {
-    const f = face === 'user' ? 'environment' : 'user'
-    setFace(f)
-    fluxRef.current?.getTracks().forEach((t) => t.stop())
-    try {
-      const flux = await ouvrirCamera(f)
-      fluxRef.current = flux
-      videoRef.current.srcObject = flux
-      await videoRef.current.play()
-    } catch (e) {
-      console.error(e)
-    }
-  }
-
-  useEffect(
-    () => () => {
-      arreter()
-      poseRef.current?.close?.()
-      window.speechSynthesis?.cancel?.()
-    },
-    [],
-  )
-
-  // Boucle : caméra → posture → règles du jeu → dessin
+  // Dire la consigne au début de chaque tour
+  const cleTour = j ? `${j.tour}-${j.cible}-${j.piege}` : ''
   useEffect(() => {
-    if (phase !== 'jeu') return
-    const video = videoRef.current
-    const canvas = canvasRef.current
-    const ctx = canvas.getContext('2d')
-    let derniereVideo = -1
-    let points = null
-    let derniereMaj = 0
-    let avant = performance.now()
-    let autre = { id: null, t: 0 }
+    if (!j || j.statut !== 'consigne') return
+    const id = setTimeout(() => parler(texteConsigne(jRef.current)), 350)
+    return () => clearTimeout(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cleTour])
 
-    function boucle(maintenant) {
-      rafRef.current = requestAnimationFrame(boucle)
-      const dt = Math.min(100, maintenant - avant)
-      avant = maintenant
-      const W = canvas.clientWidth
-      const H = canvas.clientHeight
-      const dpr = Math.min(2, window.devicePixelRatio || 1)
-      if (canvas.width !== Math.round(W * dpr)) {
-        canvas.width = Math.round(W * dpr)
-        canvas.height = Math.round(H * dpr)
-      }
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-      const vw = video.videoWidth
-      const vh = video.videoHeight
-      if (!vw || !vh) return
-      if (video.currentTime !== derniereVideo) {
-        derniereVideo = video.currentTime
-        try {
-          points = poseRef.current.detectForVideo(video, maintenant).landmarks?.[0] || null
-        } catch {
-          points = null
-        }
-      }
-      const miroir = fluxRef.current?.getVideoTracks?.()[0]?.getSettings?.().facingMode !== 'environment'
-      const s = Math.max(W / vw, H / vh)
-      const dx = (W - vw * s) / 2
-      const dy = (H - vh * s) / 2
-      ctx.save()
-      if (miroir) {
-        ctx.translate(W, 0)
-        ctx.scale(-1, 1)
-      }
-      ctx.drawImage(video, dx, dy, vw * s, vh * s)
-      ctx.restore()
-      const g = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.3, W / 2, H / 2, Math.max(W, H) * 0.75)
-      g.addColorStop(0, 'rgba(7,11,22,0)')
-      g.addColorStop(1, 'rgba(7,11,22,.75)')
-      ctx.fillStyle = g
-      ctx.fillRect(0, 0, W, H)
-
-      const j = jeu.current
-      const L = points?.map((l) => ({ x: miroir ? W - (l.x * vw * s + dx) : l.x * vw * s + dx, y: l.y * vh * s + dy, visibility: l.visibility ?? 1 }))
-      let touche = null
-      let recule = false
-      let z = null
-      if (L) {
-        z = zones(L)
-        // étiquettes déjà gagnées, collées sur le corps
-        const centre = (L[11].x + L[12].x) / 2
-        for (const id of j.collees) {
-          const p = id === 'main' ? z.main?.[0] : z[id]?.[0]
-          if (!p) continue
-          const cote = p.x < centre ? -1 : 1
-          const m = MOT[id]
-          etiquette(ctx, p.x + cote * Math.max(70, Math.abs(p.x - centre) * 0.6 + 60), p.y, m.article, m.mot, COULEUR_GENRE[m.genre], 15, p)
-        }
-      }
-
-      if (!j.termine && L) {
-        const ecoule = maintenant - j.debut
-        if (j.statut === 'consigne') {
-          recule = BAS_DU_CORPS.includes(j.cible) && !(z[j.cible] || []).length
-          let bon = false
-          let ou = null
-          if (j.cible === 'main') {
-            ou = mainsJointes(L)
-            bon = !!ou
-          } else {
-            const t = partieTouchee(L, z, j.ids)
-            if (t) {
-              touche = t
-              bon = t.id === j.cible
-              ou = t.zone
-              if (!bon) {
-                autre = autre.id === t.id ? { id: t.id, t: autre.t + dt } : { id: t.id, t: 0 }
-              }
-            } else autre = { id: null, t: 0 }
-          }
-          j.maintien = bon ? j.maintien + dt : Math.max(0, j.maintien - dt * 2)
-          // anneau de progression autour de la main
-          if (bon && ou) {
-            ctx.save()
-            ctx.strokeStyle = j.piege ? '#FF6B7A' : '#9DFF8A'
-            ctx.lineWidth = 6
-            ctx.beginPath()
-            ctx.arc(ou.x, ou.y, 34, -Math.PI / 2, -Math.PI / 2 + Math.min(1, j.maintien / MAINTIEN) * Math.PI * 2)
-            ctx.stroke()
-            ctx.restore()
-          }
-          // ce que la main touche (pour apprendre en explorant)
-          if (touche && !bon && autre.t > 700) {
-            const m = MOT[touche.id]
-            etiquette(ctx, touche.main.x, touche.main.y - 46, 'ça, c’est ' + m.article, m.mot, '#B9C1E3', 14)
-          }
-          // aide : la zone clignote après 7 secondes
-          if (!j.piege && ecoule > 7000 && j.cible !== 'main') {
-            const a = 0.45 + 0.4 * Math.sin(maintenant / 180)
-            ctx.save()
-            ctx.strokeStyle = `rgba(255,228,94,${a})`
-            ctx.lineWidth = 4
-            ctx.setLineDash([8, 7])
-            for (const p of z[j.cible] || []) {
-              ctx.beginPath()
-              ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
-              ctx.stroke()
-            }
-            ctx.restore()
-          }
-          if (j.maintien > MAINTIEN) {
-            if (j.piege) {
-              j.statut = 'rate'
-              parler('Non ! Jacques n’a pas dit !')
-              setEclat((e) => ({ message: 'Jacques n’a pas dit !', sous: 'Sans « Jacques a dit », on ne bouge pas.', cle: e.cle + 1 }))
-            } else {
-              j.statut = 'bravo'
-              j.score += ecoule < 4000 ? 2 : 1
-              j.collees.add(j.cible)
-              parler(`Bravo ! ${avecArticle(MOT[j.cible])}`)
-              setEclat((e) => ({ message: 'Bravo !', sous: avecArticle(MOT[j.cible]), cle: e.cle + 1 }))
-            }
-            j.finStatut = maintenant
-          } else if (j.piege && ecoule > 4500) {
-            j.statut = 'bravo'
-            j.score += 2
+  // Minuteries : indice après 7 s, piège réussi si on ne bouge pas, passage au tour suivant
+  const statut = j?.statut
+  useEffect(() => {
+    if (!j) return
+    const ids = []
+    if (statut === 'consigne') {
+      if (!j.piege) ids.push(setTimeout(() => setJ((x) => (x && x.statut === 'consigne' ? { ...x, indice: true } : x)), 7000))
+      else
+        ids.push(
+          setTimeout(() => {
+            const x = jRef.current
+            if (!x || x.statut !== 'consigne') return
+            setJ({ ...x, statut: 'bravo', score: x.score + 2, touche: null })
             parler('Bien joué, tu n’as pas bougé !')
             setEclat((e) => ({ message: 'Bien joué !', sous: 'Jacques n’avait rien dit.', cle: e.cle + 1 }))
-            j.finStatut = maintenant
-          }
-        } else if (maintenant - j.finStatut > 1900) {
-          if (j.tour + 1 >= TOURS) {
-            j.termine = true
+          }, 4500),
+        )
+    } else if (statut === 'bravo' || statut === 'rate') {
+      ids.push(
+        setTimeout(() => {
+          const x = jRef.current
+          if (!x) return
+          if (x.tour + 1 >= TOURS) {
+            setJ({ ...x, statut: 'fini' })
             parler('Fini ! Bravo !')
-          } else nouveauTour(j, j.tour + 1)
-        }
-      }
-
-      if (maintenant - derniereMaj > 120) {
-        derniereMaj = maintenant
-        setInfos({ tour: j.tour, score: j.score, cible: j.cible, piege: j.piege, statut: j.statut, touche: touche?.id ?? null, maintien: j.maintien, recule, corps: !!L, termine: j.termine })
-      }
+          } else setJ(preparerTour(x, x.tour + 1))
+        }, 2200),
+      )
     }
-    rafRef.current = requestAnimationFrame(boucle)
-    return () => cancelAnimationFrame(rafRef.current)
-  }, [phase])
+    return () => ids.forEach(clearTimeout)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cleTour, statut])
 
-  function photo() {
-    canvasRef.current?.toBlob((b) => {
-      if (!b) return
-      const a = document.createElement('a')
-      a.href = URL.createObjectURL(b)
-      a.download = 'mon-corps-etiquete.png'
-      a.click()
-      setTimeout(() => URL.revokeObjectURL(a.href), 2000)
-    })
+  // Danse de Jacques
+  const danse = statut === 'bravo' ? DANSES[(j.tour || 0) % DANSES.length] : null
+  useEffect(() => {
+    if (!danse) return
+    setT(0)
+    const id = setInterval(() => setT((x) => x + 1), 150)
+    return () => clearInterval(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cleTour, statut])
+  const poses = danse ? danse(Math.sin(t * 0.8)) : null
+
+  function toucher(id) {
+    const x = jRef.current
+    if (!x || x.statut !== 'consigne' || !id) return
+    const ecoule = Date.now() - x.depart
+    if (x.piege) {
+      setJ({ ...x, statut: 'rate', touche: id })
+      parler('Non ! Jacques n’a pas dit !')
+      setEclat((e) => ({ message: 'Jacques n’a pas dit !', sous: 'Sans « Jacques a dit », on ne touche pas.', cle: e.cle + 1 }))
+      return
+    }
+    if (estJuste(x.cible, id)) {
+      setJ({ ...x, statut: 'bravo', score: x.score + (ecoule < 5000 ? 2 : 1), collees: x.collees.includes(x.cible) ? x.collees : [...x.collees, x.cible], touche: id })
+      parler(`Bravo ! ${avecArticle(MOT[x.cible])}`)
+      setEclat((e) => ({ message: 'Bravo !', sous: avecArticle(MOT[x.cible]), cle: e.cle + 1 }))
+      return
+    }
+    // Mauvaise partie : on dit comment elle s'appelle (on apprend en explorant)
+    setJ({ ...x, touche: id, erreurs: x.erreurs + 1, indice: x.indice || x.erreurs + 1 >= 2 })
+    parler(avecArticle(MOT[id]))
   }
 
-  function rejouer() {
-    const n = NIVEAUX.find((x) => x.n === niveau)
-    jeu.current = { niveau, ids: n.ids, liste: tirage(n.ids), score: 0, collees: new Set(), termine: false }
-    nouveauTour(jeu.current, 0)
-  }
+  // Le petit message « ça, c'est le nez » s'efface
+  const toucheCle = j?.touche && j.statut === 'consigne' ? `${j.touche}-${j.erreurs}` : ''
+  useEffect(() => {
+    if (!toucheCle) return
+    const id = setTimeout(() => setJ((x) => (x && x.statut === 'consigne' ? { ...x, touche: null } : x)), 1800)
+    return () => clearTimeout(id)
+  }, [toucheCle])
 
-  const m = MOT[infos.cible]
-  const texteConsigne = jeu.current ? consigne({ ...jeu.current, cible: infos.cible, piege: infos.piege }) : ''
+  useEffect(() => () => window.speechSynthesis?.cancel?.(), [])
+
+  const fini = j?.statut === 'fini'
+  const m = j && j.cible ? MOT[j.cible] : null
   const trad = langue && m?.tr[langue]
   const sensLangue = LANGUES.find((l) => l.id === langue)?.dir
+
+  // Entourages sur le squelette
+  const anneaux = []
+  if (j && !fini) {
+    if (j.statut === 'consigne' && j.indice && !j.piege) anneaux.push({ id: j.cible, couleur: '#FFE45E', tirets: true })
+    if (j.touche && (j.statut === 'consigne' || j.statut === 'rate')) anneaux.push({ id: j.touche, couleur: '#FF8A98' })
+  }
 
   return (
     <CadreJeu code="A12" titre="Jacques a dit !" couleur={CYAN} large>
       <Eclat message={eclat.message} sousTitre={eclat.sous} cle={eclat.cle} couleur={CYAN} />
-      {phase !== 'jeu' && phase !== 'chargement' && (
+      {phase === 'accueil' && (
         <>
           <Carte couleur={`${CYAN}66`}>
             <p className="text-[15px] leading-snug text-[#DDE2F7]">
-              La tablette <b>dit</b> et <b>écrit</b> une consigne : « Touche ton nez ». Touche la bonne partie de ton corps : la caméra vérifie, et le mot se colle sur toi&nbsp;!
+              <b>Jacques</b> est un vrai squelette. La tablette <b>dit</b> et <b>écrit</b> une consigne : « Touche le nez ». Touche la bonne partie de Jacques : le mot se colle sur lui&nbsp;!
             </p>
             <p className="mt-2 flex items-center gap-1.5 text-[12px] text-[#9DFF8A]">
-              <ShieldCheck size={14} /> Aucune image n’est enregistrée ni envoyée.
+              <ShieldCheck size={14} /> Pas de caméra : rien n’est filmé, rien n’est enregistré.
             </p>
           </Carte>
           <div className="grid gap-2 sm:grid-cols-3">
@@ -342,80 +211,66 @@ export default function JacquesView() {
               ))}
             </div>
           </Carte>
-          {phase === 'erreur' && <p className="rounded-xl bg-[#FF6B7A]/15 px-3 py-2 text-[14px] text-[#FFC2C8]">{erreur}</p>}
-          <Bouton couleur={CYAN} onClick={() => demarrer()}>
-            <Play size={18} /> Démarrer la caméra
+          <Bouton couleur={CYAN} onClick={demarrer}>
+            <Play size={18} /> Jouer avec Jacques
           </Bouton>
-          <p className="text-center text-[12px] text-[#8A93B8]">Pose la tablette debout. Pour le niveau 2, recule pour qu’on voie tes pieds.</p>
         </>
       )}
 
-      <div className={phase === 'jeu' || phase === 'chargement' ? '' : 'hidden'}>
-        {phase === 'jeu' && !infos.termine && m && (
-          <div className="mb-2 rounded-2xl border bg-[#070B16]/88 px-3 py-2 text-center" style={{ borderColor: infos.statut === 'rate' ? '#FF6B7A' : infos.statut === 'bravo' ? '#9DFF8A' : `${CYAN}66` }}>
-            <div className="flex items-center justify-between text-[11px] text-[#8A93B8]">
-              <span className="labo-mono">
-                {infos.tour + 1}/{TOURS}
-              </span>
-              <span className="labo-mono text-[#FFE45E]">★ {infos.score}</span>
-            </div>
-            <p className="labo-titre text-[22px] font-black leading-tight text-white sm:text-3xl">{texteConsigne}</p>
-            <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
-              <span className="rounded-full px-3 py-0.5 text-lg font-black" style={{ background: `${COULEUR_GENRE[m.genre]}22`, color: COULEUR_GENRE[m.genre] }}>
-                {avecArticle(m)}
-              </span>
-              {trad && (
-                <span dir={sensLangue} className="rounded-full bg-white/10 px-3 py-0.5 text-lg font-bold text-white">
-                  {trad}
+      {phase === 'jeu' && j && (
+        <>
+          {!fini && m && (
+            <div className="rounded-2xl border bg-[#070B16]/88 px-3 py-2 text-center" style={{ borderColor: j.statut === 'rate' ? '#FF6B7A' : j.statut === 'bravo' ? '#9DFF8A' : `${CYAN}66` }}>
+              <div className="flex items-center justify-between text-[11px] text-[#8A93B8]">
+                <span className="labo-mono">
+                  {j.tour + 1}/{TOURS}
                 </span>
-              )}
-              <button type="button" aria-label="Écouter" onClick={() => parler(texteConsigne)} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#6FEFFF] text-[#04161A]">
-                <Volume2 size={18} />
-              </button>
-            </div>
-            {infos.recule && <p className="mt-1 text-[13px] font-bold text-[#FFE45E]">Recule : je dois voir tes jambes et tes pieds !</p>}
-            {!infos.corps && <p className="mt-1 text-[13px] font-bold text-[#FFE45E]">Mets-toi devant la caméra !</p>}
-          </div>
-        )}
-        {phase === 'jeu' && infos.termine && (
-          <div className="mb-2 rounded-3xl border border-[#9DFF8A]/60 bg-[#070B16]/90 p-4 text-center">
-            <p className="labo-titre text-3xl font-black text-white">★ {infos.score}</p>
-            <p className="text-[14px] text-[#B9C1E3]">Regarde : tous tes mots sont collés sur toi !</p>
-            <div className="mt-3 flex flex-wrap justify-center gap-2">
-              <Bouton couleur="#9DFF8A" onClick={photo}>
-                <Camera size={18} /> Photo souvenir
-              </Bouton>
-              <Bouton variante="secondaire" onClick={rejouer}>
-                <RotateCcw size={18} /> Rejouer
-              </Bouton>
-              <Bouton
-                variante="secondaire"
-                onClick={() => {
-                  arreter()
-                  setPhase('accueil')
-                }}
-              >
-                Changer de niveau
-              </Bouton>
-            </div>
-          </div>
-        )}
-        <div className="relative">
-          <video ref={videoRef} playsInline muted className="hidden" />
-          <canvas ref={canvasRef} className="block h-[62dvh] w-full rounded-3xl border border-[#6FEFFF]/40 bg-black" />
-          {phase === 'chargement' && <p className="absolute inset-0 flex items-center justify-center text-[15px] font-bold text-[#6FEFFF]">Préparation de la caméra…</p>}
-          {phase === 'jeu' && (
-            <div className="absolute bottom-3 right-3 flex gap-2">
-              <button type="button" aria-label="Photo souvenir" onClick={photo} className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#070B16]/85 text-white">
-                <Camera size={20} />
-              </button>
-              <button type="button" aria-label="Changer de caméra" onClick={changerCamera} className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#070B16]/85 text-white">
-                <RefreshCw size={20} />
-              </button>
+                <span className="labo-mono text-[#FFE45E]">★ {j.score}</span>
+              </div>
+              <p className="labo-titre text-[22px] font-black leading-tight text-white sm:text-3xl">{texteConsigne(j)}</p>
+              <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
+                <span className="rounded-full px-3 py-0.5 text-lg font-black" style={{ background: `${COULEUR_GENRE[m.genre]}22`, color: COULEUR_GENRE[m.genre] }}>
+                  {avecArticle(m)}
+                </span>
+                {trad && (
+                  <span dir={sensLangue} className="rounded-full bg-white/10 px-3 py-0.5 text-lg font-bold text-white">
+                    {trad}
+                  </span>
+                )}
+                <button type="button" aria-label="Écouter" onClick={() => parler(texteConsigne(j))} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#6FEFFF] text-[#04161A]">
+                  <Volume2 size={18} />
+                </button>
+              </div>
+              <p className="mt-1 min-h-[20px] text-[14px] font-bold" style={{ color: j.touche && j.statut === 'consigne' ? '#FFB3BC' : '#8A93B8' }}>
+                {j.touche && j.statut === 'consigne' ? `Non… ça, c’est ${avecArticle(MOT[j.touche])}.` : j.piege ? 'Attention… Jacques n’a rien dit !' : 'Touche la bonne partie de Jacques.'}
+              </p>
             </div>
           )}
-        </div>
-      </div>
+          {fini && (
+            <div className="rounded-3xl border border-[#9DFF8A]/60 bg-[#070B16]/90 p-4 text-center">
+              <p className="labo-titre text-3xl font-black text-white">★ {j.score}</p>
+              <p className="text-[14px] text-[#B9C1E3]">Regarde : tous les mots que tu as trouvés sont collés sur Jacques !</p>
+              <div className="mt-3 flex flex-wrap justify-center gap-2">
+                <Bouton couleur="#9DFF8A" onClick={() => setJ(preparerTour(nouvellePartie(niveau), 0))}>
+                  <RotateCcw size={18} /> Rejouer
+                </Bouton>
+                <Bouton variante="secondaire" onClick={() => setPhase('accueil')}>
+                  Changer de niveau
+                </Bouton>
+              </div>
+            </div>
+          )}
+          <PlateauCorps
+            className="h-[62dvh] w-full rounded-3xl border border-[#6FEFFF]/40 bg-[radial-gradient(circle_at_50%_38%,#17284F,#070B16_75%)]"
+            cadre={fini || !j.cible ? 'corps' : cadreDe(j.cible)}
+            trouves={j.collees}
+            anneaux={anneaux}
+            poses={poses}
+            onToucher={toucher}
+          />
+          <p className="-mt-2 text-center text-[12px] text-[#8A93B8]">Le squelette est un vrai modèle 3D : la caméra zoome toute seule sur la tête ou la main.</p>
+        </>
+      )}
     </CadreJeu>
   )
 }

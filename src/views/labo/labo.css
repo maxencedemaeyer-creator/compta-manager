@@ -69,6 +69,7 @@
 .labo-tremble { animation: labo-tremble 7s ease-in-out infinite; transform-origin: 50% 90%; }
 .labo-flash { animation: labo-flash 7s ease-out infinite; pointer-events: none; }
 .labo-apparait { animation: labo-apparait .5s ease-out both; }
+.labo-pouls { animation: labo-glow 1s ease-in-out infinite; }
 .labo-succes { animation: labo-succes 2.4s ease-out both; }
 .labo-onde { animation: labo-onde 1s ease-out both; }
 .labo-scan { position: absolute; left: 0; right: 0; height: 2px; animation: labo-scan 3s ease-in-out infinite alternate; }

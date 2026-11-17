@@ -98,8 +98,44 @@ export default function Corps3D(props) {
     let pivots = {}
     let cleCamera = ''
 
+    // Cadre libre : { centre: [x, y], demiHauteur } en mètres, vue de face, avec un zoom progressif
+    const libre = { cx: 0, cy: 0, dh: 1, pret: false }
+    function cadrerLibre(c) {
+      const W = el.clientWidth || 300
+      const H = el.clientHeight || 400
+      if (!libre.pret || c.instantane) {
+        libre.cx = c.centre[0]
+        libre.cy = c.centre[1]
+        libre.dh = c.demiHauteur
+        libre.pret = true
+      } else {
+        libre.cx = lisse(libre.cx, c.centre[0], 0.16)
+        libre.cy = lisse(libre.cy, c.centre[1], 0.16)
+        libre.dh = lisse(libre.dh, c.demiHauteur, 0.16)
+      }
+      // si la zone est plus large que l'écran, on agrandit pour la garder entière
+      const dh = Math.max(libre.dh, c.demiLargeur ? (c.demiLargeur * H) / W : 0)
+      camera.left = -dh * (W / H)
+      camera.right = dh * (W / H)
+      camera.top = dh
+      camera.bottom = -dh
+      const centre = tmp.set(libre.cx, libre.cy, 0).clone()
+      camera.position.set(libre.cx, libre.cy, 4)
+      camera.up.set(0, 1, 0)
+      camera.lookAt(centre)
+      camera.zoom = 1
+      camera.updateProjectionMatrix()
+      controles.target.copy(centre)
+      lumiere.position.set(libre.cx + 1.5, libre.cy + 3, 3)
+      contre.position.set(libre.cx - 1, libre.cy + 1, -3)
+    }
+
     function cadrer() {
       const p = derniers.current
+      if (p.cadre) {
+        if (meshes.length) cadrerLibre(p.cadre)
+        return
+      }
       const cle = `${p.vue || 'face'}|${p.cadrage || 'corps'}|${el.clientWidth}x${el.clientHeight}`
       if (cle === cleCamera) return
       const def = CADRAGES[p.cadrage || 'corps'] || CADRAGES.corps
@@ -239,6 +275,27 @@ export default function Corps3D(props) {
         derniers.current.onPret?.({
           pivots,
           versMonde: (point, noeud) => versMonde(point, noeud).toArray(),
+          // position à l'écran (pixels du cadre) d'un point du modèle, et échelle (pixels par mètre)
+          projeter: (point, noeud) => {
+            const e = versMonde(point, noeud).project(camera)
+            return { x: ((e.x + 1) / 2) * el.clientWidth, y: ((1 - e.y) / 2) * el.clientHeight }
+          },
+          pixelsParMetre: () => el.clientHeight / (camera.top - camera.bottom),
+          // image du squelette tel qu'il est affiché (pour fabriquer une affiche à enregistrer)
+          capturer: () => {
+            renderer.render(scene, camera)
+            const c = document.createElement('canvas')
+            c.width = renderer.domElement.width
+            c.height = renderer.domElement.height
+            const x = c.getContext('2d')
+            const fond = x.createRadialGradient(c.width / 2, c.height * 0.4, 0, c.width / 2, c.height * 0.4, Math.max(c.width, c.height) * 0.75)
+            fond.addColorStop(0, '#1A2A55')
+            fond.addColorStop(1, '#070B16')
+            x.fillStyle = fond
+            x.fillRect(0, 0, c.width, c.height)
+            x.drawImage(renderer.domElement, 0, 0)
+            return c
+          },
           boite: (groupe, cote) => {
             const m = meshes.find((x) => x.userData.groupe === groupe && (!cote || x.userData.cote === cote))
             return m ? m.geometry.boundingBox.clone() : null
