@@ -77,21 +77,21 @@ function Apercu({ photo, projetee, onFermer, onSupprimer }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur flex flex-col" onClick={onFermer}>
-      <div className="flex items-center justify-between p-4" onClick={(e) => e.stopPropagation()}>
+      <div className="shrink-0 flex items-center justify-between p-4" onClick={(e) => e.stopPropagation()}>
         <p className="text-sm text-white/60">{formatDate(photo.creeLe)}</p>
         <button onClick={onFermer} className="w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center" aria-label="Fermer">
           <X size={22} />
         </button>
       </div>
-      <div className="flex-1 min-h-0 flex items-center justify-center px-4">
+      {/* La photo occupe exactement l'espace libre : les boutons restent toujours visibles */}
+      <div className="relative flex-1 min-h-0 mx-4">
         <img
           src={image || photo.miniature}
           alt=""
-          onClick={(e) => e.stopPropagation()}
-          className={`max-w-full max-h-full object-contain rounded-xl ${image ? '' : 'blur-sm'}`}
+          className={`absolute inset-0 w-full h-full object-contain ${image ? '' : 'blur-sm'}`}
         />
       </div>
-      <div className="p-4 flex flex-wrap justify-center gap-3" onClick={(e) => e.stopPropagation()}>
+      <div className="shrink-0 p-4 flex flex-wrap justify-center gap-3" onClick={(e) => e.stopPropagation()}>
         <div className="flex gap-2">
           <button
             onClick={() => pivoter(-1)}
