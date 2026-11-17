@@ -77,3 +77,28 @@
   .labo-fumee, .labo-bouffee, .labo-boom, .labo-etincelle, .labo-tremble, .labo-flash, .labo-pulse, .labo-scan { animation: none; }
   .labo-boom, .labo-etincelle, .labo-flash { opacity: 0; }
 }
+
+/* ---------- Électricité : courant, hélice, sonnette, flammes, fumée ---------- */
+@keyframes elec-courant { from { stroke-dashoffset: 0; } to { stroke-dashoffset: -32; } }
+@keyframes elec-tourne { to { transform: rotate(360deg); } }
+@keyframes elec-sonne { 0%, 100% { transform: rotate(-14deg); } 50% { transform: rotate(14deg); } }
+@keyframes elec-onde { from { opacity: .9; transform: scale(.6); } to { opacity: 0; transform: scale(1.5); } }
+@keyframes elec-flamme {
+  0%, 100% { transform: scale(1, 1) translateY(0); }
+  25% { transform: scale(.88, 1.12) translateY(-1px); }
+  50% { transform: scale(1.08, .92) translateY(1px); }
+  75% { transform: scale(.94, 1.08) translateY(-2px); }
+}
+@keyframes elec-fumee { 0% { transform: translate(0, 0) scale(.4); opacity: 0; } 20% { opacity: .55; } 100% { transform: translate(var(--fx, 0px), -70px) scale(2.2); opacity: 0; } }
+@keyframes elec-alerte { 0%, 100% { opacity: .0; } 50% { opacity: .22; } }
+@keyframes elec-chauffe { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+@keyframes elec-borne { 0%, 100% { r: 7; opacity: .9; } 50% { r: 11; opacity: .5; } }
+.elec-courant { stroke-dasharray: 3 13; animation: elec-courant linear infinite; }
+.elec-tourne { transform-box: fill-box; transform-origin: center; animation: elec-tourne linear infinite; }
+.elec-sonne { transform-box: view-box; animation: elec-sonne .09s linear infinite; }
+.elec-onde { transform-box: fill-box; transform-origin: center; animation: elec-onde .7s ease-out infinite; }
+.elec-flamme { transform-box: fill-box; transform-origin: 50% 100%; animation: elec-flamme .35s ease-in-out infinite; }
+.elec-fumee { transform-box: fill-box; transform-origin: center; animation: elec-fumee 1.8s ease-out infinite; }
+.elec-alerte { animation: elec-alerte .5s ease-in-out infinite; }
+.elec-chauffe { animation: elec-chauffe .4s ease-in-out infinite; }
+.elec-borne { animation: elec-borne 1.2s ease-in-out infinite; }
