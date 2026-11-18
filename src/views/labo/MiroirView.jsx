@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { ArrowLeft, Camera, Hand, RefreshCw, ScanFace, ShieldCheck, Target, Trophy } from 'lucide-react'
 import { DecorLabo } from '../../components/labo/DecorLabo.jsx'
 import { Eclat, useRetourSalle } from '../../components/labo/CadreJeu.jsx'
+import { chargerSpritesCorps, chargerSpritesMain, dessinerSquelette, dessinerSqueletteMain } from '../../components/labo/spritesOs.js'
 import './labo.css'
 import PiedLabo from '../../components/labo/PiedLabo.jsx'
 import LogoActivite from '../../components/labo/LogoActivite.jsx'
@@ -232,6 +233,8 @@ export default function MiroirView() {
   const mainRef = useRef(null)
   const visionRef = useRef(null)
   const fluxRef = useRef(null)
+  const spritesCorpsRef = useRef(null) // vrais os 3D (les mêmes qu'en A2), transformés en images
+  const spritesMainRef = useRef(null)
   const rafRef = useRef(0)
   const jeuRef = useRef({ mode: 'main', cible: 0, maintien: 0, mission: 0, score: 0, debut: 0, termine: false })
 
@@ -281,6 +284,10 @@ export default function MiroirView() {
           creer(HandLandmarker, MODELE_MAIN, { numHands: 2 }),
         ])
       }
+      // Les vrais os 3D ; si le chargement échoue, on garde les os dessinés
+      const [sc, sm] = await Promise.allSettled([chargerSpritesCorps(), chargerSpritesMain()])
+      spritesCorpsRef.current = sc.status === 'fulfilled' ? sc.value : null
+      spritesMainRef.current = sm.status === 'fulfilled' ? sm.value : null
       jeuRef.current.debut = performance.now()
       setPhase('jeu')
     } catch (e) {
@@ -404,7 +411,8 @@ export default function MiroirView() {
           ctx.save()
           ctx.shadowColor = '#8FF4FF'
           ctx.shadowBlur = 12
-          dessinerMain(ctx, Lm, echelle)
+          if (spritesMainRef.current) dessinerSqueletteMain(ctx, spritesMainRef.current, Lm)
+          else dessinerMain(ctx, Lm, echelle)
           ctx.restore()
           const anglesDoigts = [[5, 6, 8], [9, 10, 12], [13, 14, 16], [17, 18, 20]].map(([a, b, c]) => angle(v1(Lm[a]), v1(Lm[b]), v1(Lm[c])))
           mesures.push({ anglesDoigts, doigtsTendus: anglesDoigts.filter((a) => a > 160).length, pouceAuriculaire: dist(Lm[4], Lm[20]), echelle })
@@ -463,7 +471,8 @@ export default function MiroirView() {
       c.tibG = milieu(c.genouG, c.chevilleG)
       c.tibD = milieu(c.genouD, c.chevilleD)
 
-      // ----- Squelette -----
+      // ----- Squelette (vrais os 3D si chargés, sinon os dessinés) -----
+      if (!(spritesCorpsRef.current && dessinerSquelette(ctx, spritesCorpsRef.current, c))) {
       ctx.save()
       ctx.strokeStyle = '#EDE6D1'
       ctx.fillStyle = '#EDE6D1'
@@ -549,6 +558,7 @@ export default function MiroirView() {
         ctx.fill()
       }
       ctx.restore()
+      }
 
       // ----- Mesures -----
       const m = {
