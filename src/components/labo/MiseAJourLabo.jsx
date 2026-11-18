@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react'
 //  1. un erlenmeyer se remplit pendant que la nouvelle version se
 //     télécharge VRAIMENT (la page d'accueil et ses fichiers /assets/
 //     sont préchargés : le niveau suit le téléchargement) ;
-//  2. quand tout est chargé : ça déborde… puis BOUM ! ;
+//  2. quand tout est chargé : ça déborde… puis BOUM ! (sans texte) ;
 //  3. la page se recharge (onFini).
 //  Un petit mot change pendant le chargement.
 //  Aperçu sans mise à jour : /labo?apercu-maj
@@ -98,7 +98,8 @@ export default function MiseAJourLabo({ onFini }) {
   }, [phase])
 
   const y = BAS - niveau * (BAS - HAUT)
-  const texte = phase === 'remplit' ? MOTS[mot] : phase === 'deborde' ? 'Oh oh… ça déborde !' : 'BOUM ! Le labo est à jour !'
+  // petit mot pendant le remplissage ; plus aucun texte quand ça déborde et explose
+  const texte = phase === 'remplit' ? MOTS[mot] : '\u00a0'
 
   return (
     <div className="maj-labo" role="status" aria-live="polite">
@@ -187,10 +188,10 @@ export default function MiseAJourLabo({ onFini }) {
         )}
       </div>
 
-      <p className={`maj-labo-mot ${phase === 'boum' ? 'maj-labo-mot-boum' : ''}`} key={texte}>
+      <p className="maj-labo-mot" key={texte}>
         {texte}
       </p>
-      <div className="maj-labo-barre">
+      <div className="maj-labo-barre" style={{ opacity: phase === 'remplit' ? 1 : 0, transition: 'opacity .3s' }}>
         <div style={{ width: `${Math.round(niveau * 100)}%` }} />
       </div>
     </div>
@@ -204,7 +205,6 @@ const CSS = `
 .maj-labo-scene { position: relative; width: min(62vmin, 340px); aspect-ratio: 320 / 300; }
 .maj-labo-fiole { width: 100%; height: 100%; overflow: visible; }
 .maj-labo-mot { position: relative; margin: 6px 0 0; min-height: 1.4em; font-family: 'Lilita One', 'Unbounded', system-ui, sans-serif; font-size: clamp(22px, 4.2vmin, 34px); color: #E8FFE2; text-align: center; animation: maj-mot .35s ease-out; text-shadow: 0 0 18px rgba(124,255,107,.5); }
-.maj-labo-mot-boum { color: #FFE45E; font-size: clamp(28px, 6vmin, 46px); text-shadow: 0 0 24px rgba(255,228,94,.7); }
 .maj-labo-barre { position: relative; width: min(60vmin, 320px); height: 8px; border-radius: 99px; background: rgba(255,255,255,.08); overflow: hidden; }
 .maj-labo-barre > div { height: 100%; border-radius: 99px; background: linear-gradient(90deg, #1FAE4A, #7CFF6B, #C9FFB8); box-shadow: 0 0 12px #7CFF6B; }
 @keyframes maj-mot { from { opacity: 0; transform: translateY(8px) scale(.96); } to { opacity: 1; transform: none; } }
