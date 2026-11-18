@@ -75,6 +75,18 @@ const LABO_JEUX = {
   'circulation/animaux': lazy(() => import('./views/labo/circulation/AnimauxView.jsx')),
   'circulation/defi': lazy(() => import('./views/labo/circulation/DefiCircView.jsx')),
   'espace/systeme': lazy(() => import('./views/labo/espace/SystemeView.jsx')),
+  'espace/rotation': lazy(() => import('./views/labo/espace/RotationView.jsx')),
+  'espace/revolution': lazy(() => import('./views/labo/espace/RevolutionView.jsx')),
+  'espace/phases': lazy(() => import('./views/labo/espace/PhasesView.jsx')),
+  'espace/eclipses': lazy(() => import('./views/labo/espace/EclipsesView.jsx')),
+  'espace/saisons': lazy(() => import('./views/labo/espace/SaisonsView.jsx')),
+  'espace/planetes': lazy(() => import('./views/labo/espace/PlanetesView.jsx')),
+  'espace/echelle': lazy(() => import('./views/labo/espace/EchelleView.jsx')),
+  'espace/cometes': lazy(() => import('./views/labo/espace/CometesView.jsx')),
+  'espace/galaxie': lazy(() => import('./views/labo/espace/GalaxieView.jsx')),
+  'espace/modeles': lazy(() => import('./views/labo/espace/ModelesView.jsx')),
+  'espace/mots': lazy(() => import('./views/labo/espace/MotsView.jsx')),
+  'espace/defi': lazy(() => import('./views/labo/espace/DefiEspaceView.jsx')),
 }
 
 // Une expérience masquée par le prof (Espace prof du labo) n'est plus accessible,

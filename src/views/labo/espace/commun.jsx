@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Pause, Play } from 'lucide-react'
-import CadreJeu from '../../../components/labo/CadreJeu.jsx'
+import CadreJeu, { melanger } from '../../../components/labo/CadreJeu.jsx'
 import Scene3D from '../../../components/labo/espace/Scene3D.jsx'
 import { VIOLET } from '../../../components/labo/espace/donnees.js'
 
@@ -139,3 +139,75 @@ export function Faits({ lignes, couleur = VIOLET }) {
   )
 }
 
+
+// ---------- Boule texturée qui tourne (image de la vraie planète), pour les cartes et les jeux ----------
+export function Boule({ texture, taille = 72, anneaux = false, duree = 24, className = '' }) {
+  return (
+    <span className={`relative inline-flex flex-none items-center justify-center ${className}`} style={{ width: anneaux ? taille * 1.9 : taille, height: taille }}>
+      <span className="espace-boule" style={{ width: taille, height: taille, '--t': `${taille}px`, backgroundImage: `url(/labo/espace/${texture}.jpg)`, animationDuration: `${duree}s` }} />
+      {anneaux && <span className="pointer-events-none absolute left-0 right-0 top-1/2 -translate-y-1/2 rounded-[50%] border-[3px] opacity-80" style={{ height: taille * 0.42, borderColor: '#D9C49A', transform: 'translateY(-50%) rotate(-14deg)', boxShadow: '0 0 6px rgba(217,196,154,.5)' }} />}
+    </span>
+  )
+}
+
+// ---------- Jeu « remets dans l'ordre » : on touche les cartes dans le bon ordre (S7, S11) ----------
+//  cartes : [{ id, nom, sous, visuel }]   ordre : ids dans l'ordre attendu   onFin(erreurs)
+export function OrdreCartes({ cartes, ordre, couleur = VIOLET, onFin, depart = null, fin = null, colonnes = 4 }) {
+  const [pool, setPool] = useState(() => melanger(ordre))
+  const [place, setPlace] = useState([])
+  const [erreurs, setErreurs] = useState(0)
+  const [faux, setFaux] = useState(null)
+  const par = Object.fromEntries(cartes.map((c) => [c.id, c]))
+  const fini = place.length === ordre.length
+
+  function choisir(id) {
+    if (fini) return
+    if (id === ordre[place.length]) {
+      const n = [...place, id]
+      setPlace(n)
+      setPool((p) => p.filter((x) => x !== id))
+      if (n.length === ordre.length) onFin?.(erreurs)
+    } else {
+      setErreurs((e) => e + 1)
+      setFaux(id)
+      setTimeout(() => setFaux(null), 650)
+    }
+  }
+  const gridCols = { 3: 'grid-cols-3', 4: 'grid-cols-4', 5: 'grid-cols-5', 6: 'grid-cols-6' }[colonnes] || 'grid-cols-4'
+  return (
+    <div className="flex flex-col gap-3 tab:min-h-0 tab:flex-1">
+      <div className="flex items-stretch gap-1.5 overflow-x-auto rounded-3xl border border-white/12 bg-[#05030f]/40 p-2.5">
+        {depart}
+        {ordre.map((id, i) => {
+          const c = par[id]
+          const ok = i < place.length
+          return (
+            <div key={id} className="flex min-h-[104px] min-w-[64px] flex-1 flex-col items-center justify-center rounded-2xl border-2 border-dashed px-1 py-1.5 text-center" style={{ borderColor: ok ? `${couleur}AA` : 'rgba(232,236,255,.14)', background: ok ? 'rgba(166,107,255,.12)' : 'transparent' }}>
+              {ok ? (
+                <>
+                  {c.visuel}
+                  <span className="labo-jeu mt-1 text-[13px] leading-none" style={{ color: c.couleur || couleur }}>{c.nom}</span>
+                  {c.sous && <span className="mt-0.5 text-[10px] leading-tight text-[#B9C1E3]">{c.sous}</span>}
+                </>
+              ) : (
+                <span className="labo-jeu text-2xl text-white/25">{i + 1}</span>
+              )}
+            </div>
+          )
+        })}
+        {fin}
+      </div>
+      <div className={`grid gap-2.5 ${gridCols}`}>
+        {pool.map((id) => {
+          const c = par[id]
+          return (
+            <button key={id} type="button" onClick={() => choisir(id)} className={`flex min-h-[108px] flex-col items-center justify-center gap-1 rounded-3xl border-2 bg-[#0B0A1E]/85 p-2 active:scale-95 tab:min-h-[132px] ${faux === id ? 'espace-secoue' : ''}`} style={{ borderColor: faux === id ? '#FF6B7A' : `${couleur}55` }}>
+              {c.visuel}
+              <span className="labo-jeu text-[15px] leading-none text-white">{c.nom}</span>
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}

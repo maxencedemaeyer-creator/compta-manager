@@ -18,7 +18,7 @@ function hasard(graine) {
 }
 
 // Galaxie spirale dessinée avec des milliers de petites étoiles (bras logarithmiques)
-function dessinerGalaxie(canvas, { bras = 2, graine = 7, teinte = [255, 214, 170], bout = [200, 160, 255], barre = false } = {}) {
+export function dessinerGalaxie(canvas, { bras = 2, graine = 7, teinte = [255, 214, 170], bout = [200, 160, 255], barre = false } = {}) {
   const g = canvas.getContext('2d')
   const T = canvas.width
   const c = T / 2

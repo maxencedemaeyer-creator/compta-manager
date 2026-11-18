@@ -132,3 +132,14 @@
 .espace-galaxie { animation: espace-galaxie 300s linear infinite; }
 .espace-filante { width: 90px; height: 2px; border-radius: 2px; background: linear-gradient(90deg, rgba(255,255,255,0), #fff); box-shadow: 0 0 8px #fff; animation: espace-filante 13s linear infinite; opacity: 0; }
 @media (prefers-reduced-motion: reduce) { .espace-galaxie, .espace-filante, .espace-scintille { animation: none; } }
+
+/* Boule texturée qui tourne (cartes de l'expérience « L'espace ») : l'image de la planète défile derrière un cercle */
+@keyframes espace-tourne { to { background-position-x: calc(var(--t) * -2); } }
+.espace-boule { position: relative; border-radius: 50%; background-repeat: repeat-x; background-size: auto 100%; animation: espace-tourne 24s linear infinite; box-shadow: inset -9px -7px 16px rgba(0,0,0,.75), inset 4px 3px 10px rgba(255,255,255,.18); }
+.espace-boule::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 32% 28%, rgba(255,255,255,.28), rgba(255,255,255,0) 45%); }
+@keyframes espace-secoue { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+.espace-secoue { animation: espace-secoue .3s ease-in-out 2; }
+
+/* Changement de niveau de zoom (activité « Galaxie ») : l'image arrive de plus près en s'éclaircissant */
+@keyframes espace-zoom { from { transform: scale(1.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.espace-zoom { animation: espace-zoom .65s cubic-bezier(.2,.7,.2,1) both; }

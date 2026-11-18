@@ -133,8 +133,8 @@ export default function Scene3D({ construire, donnees, className = '', fov = 40,
       renderer.setSize(w, h, false)
       const aspect = w / h
       camera.aspect = aspect
-      const t = tanBase * Math.max(1, 1.45 / aspect)
-      camera.fov = Math.min(100, THREE.MathUtils.radToDeg(2 * Math.atan(t)))
+      const t = tanBase * Math.max(1, 1.9 / aspect)
+      camera.fov = Math.min(110, THREE.MathUtils.radToDeg(2 * Math.atan(t)))
       camera.updateProjectionMatrix()
       app.redim?.(w, h)
     }
