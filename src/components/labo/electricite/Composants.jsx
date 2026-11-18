@@ -8,7 +8,7 @@
 //  enceinte : borne 0 = + (ils ne marchent que dans un sens).
 // =============================================================
 import { COMPOSANTS } from './circuit.js'
-import { DessinObjet } from './objets.jsx'
+import { DessinObjet, OBJET } from './objets.jsx'
 
 export const BORNES = [
   [-42, 24],
@@ -381,12 +381,21 @@ function Sonnette({ r }) {
   )
 }
 
-// Les deux pinces du testeur, avec l'objet glissé entre elles
+// Les deux pinces crocodile du testeur, qui mordent les bords de l'objet :
+// elles se rapprochent pour un petit objet (pièce, bouchon, gomme…),
+// pour que l'objet touche toujours les deux pinces.
 function Objet({ c }) {
+  const demi = c.objet ? (OBJET[c.objet]?.demi ?? 40) : 40
+  const xPince = Math.min(42, demi + 12) // les mâchoires (14 de long) mordent ≈ 2 dans l'objet
   return (
     <g>
       <Socle />
       <path d="M-42 18 L-42 -8 M42 18 L42 -8" stroke="url(#el-laiton)" strokeWidth="3" />
+      {/* petit câble souple entre le plot et la pince quand elle se rapproche */}
+      {xPince < 42 &&
+        [-1, 1].map((s) => (
+          <path key={`cable${s}`} d={`M${s * 42} -8 C${s * 42} -30 ${s * (xPince + 10)} -30 ${s * xPince} -10`} fill="none" stroke="#9E1A26" strokeWidth="3.4" strokeLinecap="round" />
+        ))}
       {c.objet ? (
         <g transform="translate(0 -16)">
           <DessinObjet id={c.objet} />
@@ -403,7 +412,7 @@ function Objet({ c }) {
         </g>
       )}
       {[-1, 1].map((s) => (
-        <g key={s} transform={`translate(${s * 42} -10) scale(${s} 1)`}>
+        <g key={s} transform={`translate(${s * xPince} -10) scale(${s} 1)`}>
           <path d="M0 -8 L-14 -5 L-14 3 L0 0 Z" fill="#E0384A" stroke="#6E121B" strokeWidth=".6" />
           <path d="M0 4 L-14 9 L-14 15 L0 10 Z" fill="#C42536" stroke="#6E121B" strokeWidth=".6" />
           <path d="M-14 -3 L-6 -1 M-14 12 L-6 9" stroke="url(#el-metal)" strokeWidth="2" />
