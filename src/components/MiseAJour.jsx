@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import Chargement from './Chargement.jsx'
+import MiseAJourLabo from './labo/MiseAJourLabo.jsx'
 
 // =============================================================
 //  Mise à jour automatique du site
@@ -13,6 +14,9 @@ import Chargement from './Chargement.jsx'
 //    (clic sur un onglet, un bouton qui ouvre une autre page…).
 //  - À ce moment-là : petit écran "Mise à jour du site…" puis la
 //    nouvelle version s'affiche, sur la page où tu allais.
+//  - Dans le LABO (/labo…) : écran spécial, un erlenmeyer qui se
+//    remplit pendant le téléchargement, déborde et explose
+//    (components/labo/MiseAJourLabo.jsx). Aperçu : /labo?apercu-maj
 // =============================================================
 
 const VERSION_ACTUELLE = __APP_VERSION__
@@ -53,14 +57,21 @@ export default function MiseAJour() {
     }
   }
 
+  const dansLeLabo = /^\/labo(\/|$)/.test(location.pathname)
+
   function recharger() {
     if (typeof nouvelleVersion.current === 'string') {
       sessionStorage.setItem(CLE_TENTATIVE, nouvelleVersion.current)
     }
     setEnCours(true)
+    // Dans le labo, c'est l'animation de l'erlenmeyer qui recharge la page à la fin
+    if (/^\/labo(\/|$)/.test(window.location.pathname)) return
     // Laisse le temps à l'écran de chargement de s'afficher
     setTimeout(() => window.location.reload(), 400)
   }
+
+  // Aperçu de l'animation du labo, sans mise à jour : /labo?apercu-maj
+  const apercu = dansLeLabo && new URLSearchParams(location.search).has('apercu-maj')
 
   // Vérification en arrière-plan + au retour sur l'onglet / l'appli
   useEffect(() => {
@@ -90,6 +101,15 @@ export default function MiseAJour() {
     })
   }, [location.pathname])
 
+  if (apercu)
+    return (
+      <MiseAJourLabo
+        onFini={() => {
+          window.location.replace(location.pathname)
+        }}
+      />
+    )
   if (!enCours) return null
+  if (dansLeLabo) return <MiseAJourLabo onFini={() => window.location.reload()} />
   return <Chargement superpose message="Mise à jour du site…" />
 }
