@@ -65,7 +65,7 @@ export default function AmpouleView() {
     <PageElec code="E9" titre="Au cœur de l’ampoule" attendus={[111]} couleur={OR} large resultat={{ lumiere: Math.min(1, t * c.halo), courtCircuit: false }}>
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 tab:min-h-0 tab:flex-1 tab:grid-cols-[auto_minmax(0,1fr)]">
         <Carte couleur={`${OR}55`} className="p-2 tab:flex tab:h-full tab:min-h-0 tab:items-center tab:justify-center">
-          <svg viewBox="0 0 300 380" className="mx-auto block w-full max-w-[420px] select-none tab:h-full tab:w-auto tab:max-w-none" style={{ aspectRatio: '300 / 380' }}>
+          <svg viewBox="0 0 300 380" className="mx-auto block w-full max-w-[420px] select-none tab:h-[calc(100dvh-127px)] tab:w-auto tab:max-w-none" style={{ aspectRatio: '300 / 380' }}>
             <defs>
               <radialGradient id="am-halo" cx=".5" cy=".5" r=".5">
                 <stop offset="0" stopColor="#FFF4C8" stopOpacity=".95" />
@@ -215,18 +215,25 @@ export default function AmpouleView() {
 
           <Carte couleur="rgba(157,255,138,.35)">
             <p className="labo-mono text-[11px] text-[#9DFF8A]">AMPOULE À FILAMENT OU LAMPE LED ?</p>
-            <div className="mt-2 space-y-2">
-              <div>
-                <p className="text-[13px] font-bold text-[#E8ECFF]">Ampoule à filament</p>
-                <div className="mt-1 flex h-4 overflow-hidden rounded-full">
-                  <div className="h-full bg-[#FFE45E]" style={{ width: '5%' }} />
-                  <div className="h-full bg-[#FF6B4A]" style={{ width: '95%' }} />
+            <div className="mt-2 space-y-3">
+              {[
+                { nom: 'Ampoule à filament', lumiere: 5 },
+                { nom: 'Lampe LED', lumiere: 30 },
+              ].map((l) => (
+                <div key={l.nom}>
+                  <p className="text-[13px] font-bold text-[#E8ECFF]">{l.nom}</p>
+                  <div className="mt-1 flex h-4 overflow-hidden rounded-full">
+                    <div className="h-full bg-[#FFE45E]" style={{ width: `${l.lumiere}%` }} />
+                    <div className="h-full bg-[#FF6B4A]" style={{ width: `${100 - l.lumiere}%` }} />
+                  </div>
+                  <p className="mt-0.5 text-[11px] text-[#8A93B8]">
+                    ≈ {l.lumiere} % de lumière · ≈ {100 - l.lumiere} % de chaleur
+                  </p>
                 </div>
-                <p className="mt-0.5 text-[11px] text-[#8A93B8]">≈ 5 % de lumière · ≈ 95 % de chaleur</p>
-              </div>
+              ))}
             </div>
             <p className="mt-2 text-[13px] leading-snug text-[#DDE2F7]">
-              Une lampe LED donne la même lumière en consommant environ 6 fois moins d’énergie, chauffe très peu et dure environ 15 fois plus longtemps. C’est pourquoi les ampoules à filament ne sont plus vendues en Europe pour éclairer les maisons.
+              <span className="font-bold text-[#FFE45E]">Lumière</span> · <span className="font-bold text-[#FF8A6A]">chaleur perdue</span>. La LED donne autant de lumière avec environ 6 fois moins d’énergie.
             </p>
           </Carte>
         </div>

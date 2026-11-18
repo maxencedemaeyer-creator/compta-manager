@@ -192,7 +192,7 @@ export default function BancView() {
       <Eclat message={eclat.message} sousTitre={eclat.sousTitre} cle={eclat.cle} couleur={JAUNE} />
       <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_320px] tab:min-h-0 tab:flex-1 tab:grid-cols-[auto_minmax(300px,1fr)]">
         <div className="order-2 flex min-w-0 justify-center md:order-1 tab:h-full tab:min-h-0">
-          <Banc banc={banc} vue={vue} silence={!son} largeur={L} className="mx-auto w-full tab:h-full tab:w-auto" />
+          <Banc banc={banc} vue={vue} silence={!son} largeur={L} className="mx-auto w-full tab:h-[calc(100dvh-93px)] tab:w-auto" />
         </div>
         <div className="order-1 flex min-w-0 flex-col gap-3 md:order-2 tab:min-h-0">
           <Outils

@@ -96,7 +96,7 @@ export default function Missions({ code, titre, attendus, couleur, missions, int
             silence={!son}
             fond={m.fond?.(vue)}
             hauteur={m.hauteur ?? HAUTEUR}
-            className="mx-auto w-full max-w-[540px] tab:h-full tab:w-auto tab:max-w-full"
+            className="mx-auto w-full max-w-[540px] tab:h-[calc(100dvh-93px)] tab:w-auto tab:max-w-full"
           />
         </div>
         <div className="order-1 flex min-w-0 flex-col gap-3 md:order-2 tab:min-h-0 tab:overflow-y-auto">
