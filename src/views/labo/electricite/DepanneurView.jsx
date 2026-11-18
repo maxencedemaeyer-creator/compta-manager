@@ -71,13 +71,13 @@ const MISSIONS = [
   },
   {
     titre: 'Panne n° 6',
-    consigne: 'La DEL rouge ne s’allume pas, alors que tout est branché et que rien n’est cassé.',
+    consigne: 'La lampe LED ne s’allume pas, alors que tout est branché et que rien n’est cassé.',
     composants: [P(), comp('d', 'del', 180, 210)],
     fils: [fil('p:0', 'd:1'), fil('d:0', 'p:1')],
     test: (c, f, r) => marche(r, 'd'),
-    indices: ['La DEL ne laisse passer le courant que dans un sens.', 'Sa patte longue (+) doit être reliée à la borne + de la pile : retire les deux fils et croise-les.'],
-    explication: 'La DEL était branchée à l’envers. Dans le bon sens (patte longue vers le +), elle laisse passer le courant et s’allume.',
-    question: { texte: 'Quelle était la panne ?', choix: ['La DEL était branchée à l’envers', 'La DEL était grillée', 'Il manquait un fil'], bonne: 0 },
+    indices: ['La lampe LED ne laisse passer le courant que dans un sens.', 'Son côté + doit être relié à la borne + de la pile : retire les deux fils et croise-les.'],
+    explication: 'La lampe LED était branchée à l’envers. Dans le bon sens (+ contre +), elle laisse passer le courant et s’allume.',
+    question: { texte: 'Quelle était la panne ?', choix: ['La lampe LED était branchée à l’envers', 'La lampe LED était grillée', 'Il manquait un fil'], bonne: 0 },
     deplacer: false,
   },
   {
@@ -123,8 +123,7 @@ export default function DepanneurView() {
       attendus={[111, 112, 114]}
       couleur="#FFB86B"
       missions={MISSIONS}
-      intro="Touche un composant pour l’inspecter (et le changer s’il est abîmé). Glisse d’une borne à une autre pour ajouter un fil, touche un fil pour le retirer."
-      conclusion="Pour dépanner un circuit, on vérifie un élément à la fois : les fils (sont-ils tous branchés ?), l’interrupteur (est-il fermé ?), les récepteurs (l’ampoule est-elle grillée ? la DEL dans le bon sens ?), les matériaux (conducteurs ?) et la pile (est-elle usée ?)."
+      conclusion="Pour dépanner un circuit, on vérifie un élément à la fois : les fils (sont-ils tous branchés ?), l’interrupteur (est-il fermé ?), les récepteurs (l’ampoule est-elle grillée ? la lampe LED dans le bon sens ?), les matériaux (conducteurs ?) et la pile (est-elle usée ?)."
     />
   )
 }

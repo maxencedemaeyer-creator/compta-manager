@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
+import { TOLERANCE_GLISSE, toucherTolerant } from '../toucher3D.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { BLEU, CREDIT_CIRCULATION, ROUGE, chargerCirculation, longueurs, pointSur, sangRiche } from './modele.js'
 
@@ -299,20 +300,13 @@ export default function Circulation3D(props) {
       const bouge = Math.hypot(e.clientX - depart.x, e.clientY - depart.y)
       depart = null
       const p = derniers.current
-      if (bouge > 8 || !p.onChoisir) return
-      const r = renderer.domElement.getBoundingClientRect()
+      if (bouge > TOLERANCE_GLISSE || !p.onChoisir) return
       const cibles = meshes.filter((m) => m.visible && !m.userData.attenue && (!p.choisissables || p.choisissables.includes(m.userData.nature) || p.choisissables.includes(m.userData.groupe)))
-      const essais = [[0, 0]]
-      for (const rayon of [7, 14, 22]) for (let k = 0; k < 8; k++) essais.push([Math.cos((k * Math.PI) / 4) * rayon, Math.sin((k * Math.PI) / 4) * rayon])
-      for (const [dx, dy] of essais) {
-        const ndc = new THREE.Vector2(((e.clientX + dx - r.left) / r.width) * 2 - 1, -((e.clientY + dy - r.top) / r.height) * 2 + 1)
-        raycaster.setFromCamera(ndc, camera)
-        const hit = raycaster.intersectObjects(cibles, false)[0]
-        if (hit) {
-          const { groupe, cote, nature } = hit.object.userData
-          p.onChoisir(groupe, cote, nature, hit.point.toArray())
-          return
-        }
+      const hit = toucherTolerant(e, renderer, camera, cibles, raycaster)
+      if (hit) {
+        const { groupe, cote, nature } = hit.object.userData
+        p.onChoisir(groupe, cote, nature, hit.point.toArray())
+        return
       }
       p.onChoisir(null)
     }

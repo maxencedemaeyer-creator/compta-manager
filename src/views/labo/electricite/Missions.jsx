@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowRight, Check, Lightbulb, RotateCcw, Trophy, Volume2, VolumeX } from 'lucide-react'
+import { ArrowRight, Check, Lightbulb, RotateCcw, Trophy } from 'lucide-react'
 import Banc, { HAUTEUR, useBanc } from '../../../components/labo/electricite/Banc.jsx'
 import { Bouton, Carte, Eclat } from '../../../components/labo/CadreJeu.jsx'
-import { BasculeVue, PageElec } from './commun.jsx'
+import { Outils, PageElec } from './commun.jsx'
 
 // =============================================================
-//  Moteur commun des paillasses « à missions » (E3, E5, E6) :
+//  Moteur commun des activités « à missions » (E3, E5, E6) :
 //  une suite de défis sur l'établi, vérifiés par le vrai calcul
 //  du circuit, avec indices, explication et (option) question
 //  de diagnostic à la fin.
@@ -17,6 +17,9 @@ import { BasculeVue, PageElec } from './commun.jsx'
 //    question?: { texte, choix: [..], bonne: index },
 //    cablage? (défaut true), deplacer? (défaut true)
 //  }
+//  Barre d'outils (photo/schéma, son, Recommencer) en haut du
+//  panneau, sur une seule ligne. Tablette en paysage : établi à
+//  gauche (toute la hauteur), mission à droite, sans défilement.
 // =============================================================
 export default function Missions({ code, titre, attendus, couleur, missions, intro, conclusion }) {
   const [n, setN] = useState(0)
@@ -82,20 +85,8 @@ export default function Missions({ code, titre, attendus, couleur, missions, int
     <PageElec code={code} titre={titre} attendus={attendus} couleur={couleur} large resultat={banc.resultat}>
       <Eclat message={eclat.message} cle={eclat.cle} couleur={couleur} />
       {n === 0 && intro && <p className="text-[14px] leading-snug text-[#B9C1E3]">{intro}</p>}
-      <div className="flex gap-1.5">
-        {missions.map((_, i) => (
-          <button
-            key={i}
-            type="button"
-            aria-label={`Mission ${i + 1}`}
-            onClick={() => aller(i)}
-            className="h-2 flex-1 rounded-full"
-            style={{ background: i < n ? couleur : i === n ? `${couleur}99` : 'rgba(255,255,255,.12)' }}
-          />
-        ))}
-      </div>
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="order-2 min-w-0 md:order-1">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_360px] tab:min-h-0 tab:flex-1 tab:grid-cols-[auto_minmax(340px,1fr)]">
+        <div className="order-2 flex min-w-0 justify-center md:order-1 tab:h-full tab:min-h-0">
           <Banc
             banc={banc}
             vue={vue}
@@ -105,11 +96,23 @@ export default function Missions({ code, titre, attendus, couleur, missions, int
             silence={!son}
             fond={m.fond?.(vue)}
             hauteur={m.hauteur ?? HAUTEUR}
-            className="mx-auto w-full"
-            style={{ maxWidth: `min(540px, calc((100dvh - 120px) * ${(360 / (m.hauteur ?? HAUTEUR)).toFixed(3)}))` }}
+            className="mx-auto w-full max-w-[540px] tab:h-full tab:w-auto tab:max-w-full"
           />
         </div>
-        <div className="order-1 flex min-w-0 flex-col gap-3 md:order-2">
+        <div className="order-1 flex min-w-0 flex-col gap-3 md:order-2 tab:min-h-0 tab:overflow-y-auto">
+          <Outils vue={vue} setVue={setVue} son={son} setSon={setSon} onRecommencer={() => aller(n)} />
+          <div className="flex flex-none gap-1.5">
+            {missions.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                aria-label={`Mission ${i + 1}`}
+                onClick={() => aller(i)}
+                className="h-3 flex-1 rounded-full"
+                style={{ background: i < n ? couleur : i === n ? `${couleur}99` : 'rgba(255,255,255,.12)' }}
+              />
+            ))}
+          </div>
           <Carte couleur={reussi ? '#9DFF8A88' : `${couleur}66`}>
             <p className="labo-mono text-[11px]" style={{ color: couleur }}>
               MISSION {n + 1}/{missions.length}
@@ -166,15 +169,6 @@ export default function Missions({ code, titre, attendus, couleur, missions, int
               </Bouton>
             )}
           </Carte>
-          <div className="flex flex-wrap items-center gap-2">
-            <BasculeVue vue={vue} setVue={setVue} />
-            <button type="button" aria-label={son ? 'Couper le son' : 'Activer le son'} onClick={() => setSon(!son)} className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/15 bg-[#0B1122]/90 text-[#E8ECFF]">
-              {son ? <Volume2 size={18} /> : <VolumeX size={18} />}
-            </button>
-            <button type="button" onClick={() => aller(n)} className="flex h-11 items-center gap-1.5 rounded-2xl border border-white/15 bg-[#0B1122]/90 px-3 text-[13px] font-bold text-[#E8ECFF]">
-              <RotateCcw size={16} /> Recommencer
-            </button>
-          </div>
         </div>
       </div>
     </PageElec>

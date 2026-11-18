@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
+import { TOLERANCE_GLISSE, toucherTolerant } from './toucher3D.js'
 
 // =============================================================
 //  Membres3D : les membres antérieurs de 4 animaux, construits
@@ -227,11 +228,10 @@ export default function Membres3D({ etats = {}, couleurs = true, onChoisir, clas
     let depart = null
     const bas = (e) => (depart = { x: e.clientX, y: e.clientY })
     const haut = (e) => {
-      if (!depart || Math.hypot(e.clientX - depart.x, e.clientY - depart.y) > 8) return
+      if (!depart || Math.hypot(e.clientX - depart.x, e.clientY - depart.y) > TOLERANCE_GLISSE) return
       depart = null
-      const r = renderer.domElement.getBoundingClientRect()
-      raycaster.setFromCamera(new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1), camera)
-      const hit = raycaster.intersectObjects(meshes, false)[0]
+      // zone de toucher élargie : les petits os (phalanges…) restent faciles à toucher sur tablette
+      const hit = toucherTolerant(e, renderer, camera, meshes, raycaster)
       if (hit) derniers.current.onChoisir?.(hit.object.userData.animal, hit.object.userData.groupe)
     }
     renderer.domElement.addEventListener('pointerdown', bas)

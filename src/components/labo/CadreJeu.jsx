@@ -13,6 +13,9 @@ import { activiteDepuisAdresse } from '../../config/laboAteliers.js'
 //  laboAteliers.js d'après l'adresse), score.
 //  Les attendus reçus en props ne sont plus affichés (gardés
 //  pour une prochaine fonctionnalité).
+//  ecran = true : sur tablette en paysage (variante Tailwind
+//  « tab: »), la page tient sur UN écran, sans défiler ; le
+//  contenu reçoit toute la hauteur restante (flex-1, min-h-0).
 // =============================================================
 // Adresse de la salle de l'expérience : /labo/locomoteur/miroir → /labo/locomoteur
 export function useRetourSalle() {
@@ -21,14 +24,18 @@ export function useRetourSalle() {
   return morceaux.length > 3 ? morceaux.slice(0, -1).join('/') : '/labo'
 }
 
-export default function CadreJeu({ code, titre, attendus = [], couleur = '#7CFF6B', droite, children, large = false, rgb, rgb2 }) {
+export default function CadreJeu({ code, titre, attendus = [], couleur = '#7CFF6B', droite, children, large = false, ecran = false, rgb, rgb2 }) {
   const retour = useRetourSalle()
   const { pathname } = useLocation()
   const { activite } = activiteDepuisAdresse(pathname)
   return (
-    <div className="labo relative min-h-[100dvh] overflow-x-hidden">
+    <div className={`labo relative min-h-[100dvh] overflow-x-hidden ${ecran ? 'tab:h-[100dvh] tab:overflow-hidden' : ''}`}>
       <DecorLabo flash={false} rgb={rgb} rgb2={rgb2} />
-      <div className={`relative mx-auto flex min-h-[100dvh] flex-col gap-4 px-4 pb-10 pt-[max(16px,env(safe-area-inset-top))] ${large ? 'max-w-5xl' : 'max-w-xl'}`}>
+      <div
+        className={`relative mx-auto flex min-h-[100dvh] flex-col gap-4 px-4 pb-10 pt-[max(16px,env(safe-area-inset-top))] ${large ? 'max-w-5xl' : 'max-w-xl'} ${
+          ecran ? `tab:h-[100dvh] tab:min-h-0 tab:gap-2 tab:px-5 tab:pb-1 tab:pt-[max(8px,env(safe-area-inset-top))] ${large ? 'tab:max-w-[1500px]' : ''}` : ''
+        }`}
+      >
         <header className="flex items-center gap-3">
           <Link
             to={retour}
@@ -52,8 +59,8 @@ export default function CadreJeu({ code, titre, attendus = [], couleur = '#7CFF6
           </div>
           {droite}
         </header>
-        {children}
-        <PiedLabo />
+        {ecran ? <div className="flex flex-col gap-3 tab:min-h-0 tab:flex-1 tab:overflow-y-auto">{children}</div> : children}
+        <PiedLabo className={ecran ? 'tab:pt-0 tab:leading-tight' : ''} />
       </div>
     </div>
   )

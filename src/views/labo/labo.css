@@ -109,3 +109,12 @@
 .elec-alerte { animation: elec-alerte .5s ease-in-out infinite; }
 .elec-chauffe { animation: elec-chauffe .4s ease-in-out infinite; }
 .elec-borne { animation: elec-borne 1.2s ease-in-out infinite; }
+/* Console portable, enceinte */
+@keyframes elec-saut { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-7px); } }
+@keyframes elec-defile { from { transform: translateX(0); } to { transform: translateX(-30px); } }
+@keyframes elec-membrane { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.09); } }
+@keyframes elec-note { from { transform: translate(0, 0); opacity: 1; } to { transform: translate(10px, -26px); opacity: 0; } }
+.elec-saut { animation: elec-saut .8s ease-in-out infinite; }
+.elec-defile { animation: elec-defile 1.6s linear infinite; }
+.elec-membrane { transform-box: view-box; animation: elec-membrane .18s ease-in-out infinite; }
+.elec-note { animation: elec-note 1.8s ease-out infinite; }

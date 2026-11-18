@@ -68,7 +68,7 @@ function surPoint(s, pt) {
   const [y1, y2] = [Math.min(s[0][1], s[1][1]), Math.max(s[0][1], s[1][1])]
   return pt[0] > x1 - 3 && pt[0] < x2 + 3 && pt[1] > y1 - 3 && pt[1] < y2 + 3
 }
-function routerSchema(composants, fils, bornes, hauteur) {
+function routerSchema(composants, fils, bornes, hauteur, largeur = LARGEUR) {
   const pos = Object.fromEntries(bornes.map((b) => [b.cle, b.pos]))
   // nœuds électriques (les fils d'un même nœud peuvent se toucher)
   const parent = {}
@@ -120,7 +120,7 @@ function routerSchema(composants, fils, bornes, hauteur) {
         for (const o of poses) if (o.noeud !== noeud) score += conflit(s, o.seg)
         for (const b of boites) if (traverseBoite(s, b)) score += 30
         for (const [cle, pt] of Object.entries(pos)) if (trouver(cle) !== noeud && surPoint(s, pt)) score += 25
-        for (const pt of s) if (pt[1] > hauteur - 4 || pt[1] < 4 || pt[0] < 4 || pt[0] > LARGEUR - 4) score += 50
+        for (const pt of s) if (pt[1] > hauteur - 4 || pt[1] < 4 || pt[0] < 4 || pt[0] > largeur - 4) score += 50
       }
       score += longueur / 400 + segs.length * 0.05
       if (!meilleur || score < meilleur.score) meilleur = { score, pts, segs }
@@ -146,14 +146,14 @@ export function useBanc(initial = {}) {
   const [grillees, setGrillees] = useState(0) // nombre d'ampoules grillées depuis le début
   const resultat = useMemo(() => resoudre(composants, fils), [composants, fils])
 
-  // Une ampoule trop alimentée grille au bout d'un instant (le filament fond)
+  // Une ampoule trop alimentée (3 piles) brille très fort… puis grille (le filament fond)
   useEffect(() => {
     const trop = composants.filter((c) => c.type === 'ampoule' && !c.grillee && resultat.composants[c.id]?.surcharge)
     if (!trop.length) return
     const t = setTimeout(() => {
       setComposants((l) => l.map((c) => (trop.some((x) => x.id === c.id) ? { ...c, grillee: true } : c)))
       setGrillees((n) => n + trop.length)
-    }, 1300)
+    }, 2600)
     return () => clearTimeout(t)
   }, [resultat, composants])
 
@@ -204,6 +204,44 @@ function useBuzz(actif, coupe) {
   }, [actif, coupe])
 }
 
+// ---------- Musique de l'enceinte (Web Audio, petite mélodie originale en boucle) ----------
+const MELODIE = [523, 659, 784, 659, 587, 698, 880, 698, 523, 659, 784, 1047, 988, 784, 659, 587]
+function useMusique(actif, coupe) {
+  const ctx = useRef(null)
+  useEffect(() => {
+    if (!actif || coupe) return
+    let arret = false
+    let minuteur = null
+    try {
+      ctx.current = ctx.current || new (window.AudioContext || window.webkitAudioContext)()
+      const c = ctx.current
+      let i = 0
+      const jouer = () => {
+        if (arret) return
+        const o = c.createOscillator()
+        const g = c.createGain()
+        o.type = 'triangle'
+        o.frequency.value = MELODIE[i % MELODIE.length]
+        g.gain.setValueAtTime(0.0001, c.currentTime)
+        g.gain.exponentialRampToValueAtTime(0.09, c.currentTime + 0.02)
+        g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + 0.22)
+        o.connect(g).connect(c.destination)
+        o.start()
+        o.stop(c.currentTime + 0.25)
+        i++
+        minuteur = setTimeout(jouer, 190)
+      }
+      jouer()
+    } catch {
+      /* pas de son disponible */
+    }
+    return () => {
+      arret = true
+      clearTimeout(minuteur)
+    }
+  }, [actif, coupe])
+}
+
 // ---------- Flamme ----------
 function Flamme({ x, y, taille = 1, delai = 0 }) {
   return (
@@ -231,8 +269,12 @@ function Flamme({ x, y, taille = 1, delai = 0 }) {
 //   onToucher   : (idComposant) => void, quand on touche un composant
 //   silence     : coupe le son de la sonnette
 //   hauteur     : hauteur du plan (viewBox)
+//   largeur     : largeur du plan (viewBox) — E1 a un établi plus large
+//   Le bloc garde les proportions du plan (aspect-ratio) : on peut le
+//   dimensionner en largeur (téléphone) OU en hauteur (tablette en
+//   paysage : classe « tab:h-full tab:w-auto »).
 // =============================================================
-export default function Banc({ banc, vue = 'photo', editable = true, cablage = editable, fond, onToucher, silence = false, hauteur = HAUTEUR, className = '', compact = false, retirer = true, style }) {
+export default function Banc({ banc, vue = 'photo', editable = true, cablage = editable, fond, onToucher, silence = false, hauteur = HAUTEUR, largeur = LARGEUR, className = '', compact = false, retirer = true, style }) {
   const { composants, setComposants, fils, setFils, resultat } = banc
   const svg = useRef(null)
   const [selection, setSelection] = useState(null) // { type: 'c'|'f', id }
@@ -251,12 +293,14 @@ export default function Banc({ banc, vue = 'photo', editable = true, cablage = e
     return l
   }, [composants])
   const posBorne = (cle) => bornes.find((b) => b.cle === cle)?.pos
-  const traces = useMemo(() => (vue === 'schema' ? routerSchema(composants, fils, bornes, hauteur) : null), [vue, composants, fils, bornes, hauteur])
+  const traces = useMemo(() => (vue === 'schema' ? routerSchema(composants, fils, bornes, hauteur, largeur) : null), [vue, composants, fils, bornes, hauteur, largeur])
   const dirBorne = (cle) => bornes.find((b) => b.cle === cle)?.dir
   const chemin = (f, p, q) => traces?.[f.id] ?? cheminFil(p, q, 'photo', dirBorne(f.a), dirBorne(f.b))
 
   const sonne = composants.some((c) => c.type === 'sonnette' && resultat.composants[c.id]?.sonne) && !resultat.courtCircuit
   useBuzz(sonne, silence)
+  const musique = composants.some((c) => c.type === 'enceinte' && resultat.composants[c.id]?.joue) && !resultat.courtCircuit
+  useMusique(musique, silence)
 
   // effacer la sélection si l'élément a disparu
   useEffect(() => {
@@ -312,7 +356,7 @@ export default function Banc({ banc, vue = 'photo', editable = true, cablage = e
     if (g.type === 'drag') {
       if (!g.bouge && Math.hypot(x - g.x0, y - g.y0) > 6) g.bouge = true
       if (g.bouge && g.peut) {
-        const nx = Math.max(40, Math.min(LARGEUR - 40, x + g.dx))
+        const nx = Math.max(40, Math.min(largeur - 40, x + g.dx))
         const ny = Math.max(60, Math.min(hauteur - 30, y + g.dy))
         setComposants((l) => l.map((c) => (c.id === g.id ? { ...c, x: Math.round(nx), y: Math.round(ny) } : c)))
       }
@@ -343,7 +387,7 @@ export default function Banc({ banc, vue = 'photo', editable = true, cablage = e
       if (g.bouge) {
         const [x, y] = point(e)
         const proche = bornes.filter((b) => b.cle !== g.de).map((b) => ({ b, d: Math.hypot(b.pos[0] - x, b.pos[1] - y) })).sort((a, b) => a.d - b.d)[0]
-        if (proche && proche.d < 26) relier(g.de, proche.b.cle)
+        if (proche && proche.d < 32) relier(g.de, proche.b.cle)
         setAttente(null)
       } else if (attente && attente !== g.de) {
         relier(attente, g.de)
@@ -363,11 +407,11 @@ export default function Banc({ banc, vue = 'photo', editable = true, cablage = e
   const papier = vue === 'schema'
 
   return (
-    <div className={`relative ${className}`} style={style}>
+    <div className={`relative ${className}`} style={{ aspectRatio: `${largeur} / ${hauteur}`, ...style }}>
       <svg
         ref={svg}
-        viewBox={`0 0 ${LARGEUR} ${hauteur}`}
-        className="block w-full touch-none select-none rounded-[22px]"
+        viewBox={`0 0 ${largeur} ${hauteur}`}
+        className="block h-full w-full touch-none select-none rounded-[22px]"
         style={{ background: papier ? '#F7F5EE' : '#141B2E' }}
         onPointerMove={move}
         onPointerUp={up}
@@ -387,8 +431,8 @@ export default function Banc({ banc, vue = 'photo', editable = true, cablage = e
             <path d="M12 0 L0 0 L0 12" fill="none" stroke="#C9D6E8" strokeWidth=".6" />
           </pattern>
         </defs>
-        <rect width={LARGEUR} height={hauteur} fill={papier ? 'url(#el-carreaux)' : 'url(#el-trous)'} />
-        {!papier && <rect width={LARGEUR} height={hauteur} fill={`rgba(255,220,120,${Math.min(0.22, resultat.lumiere * 0.16)})`} style={{ transition: 'fill .5s' }} />}
+        <rect width={largeur} height={hauteur} fill={papier ? 'url(#el-carreaux)' : 'url(#el-trous)'} />
+        {!papier && <rect width={largeur} height={hauteur} fill={`rgba(255,220,120,${Math.min(0.22, resultat.lumiere * 0.16)})`} style={{ transition: 'fill .5s' }} />}
         {fond}
 
         {/* halos de lumière, sous tout le reste */}
@@ -513,7 +557,7 @@ export default function Banc({ banc, vue = 'photo', editable = true, cablage = e
           const choisie = attente === b.cle
           return (
             <g key={b.cle} onPointerDown={(e) => downBorne(e, b.cle)}>
-              <circle cx={b.pos[0]} cy={b.pos[1]} r="15" fill="transparent" />
+              <circle cx={b.pos[0]} cy={b.pos[1]} r="19" fill="transparent" />
               {(choisie || (attente && cablage)) && (
                 <circle cx={b.pos[0]} cy={b.pos[1]} r={choisie ? 11 : 8} fill="none" stroke={papier ? '#2F7DF6' : '#FFE45E'} strokeWidth={choisie ? 3 : 1.6} opacity={choisie ? 1 : 0.6} className={choisie ? 'labo-pulse' : ''} style={{ pointerEvents: 'none' }} />
               )}
@@ -653,10 +697,10 @@ export function Vignette({ type, vue = 'photo', taille = 64 }) {
 // Un circuit figé (non modifiable), en photo ou en schéma.
 // apercu = true : on n'affiche pas le résultat (ampoules éteintes, pas de courant).
 const RIEN = { composants: {}, fils: {}, courtCircuit: false, lumiere: 0, actif: false }
-export function CircuitFige({ circuit, vue = 'photo', hauteur = 330, apercu = false, className = '' }) {
+export function CircuitFige({ circuit, vue = 'photo', hauteur = 330, apercu = false, className = '', style }) {
   const banc = useMemo(
     () => ({ ...circuit, resultat: apercu ? RIEN : resoudre(circuit.composants, circuit.fils), setComposants: () => {}, setFils: () => {} }),
     [circuit, apercu],
   )
-  return <Banc banc={banc} vue={vue} editable={false} cablage={false} compact silence hauteur={hauteur} className={className} />
+  return <Banc banc={banc} vue={vue} editable={false} cablage={false} compact silence hauteur={hauteur} className={className} style={style} />
 }

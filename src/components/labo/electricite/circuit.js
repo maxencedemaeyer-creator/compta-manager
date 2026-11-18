@@ -8,17 +8,25 @@
 //  Ce que le moteur reproduit fidèlement :
 //  - court-circuit : la pile débite un courant énorme ;
 //  - ampoules en série (plus faibles) / en dérivation (fortes) ;
-//  - deux piles en série : 9 V, une ampoule de 4,5 V grille ;
-//  - la DEL ne s'allume que dans un sens (borne + à l'anode) ;
+//  - piles en série : 2 piles → l'ampoule brille nettement plus,
+//    le moteur tourne plus vite ; 3 piles → l'ampoule brille très
+//    fort puis grille (trop de puissance pour son filament) ;
+//  - la lampe LED (petit ruban de LED, id technique « del »), la
+//    console portable et l'enceinte ne marchent que dans un sens
+//    (borne + du côté du + de la pile), comme les vrais appareils ;
 //  - le moteur change de sens si on inverse la pile ;
 //  - pile usée, ampoule grillée, matériaux conducteurs/isolants.
 // =============================================================
 
-// Les bornes : 0 = gauche, 1 = droite (pile : 0 = +, 1 = − ; DEL : 0 = anode +, 1 = cathode −)
+// Les bornes : 0 = gauche, 1 = droite (pile : 0 = +, 1 = − ; lampe LED, console, enceinte : 0 = +)
+// Les appareils « polarisés » (seuil) ne laissent passer le courant que dans un sens.
+// min : tension minimale pour qu'un appareil électronique s'allume.
 export const COMPOSANTS = {
-  pile: { nom: 'Pile', nomComplet: 'Pile plate 4,5 V', role: 'générateur', tension: 4.5, resistanceInterne: 0.8 },
-  ampoule: { nom: 'Ampoule', nomComplet: 'Ampoule 4,5 V', role: 'récepteur', resistance: 15 },
-  del: { nom: 'DEL', nomComplet: 'DEL rouge (avec sa résistance)', role: 'récepteur', seuil: 1.9, resistance: 150 },
+  pile: { nom: 'Pile', nomComplet: 'Pile plate', role: 'générateur', tension: 4.5, resistanceInterne: 0.8 },
+  ampoule: { nom: 'Ampoule', nomComplet: 'Ampoule', role: 'récepteur', resistance: 15 },
+  del: { nom: 'Lampe LED', nomComplet: 'Lampe LED (petit ruban de LED)', role: 'récepteur', seuil: 2.7, resistance: 120 },
+  console: { nom: 'Console', nomComplet: 'Console de jeu portable', role: 'récepteur', seuil: 0.6, resistance: 22, min: 3 },
+  enceinte: { nom: 'Enceinte', nomComplet: 'Petite enceinte musicale', role: 'récepteur', seuil: 0.6, resistance: 30, min: 2.5 },
   moteur: { nom: 'Moteur', nomComplet: 'Moteur avec hélice', role: 'récepteur', resistance: 9 },
   sonnette: { nom: 'Sonnette', nomComplet: 'Sonnette', role: 'récepteur', resistance: 30 },
   interrupteur: { nom: 'Interrupteur', nomComplet: 'Interrupteur à levier', role: 'interrupteur' },
@@ -37,7 +45,10 @@ const R_FIL = 0.02
 const R_CONTACT = 0.02
 const FUITE = 1e-9
 export const SEUIL_COURT_CIRCUIT = 1.5 // ampères débités par une pile
-export const SEUIL_GRILLE = 2.2 // puissance d'une ampoule / puissance normale
+// Une ampoule grille au-delà de 6 fois sa puissance normale : 2 piles (×4) → elle brille
+// beaucoup plus fort ; 3 piles (×9) → elle grille. (E9 a sa propre ampoule de 4,5 V.)
+export const SEUIL_GRILLE = 6
+const POLARISES = (c) => COMPOSANTS[c.type]?.seuil != null
 
 const P_NOMINALE = (4.5 / (15 + 0.8)) ** 2 * 15 // ampoule seule sur une pile neuve
 
@@ -53,17 +64,18 @@ export function resoudre(composants, fils) {
   if (!N) return res
   const k = (cle) => index.get(cle)
 
-  // DEL : on cherche l'état (allumée / éteinte) cohérent
-  const dels = composants.filter((c) => c.type === 'del')
+  // Appareils polarisés (lampe LED, console, enceinte) : on cherche l'état (passant / bloqué) cohérent
+  const dels = composants.filter(POLARISES)
   const etatDel = Object.fromEntries(dels.map((d) => [d.id, false]))
   let v = null
-  for (let essai = 0; essai < 8; essai++) {
+  for (let essai = 0; essai < 10; essai++) {
     v = resoudreTensions(composants, fils, N, k, etatDel)
     let change = false
     for (const d of dels) {
+      const def = COMPOSANTS[d.type]
       const u = v[k(`${d.id}:0`)] - v[k(`${d.id}:1`)]
-      const i = (u - COMPOSANTS.del.seuil) / COMPOSANTS.del.resistance
-      const allume = etatDel[d.id] ? i > 0 : u > COMPOSANTS.del.seuil
+      const i = (u - def.seuil) / def.resistance
+      const allume = etatDel[d.id] ? i > 0 : u > def.seuil
       if (allume !== etatDel[d.id]) {
         etatDel[d.id] = allume
         change = true
@@ -88,16 +100,22 @@ export function resoudre(composants, fils) {
       if (!c.grillee) {
         r.courant = u / def.resistance
         const p = (r.courant * r.courant * def.resistance) / P_NOMINALE
-        r.eclat = p < 0.03 ? 0 : Math.min(1.6, p)
+        r.eclat = p < 0.03 ? 0 : Math.min(2.6, p) // 1 = une pile ; ≈ 2,6 = deux piles ou plus
         r.surcharge = p > SEUIL_GRILLE
       } else r.eclat = 0
     } else if (c.type === 'del') {
       r.courant = etatDel[c.id] ? Math.max(0, (u - def.seuil) / def.resistance) : 0
       r.allumee = r.courant > 0.002
-      r.eclat = r.allumee ? Math.min(1.2, r.courant / 0.012) : 0
+      r.eclat = r.allumee ? Math.min(2.6, r.courant / 0.014) : 0
+    } else if (c.type === 'console' || c.type === 'enceinte') {
+      r.courant = etatDel[c.id] ? Math.max(0, (u - def.seuil) / def.resistance) : 0
+      const marche = r.courant > 0 && u >= def.min
+      if (c.type === 'console') r.allumee = marche
+      else r.joue = marche
+      r.niveau = marche ? Math.min(3, u / 4.5) : 0 // 1 = une pile
     } else if (c.type === 'moteur') {
       r.courant = u / def.resistance
-      r.vitesse = Math.abs(r.courant) > 0.06 ? Math.sign(r.courant) * Math.min(1.6, Math.abs(r.courant) / 0.4) : 0
+      r.vitesse = Math.abs(r.courant) > 0.06 ? Math.sign(r.courant) * Math.min(3.2, Math.abs(r.courant) / 0.45) : 0
     } else if (c.type === 'sonnette') {
       r.courant = u / def.resistance
       r.sonne = Math.abs(r.courant) > 0.05
@@ -117,7 +135,7 @@ export function resoudre(composants, fils) {
   for (const c of composants) {
     const r = res.composants[c.id]
     if (r.eclat) res.lumiere += c.type === 'del' ? r.eclat * 0.35 : Math.min(1, r.eclat)
-    if (r.eclat || r.vitesse || r.sonne) res.actif = true
+    if (r.eclat || r.vitesse || r.sonne || r.allumee || r.joue) res.actif = true
   }
   res.lumiere = Math.min(1.3, res.lumiere)
   return res
@@ -150,7 +168,7 @@ function resoudreTensions(composants, fils, N, k, etatDel) {
       I[b] -= e * gi
     } else if (c.type === 'ampoule') {
       if (!c.grillee) g(a, b, 1 / def.resistance)
-    } else if (c.type === 'del') {
+    } else if (POLARISES(c)) {
       if (etatDel[c.id]) {
         const gi = 1 / def.resistance
         g(a, b, gi)
@@ -201,7 +219,7 @@ function gauss(A0, b0) {
 export function fonctionne(res, id) {
   const r = res.composants[id]
   if (!r || res.courtCircuit) return false
-  return (r.eclat ?? 0) > 0.08 || Math.abs(r.vitesse ?? 0) > 0.3 || !!r.sonne || !!r.allumee
+  return (r.eclat ?? 0) > 0.08 || Math.abs(r.vitesse ?? 0) > 0.3 || !!r.sonne || !!r.allumee || !!r.joue
 }
 
 // Le récepteur marche quand on ferme l'interrupteur (ou presse le bouton) et s'arrête quand on l'ouvre
@@ -248,7 +266,7 @@ export function noeuds(composants, fils) {
 // Les composants non polarisés (ampoule, moteur, sonnette, interrupteurs) peuvent être retournés.
 export function memesBranchements(composants, filsEleve, filsModele) {
   const modele = noeuds(composants, filsModele)
-  const retournables = composants.filter((c) => !['pile', 'del'].includes(c.type)).map((c) => c.id)
+  const retournables = composants.filter((c) => c.type !== 'pile' && !POLARISES(c)).map((c) => c.id)
   for (let m = 0; m < 1 << retournables.length; m++) {
     const flip = (cle) => {
       const [id, b] = cle.split(':')

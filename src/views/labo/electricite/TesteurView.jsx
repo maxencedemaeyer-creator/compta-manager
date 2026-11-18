@@ -4,7 +4,7 @@ import Banc, { useBanc } from '../../../components/labo/electricite/Banc.jsx'
 import { DefsComposants } from '../../../components/labo/electricite/Composants.jsx'
 import { DessinObjet, OBJET, OBJETS } from '../../../components/labo/electricite/objets.jsx'
 import { Bouton, Carte, Eclat } from '../../../components/labo/CadreJeu.jsx'
-import { BLEU, Consigne, PageElec, comp, fil } from './commun.jsx'
+import { BLEU, PageElec, comp, fil } from './commun.jsx'
 
 // =============================================================
 //  E2 · Conducteur ou isolant ?
@@ -86,12 +86,11 @@ export default function TesteurView() {
   return (
     <PageElec code="E2" titre="Conducteur ou isolant ?" attendus={[113, 115]} couleur={BLEU} large resultat={resultat}>
       <Eclat message={eclat.message} cle={eclat.cle} couleur={BLEU} />
-      <Consigne couleur={BLEU}>
-        Choisis un objet, <b>prédis</b> s’il laisse passer le courant, puis place-le entre les pinces du testeur. L’ampoule donne la réponse.
-      </Consigne>
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="flex min-w-0 flex-col gap-3">
-          <Banc banc={banc} vue="photo" editable={false} cablage={false} hauteur={H} className="mx-auto w-full max-w-[540px]" />
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_340px] tab:min-h-0 tab:flex-1 tab:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+        <div className="flex min-w-0 flex-col gap-3 tab:min-h-0">
+          <div className="flex justify-center tab:min-h-0 tab:flex-1">
+            <Banc banc={banc} vue="photo" editable={false} cablage={false} hauteur={H} className="mx-auto w-full max-w-[540px] tab:h-full tab:w-auto tab:max-w-full" />
+          </div>
           {verdict && (
             <Carte couleur={eclatAmpoule > 0.6 ? 'rgba(255,228,94,.6)' : eclatAmpoule > 0 ? 'rgba(255,184,107,.6)' : 'rgba(138,147,184,.5)'}>
               <p className="labo-titre text-base font-bold text-white">{objetDans.nom}</p>
@@ -99,7 +98,7 @@ export default function TesteurView() {
             </Carte>
           )}
         </div>
-        <div className="flex min-w-0 flex-col gap-3">
+        <div className="flex min-w-0 flex-col gap-3 tab:min-h-0 tab:overflow-y-auto">
           {fini ? (
             <Carte couleur="rgba(62,201,255,.5)">
               <p className="labo-titre text-xl font-black text-white">
@@ -127,7 +126,7 @@ export default function TesteurView() {
                   {Object.keys(resultats).length}/{OBJETS.length} testés
                 </p>
               </div>
-              <div className="mt-2 grid grid-cols-3 gap-2">
+              <div className="mt-2 grid grid-cols-3 gap-2 tab:grid-cols-4 tab:gap-1.5">
                 {OBJETS.map((o) => {
                   const r = resultats[o.id]
                   return (

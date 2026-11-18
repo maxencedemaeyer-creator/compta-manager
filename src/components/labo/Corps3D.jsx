@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
+import { TOLERANCE_GLISSE, toucherTolerant } from './toucher3D.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { CHAINE, CREDIT_ANATOMIE, MUSCLES_ARTICULES, OS, chargerAnatomie } from './anatomie.js'
 
@@ -317,7 +318,7 @@ export default function Corps3D(props) {
       if (!depart) return
       const bouge = Math.hypot(e.clientX - depart.x, e.clientY - depart.y)
       depart = null
-      if (bouge > 8) return
+      if (bouge > TOLERANCE_GLISSE) return
       const r = renderer.domElement.getBoundingClientRect()
       const ndc = new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1)
       raycaster.setFromCamera(ndc, camera)
@@ -332,7 +333,7 @@ export default function Corps3D(props) {
           const dx = ((ecran.x - ndc.x) * r.width) / 2
           const dy = ((ecran.y - ndc.y) * r.height) / 2
           const d = Math.hypot(dx, dy)
-          if (d < 26 && d < dmin) {
+          if (d < 38 && d < dmin) {
             dmin = d
             meilleur = id
           }
@@ -344,7 +345,8 @@ export default function Corps3D(props) {
       }
       if (!p.onChoisir) return
       const cibles = meshes.filter((m) => m.visible && !m.userData.attenue)
-      const hit = raycaster.intersectObjects(cibles, false)[0]
+      // zone de toucher élargie autour du doigt (petits os, tablettes)
+      const hit = toucherTolerant(e, renderer, camera, cibles, raycaster)
       if (hit) p.onChoisir(hit.object.userData.groupe, hit.object.userData.cote, hit.point.toArray())
     }
     renderer.domElement.addEventListener('pointerdown', bas)

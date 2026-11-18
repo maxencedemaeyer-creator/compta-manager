@@ -30,7 +30,7 @@ const AFFIRMATIONS = [
   ['interrupteur', 'Dans un circuit ouvert, le courant circule.', false],
   ['interrupteur', 'Un interrupteur fermé laisse passer le courant.', true],
   ['interrupteur', 'Un circuit doit être fermé pour fonctionner.', true],
-  ['depanneur', 'Une DEL s’allume dans les deux sens.', false],
+  ['depanneur', 'Une lampe LED s’allume dans les deux sens.', false],
   ['depanneur', 'Une pile usée peut empêcher l’ampoule de briller.', true],
   ['danger', 'Relier les deux bornes d’une pile par un fil, c’est un court-circuit.', true],
   ['danger', 'La prise du mur (230 V) est sans danger.', false],
@@ -38,8 +38,8 @@ const AFFIRMATIONS = [
   ['ampoule', 'Dans l’ampoule, c’est le filament qui brille.', true],
   ['ampoule', 'Avec une pile trop forte, le filament peut griller.', true],
 ]
-const SYMBOLES = { pile: 'Pile', ampoule: 'Ampoule', moteur: 'Moteur', sonnette: 'Sonnette', del: 'DEL', interrupteur: 'Interrupteur', poussoir: 'Bouton-poussoir' }
-const QUESTION_RECEPTEUR = { ampoule: 'L’ampoule s’allume-t-elle ?', moteur: 'Le moteur tourne-t-il ?', del: 'La DEL s’allume-t-elle ?', sonnette: 'La sonnette sonne-t-elle ?' }
+const SYMBOLES = { pile: 'Pile', ampoule: 'Ampoule', moteur: 'Moteur', sonnette: 'Sonnette', del: 'Lampe LED', interrupteur: 'Interrupteur', poussoir: 'Bouton-poussoir' }
+const QUESTION_RECEPTEUR = { ampoule: 'L’ampoule s’allume-t-elle ?', moteur: 'Le moteur tourne-t-il ?', del: 'La lampe LED s’allume-t-elle ?', sonnette: 'La sonnette sonne-t-elle ?' }
 const hasard = (l) => l[Math.floor(Math.random() * l.length)]
 
 function circuitAuHasard() {
@@ -60,7 +60,7 @@ function circuitAuHasard() {
   const circuit = { composants, fils }
   const marche = fonctionne(resoudre(composants, fils), 'x')
   // activité liée : un objet à tester → Testeur ; un interrupteur → Interrupteur ;
-  // une panne (fil manquant, court-circuit, DEL) → Dépanneur ; sinon Atelier
+  // une panne (fil manquant, court-circuit, lampe LED à l'envers) → Dépanneur ; sinon Atelier
   const act = t < 0.3 || type === 'del' ? 'depanneur' : second === 'objet' ? 'testeur' : second === 'interrupteur' ? 'interrupteur' : 'banc'
   return { act, type: 'circuit', circuit, texte: QUESTION_RECEPTEUR[type], vue: Math.random() < 0.65 ? 'photo' : 'schema', choix: ['oui', 'non'], bonne: marche ? 'oui' : 'non' }
 }
@@ -94,7 +94,7 @@ function rendu(q, flash) {
         <div>
           <p className="mb-2 text-center text-[15px] font-bold text-white">{q.texte}</p>
           {/* pendant la question, le circuit est montré éteint ; la réponse s'allume après */}
-          <CircuitFige circuit={q.circuit} vue={q.vue} hauteur={H} apercu={!flash} />
+          <CircuitFige circuit={q.circuit} vue={q.vue} hauteur={H} apercu={!flash} className="mx-auto w-full tab:h-[42dvh] tab:w-auto tab:max-w-full" />
         </div>
       )}
     </>

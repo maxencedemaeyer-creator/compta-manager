@@ -134,7 +134,6 @@ export default function MaisonView() {
       attendus={[110, 116]}
       couleur="#FF8AD8"
       missions={MISSIONS.map((m) => ({ ...m, hauteur: H, fond: Maison, deplacer: false }))}
-      intro="Tu es l’électricien de la maison. Tire les fils depuis la pile de la cave jusqu’aux pièces. La vérification essaie toutes les positions des interrupteurs."
       conclusion="Dans une maison, les appareils sont branchés en dérivation : chacun a sa propre branche et son interrupteur, et reçoit toute la tension. Prépare maintenant ta vraie maquette en classe avec ce plan de câblage !"
     />
   )

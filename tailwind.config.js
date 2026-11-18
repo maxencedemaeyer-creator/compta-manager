@@ -3,6 +3,10 @@ export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
     extend: {
+      screens: {
+        // Tablette (ou ordinateur) en mode paysage : le labo tient sur un seul écran
+        tab: { raw: '(orientation: landscape) and (min-width: 900px)' },
+      },
       colors: {
         // Couleurs « thème » : les valeurs changent selon le profil (voir src/index.css)
         emerald: {

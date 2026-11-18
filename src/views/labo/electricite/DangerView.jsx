@@ -59,8 +59,8 @@ export default function DangerView() {
   return (
     <PageElec code="E7" titre="Danger, électricité !" couleur={ROUGE} large>
       <Eclat message={eclat.message} cle={eclat.cle} couleur={ROUGE} />
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        <Carte couleur={`${ROUGE}55`}>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 tab:min-h-0 tab:flex-1">
+        <Carte couleur={`${ROUGE}55`} className="tab:min-h-0 tab:overflow-y-auto">
           <p className="labo-mono text-[11px] tracking-[.1em]" style={{ color: ROUGE }}>
             L’ÉCHELLE DES TENSIONS
           </p>

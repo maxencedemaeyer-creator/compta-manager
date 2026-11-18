@@ -95,7 +95,7 @@ export const cadreDe = (id) => (MOTS_TETE.includes(id) ? 'tete' : id === 'doigt'
 export const CONTIENT = { tete: ['yeux', 'nez', 'bouche', 'oreille'], bras: ['coude'], jambe: ['genou'], main: ['doigt'] }
 export const estJuste = (cible, touche) => !!touche && (touche === cible || (CONTIENT[cible] || []).includes(touche))
 
-const MIN_PX = 30 // même sur une petite zone, un doigt doit pouvoir la toucher
+const MIN_PX = 34 // même sur une petite zone, un doigt doit pouvoir la toucher
 
 function distanceSegment(p, a, b) {
   const dx = b.x - a.x

@@ -4,13 +4,15 @@ import Banc, { useBanc } from '../../../components/labo/electricite/Banc.jsx'
 import { COMPOSANTS, memesBranchements } from '../../../components/labo/electricite/circuit.js'
 import { Bouton, Carte, Eclat, melanger } from '../../../components/labo/CadreJeu.jsx'
 import { CircuitFige, Vignette } from '../../../components/labo/electricite/Banc.jsx'
-import { PageElec, comp, fil } from './commun.jsx'
+import { AideSymboles, PageElec, comp, fil } from './commun.jsx'
 
 // =============================================================
 //  E4 · Le traducteur de schémas.
 //  1) Quiz : photo d'un montage ↔ son schéma normalisé (et les symboles).
 //  2) Construction : réaliser le montage à partir d'un schéma ;
 //     la vérification compare les nœuds du circuit (même schéma).
+//  Bouton « Symboles » (en haut à droite du montage à analyser) :
+//  fenêtre de rappel photo → symbole de chaque objet.
 //  Attendu 117.
 // =============================================================
 const VIOLET = '#C9A3FF'
@@ -49,7 +51,7 @@ const NOMS_SYMBOLES = {
   ampoule: 'Ampoule',
   moteur: 'Moteur',
   sonnette: 'Sonnette',
-  del: 'DEL (diode électroluminescente)',
+  del: 'Lampe LED',
   interrupteur: 'Interrupteur ouvert',
   poussoir: 'Bouton-poussoir',
 }
@@ -66,7 +68,7 @@ function creerQuiz() {
   return melanger([...circuits, ...symboles])
 }
 
-const Fige = ({ circuit, vue, hauteur = H }) => <CircuitFige circuit={circuit} vue={vue} hauteur={hauteur} />
+const Fige = ({ circuit, vue, hauteur = H, className = 'w-full' }) => <CircuitFige circuit={circuit} vue={vue} hauteur={hauteur} className={className} />
 
 // ---------- Défis de construction ----------
 const DEFIS = [
@@ -74,7 +76,7 @@ const DEFIS = [
   { titre: 'Deux ampoules en série', modele: serie('ampoule', 'ampoule') },
   { titre: 'Une ampoule et un moteur en dérivation', modele: derivation('ampoule', 'moteur') },
   {
-    titre: 'Une DEL commandée par un bouton-poussoir',
+    titre: 'Une lampe LED commandée par un bouton-poussoir',
     modele: serie('del', 'poussoir'),
   },
   {
@@ -111,16 +113,20 @@ function Construction() {
   return (
     <>
       <Eclat message={eclat.message} cle={eclat.cle} couleur={VIOLET} />
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        <Carte couleur={`${VIOLET}66`}>
-          <p className="labo-mono text-[11px]" style={{ color: VIOLET }}>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 tab:min-h-0 tab:flex-1">
+        <Carte couleur={`${VIOLET}66`} className="relative tab:flex tab:min-h-0 tab:flex-col">
+          <AideSymboles couleur={VIOLET} className="absolute right-3 top-3 z-10" />
+          <p className="labo-mono pr-28 text-[11px]" style={{ color: VIOLET }}>
             SCHÉMA {n + 1}/{DEFIS.length} · {d.titre.toUpperCase()}
           </p>
-          <p className="mb-2 mt-1 text-[13px] text-[#B9C1E3]">Réalise ce montage sur l’établi en dessous, avec des fils.</p>
-          <Fige circuit={d.modele} vue="schema" />
+          <div className="mt-2 flex justify-center tab:min-h-0 tab:flex-1">
+            <Fige circuit={d.modele} vue="schema" className="w-full tab:h-full tab:w-auto tab:max-w-full" />
+          </div>
         </Carte>
-        <div className="flex min-w-0 flex-col gap-2">
-          <Banc banc={banc} vue="photo" editable={false} cablage hauteur={H} className="w-full" />
+        <div className="flex min-w-0 flex-col gap-2 tab:min-h-0">
+          <div className="flex justify-center tab:min-h-0 tab:flex-1">
+            <Banc banc={banc} vue="photo" editable={false} cablage hauteur={H} className="w-full tab:h-full tab:w-auto tab:max-w-full" />
+          </div>
           {verif === false && (
             <p className="rounded-xl bg-[#FF8A95]/10 px-3 py-2 text-[13px] text-[#FFC2C8]">
               Pas encore : compare chaque fil du schéma avec ton montage. Chaque trait du schéma est un fil qui relie deux bornes.
@@ -194,7 +200,7 @@ function Quiz() {
 
   if (q.type === 'symbole') {
     return (
-      <div className="flex flex-col gap-3">
+      <div className="mx-auto flex w-full max-w-xl flex-col gap-3">
         {progression}
         <Carte couleur={`${VIOLET}66`} className="text-center">
           <p className="text-[14px] text-[#B9C1E3]">Quel composant représente ce symbole ?</p>
@@ -229,14 +235,18 @@ function Quiz() {
 
   const autre = q.sens === 'photo' ? 'schema' : 'photo'
   return (
-    <div className="flex flex-col gap-3">
+    <div className="grid grid-cols-1 gap-3 tab:min-h-0 tab:flex-1 tab:grid-cols-[minmax(0,.9fr)_minmax(0,1.6fr)]">
+    <div className="flex flex-col gap-3 tab:min-h-0">
       {progression}
-      <Carte couleur={`${VIOLET}66`}>
-        <p className="mb-2 text-[14px] text-[#B9C1E3]">{q.sens === 'photo' ? 'Voici un vrai montage. Quel est son schéma ?' : 'Voici un schéma. Quel montage lui correspond ?'}</p>
+      <Carte couleur={`${VIOLET}66`} className="relative">
+        <AideSymboles couleur={VIOLET} className="absolute right-3 top-3 z-10" />
+        <p className="mb-2 pr-28 text-[14px] text-[#B9C1E3]">{q.sens === 'photo' ? 'Quel est son schéma ?' : 'Quel montage lui correspond ?'}</p>
         <div className="mx-auto max-w-[420px]">
           <Fige circuit={q.serie[0]} vue={q.sens} />
         </div>
       </Carte>
+    </div>
+    <div className="flex flex-col gap-3 tab:min-h-0 tab:overflow-y-auto">
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         {q.ordre.map((k, i) => {
           const bon = k === 0
@@ -278,6 +288,7 @@ function Quiz() {
           </Bouton>
         </>
       )}
+    </div>
     </div>
   )
 }

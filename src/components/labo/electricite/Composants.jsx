@@ -4,7 +4,8 @@
 //  Repère local : centre (0, 0) ; les 2 bornes sont TOUJOURS en
 //  (−42, 24) [borne 0] et (42, 24) [borne 1], sur un socle comme
 //  dans les boîtes de matériel de classe.
-//  Pile : borne 0 = +, borne 1 = −. DEL : borne 0 = anode (+).
+//  Pile : borne 0 = +, borne 1 = −. Lampe LED (« del »), console,
+//  enceinte : borne 0 = + (ils ne marchent que dans un sens).
 // =============================================================
 import { COMPOSANTS } from './circuit.js'
 import { DessinObjet } from './objets.jsx'
@@ -73,6 +74,19 @@ export function DefsComposants() {
         <stop offset=".35" stopColor="#FF6A6A" />
         <stop offset="1" stopColor="#E01010" />
       </radialGradient>
+      <radialGradient id="el-halo-led" cx=".5" cy=".5" r=".5">
+        <stop offset="0" stopColor="#FFFFFF" stopOpacity=".95" />
+        <stop offset=".3" stopColor="#DDF2FF" stopOpacity=".5" />
+        <stop offset="1" stopColor="#BFE6FF" stopOpacity="0" />
+      </radialGradient>
+      <linearGradient id="el-ruban" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stopColor="#F4F1E6" />
+        <stop offset="1" stopColor="#D8D2BE" />
+      </linearGradient>
+      <linearGradient id="el-console" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stopColor="#5B6CFF" />
+        <stop offset="1" stopColor="#2E36A8" />
+      </linearGradient>
       <linearGradient id="el-bobine" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0" stopColor="#E8915A" />
         <stop offset=".5" stopColor="#B85A24" />
@@ -118,7 +132,11 @@ export function Photo({ c, r = {} }) {
     case 'ampoule':
       return <Ampoule c={c} r={r} />
     case 'del':
-      return <Del r={r} />
+      return <RubanLed r={r} />
+    case 'console':
+      return <Console r={r} />
+    case 'enceinte':
+      return <Enceinte r={r} />
     case 'moteur':
       return <Moteur r={r} />
     case 'sonnette':
@@ -145,9 +163,7 @@ function Pile({ c, r }) {
       <rect x="-30" y="-46" width="60" height="58" rx="5" fill="url(#el-pile)" stroke="#4A0C12" strokeWidth="1" />
       <rect x="-30" y="-46" width="60" height="9" rx="4" fill="#1B1E27" />
       <rect x="-26" y="-30" width="52" height="24" rx="3" fill="#FFFFFF" opacity=".93" />
-      <text x="0" y="-13" textAnchor="middle" fontSize="15" fontWeight="900" fill="#B3202E" fontFamily="system-ui">
-        4,5 V
-      </text>
+      <path d="M3 -28 L-6 -17 L0 -17 L-3 -8 L7 -20 L1 -20 Z" fill="#B3202E" />
       <rect x="-26" y="-2" width="52" height="3" fill="#FFFFFF" opacity=".25" />
       <text x="-22" y="-56" textAnchor="middle" fontSize="15" fontWeight="900" fill="#FF6B7A">
         +
@@ -161,7 +177,7 @@ function Pile({ c, r }) {
 }
 
 function Ampoule({ c, r }) {
-  const e = c.grillee ? 0 : Math.min(1.3, r.eclat ?? 0)
+  const e = c.grillee ? 0 : Math.min(2.6, r.eclat ?? 0) // 1 = une pile, 2,6 = deux piles ou plus
   return (
     <g>
       <Socle />
@@ -189,30 +205,118 @@ function Ampoule({ c, r }) {
         <path d="M-6 -34 Q-4 -41 -2 -34 Q0 -41 2 -34 Q4 -41 6 -34" stroke={e > 0 ? '#FFFFFF' : '#8A8E99'} strokeWidth={e > 0 ? 2 : 1.2} fill="none" />
       )}
       <path d="M-14 -52 Q-18 -44 -16 -36" stroke="#FFFFFF" strokeOpacity=".75" strokeWidth="2" fill="none" strokeLinecap="round" />
+      {/* cœur éblouissant quand l'ampoule reçoit plus que d'habitude (2 ou 3 piles) */}
+      {e > 1.1 && <circle cx="0" cy="-36" r={8 + 9 * (e - 1)} fill="#FFFFFF" opacity={Math.min(0.95, 0.35 + 0.4 * (e - 1))} style={{ filter: 'blur(3px)' }} />}
       {c.grillee && <ellipse cx="2" cy="-48" rx="9" ry="5" fill="#2B2620" opacity=".55" />}
       {r.surcharge && !c.grillee && <circle cx="0" cy="-36" r="30" fill="#FFFFFF" className="elec-chauffe" opacity=".6" />}
     </g>
   )
 }
 
-function Del({ r }) {
-  const on = r.allumee
+// Lampe LED : un petit morceau de ruban de LED (3 LED sur une bande souple)
+function RubanLed({ r }) {
+  const e = r.allumee ? Math.min(2.6, r.eclat ?? 1) : 0
   return (
     <g>
       <Socle />
-      {/* résistance de protection (anneaux de couleur) */}
-      <Liaison de={[42, 24]} a={[30, 4]} />
-      <rect x="16" y="-2" width="20" height="9" rx="4" fill="#E9D4A8" stroke="#8C7550" strokeWidth=".6" transform="rotate(-20 26 2.5)" />
-      {[20, 24, 28].map((x, i) => (
-        <rect key={x} x={x} y="-2" width="2" height="9" fill={['#8B4513', '#000000', '#8B4513'][i]} transform="rotate(-20 26 2.5)" />
+      {/* fils soudés aux pastilles + et − du ruban */}
+      <path d="M-38 -22 C-46 -14 -46 4 -42 18" stroke="#E0384A" strokeWidth="3" fill="none" strokeLinecap="round" />
+      <path d="M38 -22 C46 -14 46 4 42 18" stroke="#1E2230" strokeWidth="3" fill="none" strokeLinecap="round" />
+      {/* la bande souple */}
+      <rect x="-42" y="-32" width="84" height="20" rx="3" fill="url(#el-ruban)" stroke="#A39C84" strokeWidth=".8" filter="url(#el-ombre)" />
+      <path d="M-40 -16 L40 -16" stroke="#C9A64A" strokeWidth="1.2" />
+      <path d="M-40 -28 L40 -28" stroke="#C9A64A" strokeWidth="1.2" />
+      {/* pastilles de cuivre */}
+      <rect x="-40" y="-29" width="7" height="14" rx="1.5" fill="url(#el-laiton)" />
+      <rect x="33" y="-29" width="7" height="14" rx="1.5" fill="url(#el-laiton)" />
+      {/* les 3 LED */}
+      {[-18, 0, 18].map((x) => (
+        <g key={x}>
+          <rect x={x - 6} y="-28" width="12" height="12" rx="1.5" fill="#F5F7FA" stroke="#B9BFCC" strokeWidth=".7" />
+          <circle cx={x} cy="-22" r="4.2" fill={e > 0 ? '#FFFFFF' : '#F2E38A'} stroke={e > 0 ? '#DDF2FF' : '#D9C35A'} strokeWidth=".8" />
+          {e > 0 && <circle cx={x} cy="-22" r={6 + 3 * e} fill="#FFFFFF" opacity={Math.min(0.9, 0.35 + 0.25 * e)} style={{ filter: 'blur(2.5px)' }} />}
+        </g>
       ))}
-      {/* pattes : la longue est l'anode (+) */}
-      <path d="M-5 -14 L-5 6 L-42 18" stroke="#C7CCD6" strokeWidth="2" fill="none" strokeLinejoin="round" />
-      <path d="M5 -14 L5 0 L18 2" stroke="#C7CCD6" strokeWidth="2" fill="none" strokeLinejoin="round" />
-      <path d="M-11 -14 L11 -14 L11 -34 C11 -44 -11 -44 -11 -34 Z" fill={on ? 'url(#el-del-allumee)' : 'url(#el-del)'} stroke="#5E0B0B" strokeWidth=".8" />
-      <rect x="-13" y="-16" width="26" height="4" rx="1" fill={on ? '#FF5A5A' : '#9E1A1A'} />
-      <path d="M-6 -36 Q-7 -30 -6 -24" stroke="#FFFFFF" strokeOpacity=".6" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-      <text x="-32" y="12" textAnchor="middle" fontSize="12" fontWeight="900" fill="#FF6B7A">
+      {/* petites résistances entre les LED */}
+      {[-9, 9].map((x) => (
+        <rect key={x} x={x - 2.5} y="-19" width="5" height="3" fill="#1B1E27" />
+      ))}
+      <text x="-36" y="-37" textAnchor="middle" fontSize="13" fontWeight="900" fill="#FF6B7A">
+        +
+      </text>
+      <text x="36" y="-36" textAnchor="middle" fontSize="15" fontWeight="900" fill="#7CB8FF">
+        −
+      </text>
+    </g>
+  )
+}
+
+// Console de jeu portable (fonctionne avec des piles) : l'écran s'allume et le jeu tourne
+function Console({ r }) {
+  const on = !!r.allumee
+  return (
+    <g>
+      <Socle />
+      <path d="M-30 -2 C-40 4 -44 10 -42 18" stroke="#E0384A" strokeWidth="3" fill="none" strokeLinecap="round" />
+      <path d="M30 -2 C40 4 44 10 42 18" stroke="#1E2230" strokeWidth="3" fill="none" strokeLinecap="round" />
+      <rect x="-34" y="-62" width="68" height="64" rx="12" fill="url(#el-console)" stroke="#1B1F5E" strokeWidth="1" filter="url(#el-ombre)" />
+      <rect x="-22" y="-56" width="44" height="30" rx="3" fill={on ? '#0E2A1A' : '#151A26'} stroke="#0B0E15" />
+      {on && (
+        <g>
+          <rect x="-22" y="-56" width="44" height="30" rx="3" fill="#3BE37A" opacity=".18" />
+          <rect x="-20" y="-32" width="40" height="3" fill="#7CFF6B" />
+          {/* petit héros qui saute, pièces qui défilent */}
+          <g className="elec-saut">
+            <rect x="-12" y="-41" width="6" height="7" rx="1" fill="#FFE45E" />
+            <rect x="-11" y="-44" width="4" height="3" fill="#FFB86B" />
+          </g>
+          <g className="elec-defile">
+            <circle cx="8" cy="-44" r="2" fill="#FFE45E" />
+            <circle cx="16" cy="-40" r="2" fill="#FFE45E" />
+            <rect x="12" y="-36" width="5" height="4" fill="#FF6B7A" />
+          </g>
+          <rect x="-22" y="-56" width="44" height="30" rx="3" fill="#FFFFFF" opacity={Math.min(0.25, 0.05 * (r.niveau ?? 1))} />
+        </g>
+      )}
+      {/* croix directionnelle et boutons */}
+      <path d="M-20 -17 L-12 -17 M-16 -21 L-16 -13" stroke="#0B0E15" strokeWidth="3.5" strokeLinecap="round" />
+      <circle cx="12" cy="-14" r="3.2" fill="#FF6B7A" />
+      <circle cx="20" cy="-19" r="3.2" fill="#FFE45E" />
+      <circle cx="24" cy="-54" r="1.8" fill={on ? '#9DFF8A' : '#3A3F55'} />
+      <text x="-38" y="-6" textAnchor="middle" fontSize="12" fontWeight="900" fill="#FF6B7A">
+        +
+      </text>
+    </g>
+  )
+}
+
+// Petite enceinte musicale : la membrane vibre, des notes s'envolent
+function Enceinte({ r }) {
+  const on = !!r.joue
+  return (
+    <g>
+      <Socle />
+      <path d="M-24 0 C-38 4 -44 10 -42 18" stroke="#E0384A" strokeWidth="3" fill="none" strokeLinecap="round" />
+      <path d="M24 0 C38 4 44 10 42 18" stroke="#1E2230" strokeWidth="3" fill="none" strokeLinecap="round" />
+      <rect x="-26" y="-62" width="52" height="66" rx="10" fill="#22283A" stroke="#0B0E15" strokeWidth="1" filter="url(#el-ombre)" />
+      <circle cx="0" cy="-48" r="5" fill="#0B0E15" stroke="#4E5566" />
+      <g className={on ? 'elec-membrane' : ''} style={{ transformOrigin: '0px -20px' }}>
+        <circle cx="0" cy="-20" r="17" fill="#0B0E15" stroke="#5E6577" strokeWidth="1.5" />
+        <circle cx="0" cy="-20" r="11" fill="#2A3147" />
+        <circle cx="0" cy="-20" r="4.5" fill="#5E6577" />
+      </g>
+      <circle cx="16" cy="-56" r="1.8" fill={on ? '#3EC9FF' : '#3A3F55'} />
+      {on &&
+        [
+          [30, 0],
+          [36, 0.6],
+          [26, 1.2],
+        ].map(([x, d]) => (
+          <text key={d} x={x} y="-40" fontSize="15" fontWeight="900" fill="#3EC9FF" className="elec-note" style={{ animationDelay: `${d}s` }}>
+            ♪
+          </text>
+        ))}
+      <text x="-32" y="-2" textAnchor="middle" fontSize="12" fontWeight="900" fill="#FF6B7A">
         +
       </text>
     </g>
@@ -288,9 +392,15 @@ function Objet({ c }) {
           <DessinObjet id={c.objet} />
         </g>
       ) : (
-        <text x="0" y="-22" textAnchor="middle" fontSize="10" fontWeight="700" fill="#8A93B8">
-          place un objet ici
-        </text>
+        <g className="labo-pulse">
+          <rect x="-34" y="-36" width="68" height="44" rx="8" fill="rgba(62,201,255,.10)" stroke="#3EC9FF" strokeWidth="2.2" strokeDasharray="6 4" />
+          <text x="0" y="-16" textAnchor="middle" fontSize="11" fontWeight="900" fill="#3EC9FF">
+            Place un
+          </text>
+          <text x="0" y="-3" textAnchor="middle" fontSize="11" fontWeight="900" fill="#3EC9FF">
+            objet ici
+          </text>
+        </g>
       )}
       {[-1, 1].map((s) => (
         <g key={s} transform={`translate(${s * 42} -10) scale(${s} 1)`}>
@@ -354,10 +464,16 @@ function Poussoir({ c }) {
 // Halo de lumière d'une ampoule / DEL allumée (dessiné sous les fils)
 export function Halo({ c, r }) {
   if (c.type === 'ampoule' && !c.grillee && r?.eclat > 0) {
-    const t = 60 + 70 * Math.min(1.3, r.eclat)
-    return <circle cx="0" cy="-36" r={t} fill="url(#el-halo)" opacity={Math.min(1, 0.35 + r.eclat * 0.6)} />
+    // plus de piles → halo nettement plus grand et plus lumineux
+    const e = Math.min(2.6, r.eclat)
+    const t = 52 + 58 * e
+    return <circle cx="0" cy="-36" r={t} fill="url(#el-halo)" opacity={Math.min(1, 0.3 + e * 0.45)} />
   }
-  if (c.type === 'del' && r?.allumee) return <circle cx="0" cy="-30" r={50} fill="url(#el-halo-rouge)" opacity={0.85} />
+  if (c.type === 'del' && r?.allumee) {
+    const e = Math.min(2.6, r.eclat ?? 1)
+    return <circle cx="0" cy="-22" r={42 + 22 * e} fill="url(#el-halo-led)" opacity={Math.min(1, 0.45 + 0.25 * e)} />
+  }
+  if (c.type === 'console' && r?.allumee) return <circle cx="0" cy="-42" r={46} fill="url(#el-halo-led)" opacity={0.35} />
   return null
 }
 
@@ -430,6 +546,36 @@ export function Symbole({ c }) {
           <path d={`M-16 ${y - 13} L-10 ${y - 21} M-11 ${y - 15} L-10 ${y - 21} L-15 ${y - 20}`} {...t} strokeWidth="1.6" />
           <path d={`M-9 ${y - 12} L-3 ${y - 20} M-4 ${y - 14} L-3 ${y - 20} L-8 ${y - 19}`} {...t} strokeWidth="1.6" />
           <rect x="10" y={y - 5} width="20" height="10" {...t} />
+        </>
+      )
+      break
+    case 'console':
+      // récepteur quelconque : un rectangle (+ le côté « + »)
+      corps = (
+        <>
+          {fil(-42, -18)}
+          {fil(18, 42)}
+          <rect x="-18" y={y - 10} width="36" height="20" {...t} />
+          <path d={`M-8 ${y} L-2 ${y} M-5 ${y - 3} L-5 ${y + 3}`} {...t} strokeWidth="1.6" />
+          <circle cx="7" cy={y} r="2" fill="#151A26" />
+          <text x="-28" y={y - 8} textAnchor="middle" fontSize="12" fontWeight="800" fill="#151A26">
+            +
+          </text>
+        </>
+      )
+      break
+    case 'enceinte':
+      // symbole normalisé du haut-parleur
+      corps = (
+        <>
+          {fil(-42, -12)}
+          {fil(12, 42)}
+          <path d={`M-12 ${y} L-12 ${y - 10} M12 ${y} L12 ${y - 10}`} {...t} />
+          <rect x="-12" y={y - 22} width="24" height="12" {...t} />
+          <path d={`M-12 ${y - 22} L-22 ${y - 36} L22 ${y - 36} L12 ${y - 22}`} {...t} />
+          <text x="-28" y={y - 8} textAnchor="middle" fontSize="12" fontWeight="800" fill="#151A26">
+            +
+          </text>
         </>
       )
       break

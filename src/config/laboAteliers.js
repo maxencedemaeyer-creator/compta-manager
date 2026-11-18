@@ -100,7 +100,7 @@ export const EXPERIENCES = [
     activites: [
       {
         id: 'banc', code: 'E1', nom: 'Atelier', consigne: 'Invente tes circuits', icon: Cable, couleur: '#FFE45E', attendus: [111, 112, 116],
-        detail: 'L’atelier libre : un magasin de matériel (piles, ampoules, DEL, moteur, sonnette, interrupteurs, bouton-poussoir). On pose, on tire les fils, le circuit est calculé pour de vrai (loi d’Ohm). Série, dérivation, court-circuit avec flammes, ampoule qui grille à 9 V… et un carnet de 13 découvertes à débloquer.',
+        detail: 'L’atelier libre : un magasin de matériel (piles, ampoules, lampes LED, moteur, sonnette, interrupteurs, bouton-poussoir, console, enceinte). On pose, on tire les fils, le circuit est calculé pour de vrai (loi d’Ohm). Série, dérivation, court-circuit avec flammes, ampoule qui grille à 9 V… et un carnet de 13 découvertes à débloquer.',
       },
       {
         id: 'testeur', code: 'E2', nom: 'Testeur', consigne: 'Conducteur ou isolant ?', icon: SearchCheck, couleur: '#3EC9FF', attendus: [113, 115],
@@ -116,7 +116,7 @@ export const EXPERIENCES = [
       },
       {
         id: 'depanneur', code: 'E5', nom: 'Dépanneur', consigne: 'Trouve la panne', icon: Wrench, couleur: '#FFB86B', attendus: [111, 112, 114],
-        detail: 'Neuf circuits en panne : fil débranché, ampoule grillée, pile usée, interrupteur ouvert, gomme dans la boucle, DEL à l’envers, court-circuit, série coupée, double panne. On inspecte, on répare, puis on nomme la panne.',
+        detail: 'Neuf circuits en panne : fil débranché, ampoule grillée, pile usée, interrupteur ouvert, gomme dans la boucle, lampe LED à l’envers, court-circuit, série coupée, double panne. On inspecte, on répare, puis on nomme la panne.',
       },
       {
         id: 'maison', code: 'E6', nom: 'Maison', consigne: 'Éclaire toutes les pièces', icon: Home, couleur: '#FF8AD8', attendus: [110, 116],
@@ -132,7 +132,7 @@ export const EXPERIENCES = [
       },
       {
         id: 'ampoule', code: 'E9', nom: 'Ampoule', consigne: 'Regarde à l’intérieur', icon: Lightbulb, couleur: '#FFD27A', attendus: [111],
-        detail: 'La coupe d’une ampoule à filament : on touche chaque partie, on suit le trajet du courant du plot au culot, on règle la tension de 0 à 9 V (le filament rougit, blanchit, puis grille). Et la comparaison avec la DEL.',
+        detail: 'La coupe d’une ampoule à filament : on touche chaque partie, on suit le trajet du courant du plot au culot, on règle la tension de 0 à 9 V (le filament rougit, blanchit, puis grille). Et la comparaison avec la lampe LED.',
       },
     ],
   },

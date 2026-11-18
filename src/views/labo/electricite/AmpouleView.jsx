@@ -1,26 +1,27 @@
 import { useEffect, useState } from 'react'
 import { Route, Wrench, Zap } from 'lucide-react'
 import { Bouton, Carte } from '../../../components/labo/CadreJeu.jsx'
-import { SEUIL_GRILLE } from '../../../components/labo/electricite/circuit.js'
 import { PageElec } from './commun.jsx'
 
 // =============================================================
 //  E9 · Au cœur de l'ampoule : coupe d'une ampoule à filament.
 //  On touche chaque partie, on suit le trajet du courant, on
 //  règle la tension (0 à 9 V) : le filament rougit, blanchit…
-//  et grille. Comparaison avec la DEL. Attendu 111.
+//  et grille. Comparaison avec la lampe LED. Attendu 111.
 // =============================================================
 const OR = '#FFD27A'
+// Cette ampoule-ci est une ampoule de 4,5 V : au-delà de 2,2 fois sa puissance normale, elle grille
+const SEUIL_GRILLE = 2.2
 
 const PARTIES = {
-  verre: ['L’ampoule de verre', 'Elle laisse passer la lumière et isole le filament de l’air : avec l’oxygène de l’air, le filament brûlerait aussitôt.'],
-  gaz: ['Le gaz inerte', 'À l’intérieur, il n’y a pas d’air mais un gaz qui ne brûle pas (souvent de l’argon), ou le vide. Le filament peut chauffer sans brûler.'],
-  filament: ['Le filament', 'Un fil de tungstène très fin, enroulé en spirale. Le courant le traverse et le chauffe à plus de 2 500 °C : il devient incandescent et émet de la lumière. Le tungstène ne fond qu’à 3 422 °C.'],
-  electrodes: ['Les fils de support', 'Deux fils métalliques (conducteurs) amènent le courant jusqu’au filament et le maintiennent en place.'],
-  pied: ['Le pied en verre', 'Il tient les deux fils de support écartés et ferme l’ampoule de façon étanche.'],
-  culot: ['Le culot à vis', 'C’est une des deux bornes de l’ampoule. Il est en métal et relié à un des fils de support. Il se visse dans la douille.'],
-  isolant: ['L’isolant', 'Un anneau de verre noir sépare le culot du plot. Sans lui, le courant passerait directement d’une borne à l’autre sans traverser le filament : court-circuit !'],
-  plot: ['Le plot', 'C’est l’autre borne de l’ampoule, tout en bas. Il est relié à l’autre fil de support.'],
+  verre: ['L’ampoule de verre', 'Elle laisse passer la lumière et protège le filament de l’air (sinon il brûlerait).'],
+  gaz: ['Le gaz', 'Pas d’air dedans, mais un gaz qui ne brûle pas (souvent de l’argon) : le filament chauffe sans brûler.'],
+  filament: ['Le filament', 'Un fil de tungstène très fin, enroulé. Le courant le chauffe très fort : il brille.'],
+  electrodes: ['Les fils de support', 'Deux fils de métal qui amènent le courant jusqu’au filament.'],
+  pied: ['Le pied en verre', 'Il tient les deux fils de support écartés.'],
+  culot: ['Le culot à vis', 'Une des deux bornes de l’ampoule, en métal. Il se visse dans la douille.'],
+  isolant: ['L’isolant', 'Il sépare le culot du plot. Sans lui : court-circuit !'],
+  plot: ['Le plot', 'L’autre borne de l’ampoule, tout en bas.'],
 }
 
 const VERRE = 'M150 22 C82 22 56 80 62 128 C68 172 104 198 110 238 L190 238 C196 198 232 172 238 128 C244 80 218 22 150 22 Z'
@@ -62,9 +63,9 @@ export default function AmpouleView() {
 
   return (
     <PageElec code="E9" titre="Au cœur de l’ampoule" attendus={[111]} couleur={OR} large resultat={{ lumiere: Math.min(1, t * c.halo), courtCircuit: false }}>
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        <Carte couleur={`${OR}55`} className="p-2">
-          <svg viewBox="0 0 300 380" className="mx-auto block w-full max-w-[420px] select-none">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 tab:min-h-0 tab:flex-1 tab:grid-cols-[auto_minmax(0,1fr)]">
+        <Carte couleur={`${OR}55`} className="p-2 tab:flex tab:h-full tab:min-h-0 tab:items-center tab:justify-center">
+          <svg viewBox="0 0 300 380" className="mx-auto block w-full max-w-[420px] select-none tab:h-full tab:w-auto tab:max-w-none" style={{ aspectRatio: '300 / 380' }}>
             <defs>
               <radialGradient id="am-halo" cx=".5" cy=".5" r=".5">
                 <stop offset="0" stopColor="#FFF4C8" stopOpacity=".95" />
@@ -146,12 +147,12 @@ export default function AmpouleView() {
           </svg>
         </Carte>
 
-        <div className="flex min-w-0 flex-col gap-3">
+        <div className="flex min-w-0 flex-col gap-3 tab:min-h-0 tab:overflow-y-auto">
           <Carte couleur={`${OR}66`}>
             <p className="labo-mono text-[11px]" style={{ color: OR }}>
               {PARTIES[partie][0].toUpperCase()}
             </p>
-            <p className="mt-1 text-[15px] leading-snug text-[#E8ECFF]">{PARTIES[partie][1]}</p>
+            <p className="mt-1 text-[13px] leading-snug text-[#DDE2F7]">{PARTIES[partie][1]}</p>
             <div className="mt-3 flex flex-wrap gap-1.5">
               {Object.entries(PARTIES).map(([id, [nom]]) => (
                 <button
@@ -207,13 +208,13 @@ export default function AmpouleView() {
             </div>
             {trajet && (
               <p className="mt-2 text-[13px] leading-snug text-[#B9C1E3]">
-                <span className="font-bold text-[#3EC9FF]">En bleu :</span> le courant entre par le plot, monte par un fil de support, traverse le filament, redescend par l’autre fil et ressort par le culot. Si on inverse la pile, il fait le même chemin en sens inverse. L’ampoule a donc deux bornes, comme tous les récepteurs.
+                <span className="font-bold text-[#3EC9FF]">En bleu :</span> le courant entre par le plot, traverse le filament et ressort par le culot. L’ampoule a deux bornes, comme tous les récepteurs.
               </p>
             )}
           </Carte>
 
           <Carte couleur="rgba(157,255,138,.35)">
-            <p className="labo-mono text-[11px] text-[#9DFF8A]">AMPOULE À FILAMENT OU DEL ?</p>
+            <p className="labo-mono text-[11px] text-[#9DFF8A]">AMPOULE À FILAMENT OU LAMPE LED ?</p>
             <div className="mt-2 space-y-2">
               <div>
                 <p className="text-[13px] font-bold text-[#E8ECFF]">Ampoule à filament</p>
@@ -225,7 +226,7 @@ export default function AmpouleView() {
               </div>
             </div>
             <p className="mt-2 text-[13px] leading-snug text-[#DDE2F7]">
-              Une DEL produit la même lumière en consommant environ 6 fois moins d’énergie (une ampoule de 60 W ≈ une DEL de 9 W), chauffe très peu et dure environ 15 fois plus longtemps. C’est pourquoi les ampoules à filament ne sont plus vendues en Europe pour éclairer les maisons.
+              Une lampe LED donne la même lumière en consommant environ 6 fois moins d’énergie, chauffe très peu et dure environ 15 fois plus longtemps. C’est pourquoi les ampoules à filament ne sont plus vendues en Europe pour éclairer les maisons.
             </p>
           </Carte>
         </div>
