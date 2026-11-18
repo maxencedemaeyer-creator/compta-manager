@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Check, Sun, Sunrise, Sunset, Moon } from 'lucide-react'
+import { Sun, Sunrise, Sunset, Moon } from 'lucide-react'
 import { Carte, Duo, Eclat } from '../../../components/labo/CadreJeu.jsx'
 import { ambiance, creerTerre, deg, etoiles3D, halo } from '../../../components/labo/espace/outils3d.js'
 import { ORANGE } from '../../../components/labo/espace/donnees.js'
@@ -36,12 +36,12 @@ const etatCiel = (h, heure) => (h > 6 ? 'jour' : h < -6 ? 'nuit' : heure < 12 ? 
 const fmtH = (h) => `${Math.floor(h)} h ${String(Math.floor((h % 1) * 60)).padStart(2, '0')}`
 
 const MISSIONS = [
-  { id: 'jourB', texte: 'Il fait jour à Bruxelles', ok: (l) => etatCiel(l.hautB, l.heureB) === 'jour' },
-  { id: 'nuitB', texte: 'Il fait nuit à Bruxelles', ok: (l) => etatCiel(l.hautB, l.heureB) === 'nuit' },
+  { id: 'jourB', texte: 'Fais jour à Bruxelles', ok: (l) => etatCiel(l.hautB, l.heureB) === 'jour' },
+  { id: 'nuitB', texte: 'Fais nuit à Bruxelles', ok: (l) => etatCiel(l.hautB, l.heureB) === 'nuit' },
   { id: 'midi', texte: 'Il est midi à Bruxelles', ok: (l) => Math.abs(l.heureB - 12) < 0.3 },
-  { id: 'lever', texte: 'Le Soleil se lève quelque part', ok: (l) => etatCiel(l.hauteur, l.heure) === 'lever' },
-  { id: 'oppose', texte: 'Jour à Bruxelles, nuit ailleurs', ok: (l, e) => e.pin.nom !== 'Bruxelles' && etatCiel(l.hautB, l.heureB) === 'jour' && etatCiel(l.hauteur, l.heure) === 'nuit' },
-  { id: 'oppose2', texte: 'Nuit à Bruxelles, jour ailleurs', ok: (l, e) => e.pin.nom !== 'Bruxelles' && etatCiel(l.hautB, l.heureB) === 'nuit' && etatCiel(l.hauteur, l.heure) === 'jour' },
+  { id: 'leverT', texte: 'Fais lever le Soleil à Tokyo', ok: (l, e) => e.pin.nom === 'Tokyo' && etatCiel(l.hauteur, l.heure) === 'lever' },
+  { id: 'oppose', texte: 'Jour à Bruxelles, nuit à Tokyo', ok: (l, e) => e.pin.nom === 'Tokyo' && etatCiel(l.hautB, l.heureB) === 'jour' && etatCiel(l.hauteur, l.heure) === 'nuit' },
+  { id: 'oppose2', texte: 'Nuit à Bruxelles, jour à Sydney', ok: (l, e) => e.pin.nom === 'Sydney' && etatCiel(l.hautB, l.heureB) === 'nuit' && etatCiel(l.hauteur, l.heure) === 'jour' },
 ]
 
 function construire(ctx) {
@@ -126,29 +126,35 @@ function construire(ctx) {
 }
 
 export default function RotationView() {
-  const etat = useRef({ rot: 25, joue: true, vitesse: 'normal', pin: { ...BXL } })
+  const etat = useRef({ rot: 160.65, joue: false, vitesse: 'normal', pin: { ...BXL } })
   const [vitesse, setVitesse] = useState('normal')
-  const [joue, setJoue] = useState(true)
+  const [joue, setJoue] = useState(false)
   const [pin, setPin] = useState(BXL.nom)
-  const [faites, setFaites] = useState([])
+  const [mission, setMission] = useState(0)
+  const gestes = useRef(0)
+  const gestesDebut = useRef(0)
+  const geste = () => { gestes.current += 1 }
   const [glisse, setGlisse] = useState(null)
   const minuteur = useRef(null)
   const [eclat, setEclat] = useState({ message: '', cle: 0 })
   const donnees = useRef({})
-  donnees.current = { etat: etat.current, placer: (p) => { etat.current.pin = p; setPin(p.nom) } }
+  donnees.current = { etat: etat.current, placer: (p) => { geste(); etat.current.pin = p; setPin(p.nom) } }
   const l = useLecture(etat, lire)
 
+  // Une mission n'est validée que si l'élève a lui-même réglé la Terre (Terre à l'arrêt, au moins un geste depuis le début de la mission)
+  const missionRef = useRef(0)
+  missionRef.current = mission
   useEffect(() => {
     const id = setInterval(() => {
       const e = etat.current
-      const x = lire(e)
-      setFaites((f) => {
-        const nouveaux = MISSIONS.filter((m) => !f.includes(m.id) && m.ok(x, e))
-        if (!nouveaux.length) return f
+      const m = MISSIONS[missionRef.current]
+      if (!m || e.joue || gestes.current <= gestesDebut.current) return
+      if (m.ok(lire(e), e)) {
+        gestesDebut.current = gestes.current
         setEclat((c) => ({ message: 'Mission réussie !', cle: c.cle + 1 }))
-        return [...f, ...nouveaux.map((m) => m.id)]
-      })
-    }, 200)
+        setMission((k) => k + 1)
+      }
+    }, 150)
     return () => clearInterval(id)
   }, [])
 
@@ -160,6 +166,7 @@ export default function RotationView() {
 
   function regler(h) {
     // fait tourner la Terre pour qu'il soit l'heure h à Bruxelles
+    geste()
     etat.current.rot = (h - 12) * 15 - BXL.lon
     etat.current.joue = false
     setJoue(false)
@@ -177,7 +184,7 @@ export default function RotationView() {
           <>
             <div className="flex flex-wrap gap-1.5">
               {VILLES.map((v) => (
-                <button key={v.nom} type="button" onClick={() => { etat.current.pin = { ...v }; setPin(v.nom) }} className="min-h-[40px] rounded-full border px-3 text-[13px] font-bold active:scale-95" style={pin === v.nom ? { background: ORANGE, color: '#12062A', borderColor: ORANGE } : { color: '#FFD9B0', borderColor: '#FFA24D66', background: 'rgba(11,10,30,.8)' }}>
+                <button key={v.nom} type="button" onClick={() => { geste(); etat.current.pin = { ...v }; setPin(v.nom) }} className="min-h-[40px] rounded-full border px-3 text-[13px] font-bold active:scale-95" style={pin === v.nom ? { background: ORANGE, color: '#12062A', borderColor: ORANGE } : { color: '#FFD9B0', borderColor: '#FFA24D66', background: 'rgba(11,10,30,.8)' }}>
                   {v.nom}
                 </button>
               ))}
@@ -203,17 +210,24 @@ export default function RotationView() {
                 <Vitesses valeur={vitesse} onChange={(v) => { etat.current.vitesse = v; setVitesse(v) }} couleur={ORANGE} />
               </div>
             </div>
-            <ul className="grid gap-1.5">
-              {MISSIONS.map((m) => {
-                const ok = faites.includes(m.id)
-                return (
-                  <li key={m.id} className="flex items-center gap-2.5 rounded-2xl border px-3 py-2 text-[13px]" style={{ borderColor: ok ? '#9DFF8A88' : 'rgba(232,236,255,.14)', background: ok ? 'rgba(157,255,138,.1)' : 'rgba(11,10,30,.8)', color: ok ? '#C8FFC0' : '#E8ECFF' }}>
-                    <span className="flex h-6 w-6 flex-none items-center justify-center rounded-full" style={{ background: ok ? '#9DFF8A' : 'rgba(255,255,255,.1)', color: '#06210A' }}>{ok && <Check size={15} strokeWidth={3} />}</span>
-                    {m.texte}
-                  </li>
-                )
-              })}
-            </ul>
+            <Carte couleur={mission >= MISSIONS.length ? '#9DFF8A88' : 'rgba(255,162,77,.55)'} className="!p-3">
+              <div className="flex items-center justify-between gap-2">
+                <p className="labo-mono text-[10px] text-[#B9C1E3]">{mission >= MISSIONS.length ? 'TERMINÉ' : `MISSION ${mission + 1} SUR ${MISSIONS.length}`}</p>
+                <div className="flex gap-1">
+                  {MISSIONS.map((m, i) => (
+                    <span key={m.id} className="h-2.5 w-5 rounded-full" style={{ background: i < mission ? '#9DFF8A' : i === mission ? ORANGE : 'rgba(255,255,255,.15)' }} />
+                  ))}
+                </div>
+              </div>
+              {mission >= MISSIONS.length ? (
+                <div className="mt-1 flex items-center justify-between gap-2">
+                  <p className="labo-jeu text-[24px] leading-tight text-[#C8FFC0]">Bravo ! Tu maîtrises la rotation.</p>
+                  <button type="button" onClick={() => { gestesDebut.current = gestes.current; setMission(0) }} className="min-h-[44px] flex-none rounded-2xl px-4 text-[14px] font-bold active:scale-95" style={{ background: ORANGE, color: '#12062A' }}>Rejouer</button>
+                </div>
+              ) : (
+                <p className="labo-jeu mt-1 text-[26px] leading-tight text-white">{MISSIONS[mission].texte}</p>
+              )}
+            </Carte>
             <p className="labo-mono text-[10px] leading-snug text-[#8A93B8]">Un tour complet de la Terre sur elle-même = 24 h = 1 jour. La Terre tourne vers l’est : le Soleil « se lève » à l’est.</p>
           </>
         }
