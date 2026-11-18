@@ -30,7 +30,7 @@ const ETAPES = [
   ['P:oreillette_g', 'cavite_oreillette_g', 'Il entre dans l’oreillette gauche…'],
   ['P:ventricule_g', 'cavite_ventricule_g', '… puis dans le ventricule gauche, le plus musclé des quatre.'],
   ['L:aorte_ascendante', 'aorte', 'Le ventricule gauche se contracte : le sang part dans l’aorte…'],
-  ['L:crosse_aorte', 'aorte', '… vers tout le corps. C’est le grand voyage (paillasse C2) !'],
+  ['L:crosse_aorte', 'aorte', '… vers tout le corps. C’est le grand voyage (activité « Voyage », C2) !'],
 ]
 
 // Vaisseaux autour du cœur où l'on montre le sens du sang

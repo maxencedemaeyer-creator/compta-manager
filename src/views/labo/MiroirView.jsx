@@ -5,6 +5,8 @@ import { DecorLabo } from '../../components/labo/DecorLabo.jsx'
 import { Eclat, useRetourSalle } from '../../components/labo/CadreJeu.jsx'
 import './labo.css'
 import PiedLabo from '../../components/labo/PiedLabo.jsx'
+import LogoActivite from '../../components/labo/LogoActivite.jsx'
+import { EXPERIENCE } from '../../config/laboAteliers.js'
 
 // =============================================================
 //  A1 · Le miroir à rayons X
@@ -684,9 +686,10 @@ export default function MiroirView() {
             <Link to={retour} aria-label="Retour au labo" className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/15">
               <ArrowLeft size={20} strokeWidth={2.5} />
             </Link>
+            <LogoActivite activite={EXPERIENCE.locomoteur.activites[0]} taille={44} />
             <div>
-              <p className="labo-mono text-[11px] tracking-[.1em] text-[#6FEFFF]">PAILLASSE A1 · ATTENDUS 112, 113, 120, 121</p>
-              <h1 className="labo-titre text-xl font-bold">Le miroir à rayons X</h1>
+              <p className="labo-mono text-[11px] tracking-[.1em] text-[#6FEFFF]">ACTIVITÉ A1</p>
+              <h1 className="labo-jeu text-[26px] leading-tight text-[#6FEFFF]">Rayons X</h1>
             </div>
           </header>
 

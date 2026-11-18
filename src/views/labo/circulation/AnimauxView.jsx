@@ -20,7 +20,7 @@ const ANIMAUX = [
   { id: 'elephant', nom: 'Éléphant d’Afrique', masse: 5000, bpm: 30, texte: 'environ 25 à 35' },
   { id: 'cheval', nom: 'Cheval', masse: 500, bpm: 36, texte: 'environ 28 à 44' },
   { id: 'adulte', nom: 'Humain adulte', masse: 70, bpm: 70, texte: 'environ 60 à 80' },
-  { id: 'enfant', nom: 'Enfant de 10 ans', masse: 32, bpm: 85, texte: 'environ 70 à 110', note: 'C’est toi ! Mesure ton propre rythme à la paillasse C4.' },
+  { id: 'enfant', nom: 'Enfant de 10 ans', masse: 32, bpm: 85, texte: 'environ 70 à 110', note: 'C’est toi ! Mesure ton propre rythme à l’activité « Pouls » (C4).' },
   { id: 'chien', nom: 'Chien moyen', masse: 20, bpm: 95, texte: 'environ 70 à 120' },
   { id: 'bebe', nom: 'Bébé humain', masse: 3.5, bpm: 140, texte: 'environ 120 à 160', note: 'Même espèce que nous, mais plus petit : son cœur bat deux fois plus vite.' },
   { id: 'chat', nom: 'Chat', masse: 4, bpm: 150, texte: 'environ 120 à 180' },

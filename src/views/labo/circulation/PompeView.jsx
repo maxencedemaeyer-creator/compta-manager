@@ -186,7 +186,7 @@ export default function PompeView() {
         </table>
         {Object.keys(reussis).length >= 3 && (
           <p className="labo-apparait mt-3 rounded-xl bg-[#9DFF8A]/10 p-2 text-[14px] leading-snug text-[#E8ECFF]">
-            <b>Conclusion :</b> plus l’effort est intense, plus les muscles ont besoin de dioxygène et de nutriments. Le cœur bat alors plus vite (et plus fort) pour envoyer plus de sang, et la respiration s’accélère pour apporter plus de dioxygène. Vérifie-le sur toi à la paillasse C4 !
+            <b>Conclusion :</b> plus l’effort est intense, plus les muscles ont besoin de dioxygène et de nutriments. Le cœur bat alors plus vite (et plus fort) pour envoyer plus de sang, et la respiration s’accélère pour apporter plus de dioxygène. Vérifie-le sur toi à l’activité « Pouls » (C4) !
           </p>
         )}
       </Carte>

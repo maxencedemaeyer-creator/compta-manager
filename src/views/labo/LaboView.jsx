@@ -9,8 +9,9 @@ import PiedLabo from '../../components/labo/PiedLabo.jsx'
 // =============================================================
 //  Le hall du labo de sciences (/labo) : public, sans code PIN.
 //  Une grande porte par expérience (un chapitre du cours).
-//  Toutes les expériences sont ouvertes : les élèves peuvent
-//  revenir rejouer un ancien chapitre quand ils veulent.
+//  Toutes les expériences sont ouvertes (pas de verrouillage).
+//  Volontairement épuré : pas de niveau (P3…), pas de nombre
+//  d'activités, pas de phrase d'explication (demande de Max).
 // =============================================================
 export default function LaboView() {
   return (
@@ -27,7 +28,6 @@ export default function LaboView() {
 
         <div className="flex items-end gap-3">
           <div className="flex-1">
-            <p className="labo-mono mb-1.5 text-xs text-[#B57BFF]">// choisis ton expérience</p>
             <h1 className="labo-titre text-[40px] font-black leading-[.98] tracking-tight text-[#F4F6FF] sm:text-6xl">
               Le labo
               <br />
@@ -37,15 +37,10 @@ export default function LaboView() {
           <Fiole />
         </div>
 
-        <div className="flex items-baseline justify-between">
-          <h2 className="labo-titre text-[15px] font-medium text-[#F4F6FF]">Les expériences</h2>
-          <span className="labo-mono text-[11px] text-[#8A93B8]">{EXPERIENCES.length} chapitres</span>
-        </div>
+        <h2 className="labo-titre text-[15px] font-medium text-[#F4F6FF]">Les expériences</h2>
 
         <div className="grid gap-3 md:grid-cols-2">
-          {EXPERIENCES.map((e, i) => {
-            const prets = e.paillasses.filter((p) => p.pret !== false).length
-            return (
+          {EXPERIENCES.map((e, i) => (
               <Link
                 key={e.id}
                 to={`/labo/${e.id}`}
@@ -59,26 +54,21 @@ export default function LaboView() {
                 <div className="relative flex min-w-0 flex-1 flex-col justify-between gap-2 p-4 pl-1">
                   <div>
                     <p className="labo-mono text-[11px] tracking-[.1em]" style={{ color: e.couleur }}>
-                      EXPÉRIENCE {e.numero} · {e.niveau}
+                      EXPÉRIENCE {e.numero}
                     </p>
                     <h3 className="labo-titre mt-1 text-[21px] font-bold leading-tight text-[#F4F6FF]">{e.titre}</h3>
                     <p className="mt-1 text-sm leading-snug text-[#B9C1E3]">{e.accroche}</p>
                   </div>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="rounded-full px-2.5 py-1 text-[11px]" style={{ background: `rgba(${e.rgb},.15)`, color: e.couleur }}>
-                      {prets > 0 ? `${prets} paillasses` : `${e.paillasses.length} paillasses en préparation`}
-                    </span>
+                  <div className="flex items-center justify-end">
                     <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full transition group-hover:translate-x-0.5" style={{ background: e.couleur, color: '#070B16' }}>
                       <ArrowRight size={20} strokeWidth={2.5} />
                     </span>
                   </div>
                 </div>
               </Link>
-            )
-          })}
+          ))}
         </div>
 
-        <p className="text-center text-xs leading-relaxed text-[#8A93B8]">Toutes les expériences restent ouvertes : reviens rejouer quand tu veux.</p>
         <PiedLabo className="pt-2" />
       </div>
     </div>

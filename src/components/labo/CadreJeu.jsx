@@ -4,10 +4,15 @@ import { ArrowLeft } from 'lucide-react'
 import { DecorLabo } from './DecorLabo.jsx'
 import '../../views/labo/labo.css'
 import PiedLabo from './PiedLabo.jsx'
+import LogoActivite from './LogoActivite.jsx'
+import { activiteDepuisAdresse } from '../../config/laboAteliers.js'
 
 // =============================================================
-//  Cadre commun à toutes les paillasses du labo :
-//  décor, bouton retour, titre, attendus du référentiel, score.
+//  Cadre commun à toutes les activités du labo :
+//  décor, bouton retour, logo + nom de l'activité (lus dans
+//  laboAteliers.js d'après l'adresse), score.
+//  Les attendus reçus en props ne sont plus affichés (gardés
+//  pour une prochaine fonctionnalité).
 // =============================================================
 // Adresse de la salle de l'expérience : /labo/locomoteur/miroir → /labo/locomoteur
 export function useRetourSalle() {
@@ -18,6 +23,8 @@ export function useRetourSalle() {
 
 export default function CadreJeu({ code, titre, attendus = [], couleur = '#7CFF6B', droite, children, large = false, rgb, rgb2 }) {
   const retour = useRetourSalle()
+  const { pathname } = useLocation()
+  const { activite } = activiteDepuisAdresse(pathname)
   return (
     <div className="labo relative min-h-[100dvh] overflow-x-hidden">
       <DecorLabo flash={false} rgb={rgb} rgb2={rgb2} />
@@ -30,12 +37,18 @@ export default function CadreJeu({ code, titre, attendus = [], couleur = '#7CFF6
           >
             <ArrowLeft size={20} strokeWidth={2.5} />
           </Link>
+          {activite && <LogoActivite activite={activite} taille={44} />}
           <div className="min-w-0 flex-1">
-            <p className="labo-mono truncate text-[11px] tracking-[.1em]" style={{ color: couleur }}>
-              {code ? `PAILLASSE ${code}` : "LE CORPS EN 3D"}
-              {attendus.length > 0 && ` · ATTENDUS ${attendus.join(', ')}`}
+            <p className="labo-mono truncate text-[11px] tracking-[.1em]" style={{ color: activite?.couleur || couleur }}>
+              {code ? `ACTIVITÉ ${code}` : 'EN 3D'}
             </p>
-            <h1 className="labo-titre truncate text-xl font-bold text-[#F4F6FF]">{titre}</h1>
+            {activite ? (
+              <h1 className="labo-jeu truncate text-[26px] leading-tight" style={{ color: activite.couleur }}>
+                {activite.nom}
+              </h1>
+            ) : (
+              <h1 className="labo-titre truncate text-xl font-bold text-[#F4F6FF]">{titre}</h1>
+            )}
           </div>
           {droite}
         </header>

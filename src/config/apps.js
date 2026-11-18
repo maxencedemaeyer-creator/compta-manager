@@ -56,7 +56,7 @@ export const APPS = [
     id: 'labo',
     to: '/labo',
     nom: 'Labo de sciences',
-    description: 'Les paillasses des élèves (sans code)',
+    description: 'Les activités des élèves (sans code)',
     icon: FlaskConical,
     couleur: 'from-lime-400 via-emerald-500 to-violet-600',
     profils: ['maxence'],
