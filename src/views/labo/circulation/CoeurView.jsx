@@ -162,7 +162,7 @@ export default function CoeurView() {
   const riche = choisi ? sangRiche(choisi.groupe, choisi.nature) : null
 
   return (
-    <PageCirc code="C1" titre="Le cœur qui bat" attendus={[66, 70]} large>
+    <PageCirc code="C1" titre="Le cœur qui bat" attendus={[66, 70]} large ecran>
       <Eclat message={eclat.message} cle={eclat.cle} couleur="#FF4D6D" />
       <Onglets
         valeur={mode}
@@ -175,10 +175,10 @@ export default function CoeurView() {
         ]}
       />
 
-      <div className="grid gap-3 lg:grid-cols-[1fr_340px]">
-        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#070B16]/80">
+      <div className="grid gap-3 lg:grid-cols-[1fr_340px] tab:min-h-0 tab:flex-1 tab:grid-rows-[minmax(0,1fr)]">
+        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#070B16]/80 tab:min-h-0">
           <Circulation3D
-            className="h-[58vh] min-h-[380px] max-h-[640px] w-full"
+            className="h-[58vh] min-h-[380px] max-h-[640px] w-full tab:h-full tab:max-h-none tab:min-h-0"
             rotation
             afficher={VAISSEAUX_COEUR}
             cadrage={mode === 'explorer' ? CADRAGE : CADRAGE_SERRE}
@@ -200,7 +200,7 @@ export default function CoeurView() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 tab:min-h-0 tab:overflow-y-auto">
           {/* Rythme */}
           <Carte couleur="rgba(255,77,109,.45)">
             <div className="flex items-center justify-between">

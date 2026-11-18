@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { RotateCcw } from 'lucide-react'
-import CadreJeu, { Bouton, Carte, Eclat, melanger } from '../../components/labo/CadreJeu.jsx'
+import CadreJeu, { Bouton, Carte, Eclat, melanger, Duo } from '../../components/labo/CadreJeu.jsx'
 import Membres3D, { ANIMAUX, GROUPES } from '../../components/labo/Membres3D.jsx'
 
 // =============================================================
@@ -50,8 +50,11 @@ export default function CousinsView() {
   if (mode === 'defi' && retour) etats[`${retour.animal}_${retour.groupe}`] = retour.bon ? 'ok' : 'erreur'
 
   return (
-    <CadreJeu code="A9" titre="Les cousins cachés" attendus={[112]} couleur="#9DE7C2">
+    <CadreJeu code="A9" titre="Les cousins cachés" attendus={[112]} couleur="#9DE7C2" ecran large>
       <Eclat message={eclat.message} cle={eclat.cle} couleur="#9DE7C2" />
+      <Duo
+        commandes={
+          <>
       <div className="grid grid-cols-2 gap-2">
         {['explorer', 'defi'].map((m) => (
           <button
@@ -101,10 +104,6 @@ export default function CousinsView() {
         )}
       </Carte>
 
-      <div className="rounded-3xl border border-white/10 bg-[#070B16]/75">
-        <Membres3D className="h-[64vh] max-h-[640px] w-full" etats={etats} couleurs={mode === 'explorer'} onChoisir={toucher} />
-      </div>
-
       {mode === 'explorer' && (
         <div className="flex flex-wrap justify-center gap-2">
           {Object.entries(GROUPES).map(([id, g]) => (
@@ -117,6 +116,14 @@ export default function CousinsView() {
       <p className="text-center text-xs text-[#8A93B8]">
         Vrais os humains en 3D, mis aux proportions de chaque animal. Pas à la même échelle : l’aile d’une chauve-souris tient dans ta main, la nageoire d’une baleine mesure plusieurs mètres.
       </p>
+          </>
+        }
+      >
+      <div className="rounded-3xl border border-white/10 bg-[#070B16]/75 tab:min-h-0 tab:flex-1">
+        <Membres3D className="h-[64vh] max-h-[640px] w-full tab:h-full tab:max-h-none" etats={etats} couleurs={mode === 'explorer'} onChoisir={toucher} />
+      </div>
+
+      </Duo>
     </CadreJeu>
   )
 }

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Bed, Bike, Footprints, Armchair, Wind, Zap } from 'lucide-react'
-import { Carte, Eclat } from '../../../components/labo/CadreJeu.jsx'
+import { Carte, Eclat, Duo } from '../../../components/labo/CadreJeu.jsx'
 import { BLEU_SANG, Consigne, PageCirc, ROUGE_SANG, boumTac } from './commun.jsx'
 
 // =============================================================
@@ -24,26 +24,29 @@ const ACTIVITES = [
 ]
 const besoinBpm = (a) => Math.round((a.debit * 1000) / a.volume)
 const TENIR = 4 // secondes à tenir dans la zone verte
+// Jauge : elle montre directement « sang envoyé ÷ sang demandé ».
+// 100 % de la jauge = 1,8 × le besoin ; zone verte = de 0,9 × à 1,35 × le besoin.
+const ECHELLE = 1.8
+const ZONE_MIN = 0.9
+const ZONE_MAX = 1.35
 
 export default function PompeView() {
   const [act, setAct] = useState(ACTIVITES[1])
   const [bpm, setBpm] = useState(0)
-  const [jauge, setJauge] = useState(0.5)
+  const [niveau, setNiveau] = useState(0) // sang envoyé ÷ sang demandé (lissé)
   const [tenu, setTenu] = useState(0)
   const [reussis, setReussis] = useState({})
   const [son, setSon] = useState(true)
   const [battement, setBattement] = useState(0)
   const [eclat, setEclat] = useState({ message: '', cle: 0 })
   const taps = useRef([])
-  const etat = useRef({ jauge: 0.5, tenu: 0, bpm: 0 })
+  const etat = useRef({ niveau: 0, tenu: 0 })
 
-  const cible = besoinBpm(act)
-
-  // Calcul continu : rythme des 6 dernières tapes, débit, jauge d'oxygène des muscles
+  // Calcul continu : rythme des dernières tapes → débit envoyé → jauge des muscles
   useEffect(() => {
-    etat.current = { jauge: 0.5, tenu: 0, bpm: 0 }
+    etat.current = { niveau: 0, tenu: 0 }
     taps.current = []
-    setJauge(0.5)
+    setNiveau(0)
     setTenu(0)
     setBpm(0)
     let dernier = performance.now()
@@ -52,22 +55,23 @@ export default function PompeView() {
       raf = requestAnimationFrame(boucle)
       const dt = Math.min(0.1, (t - dernier) / 1000)
       dernier = t
-      const l = taps.current.filter((x) => t - x < 6000)
+      const l = taps.current.filter((x) => t - x < 5000)
       taps.current = l
+      // rythme = moyenne des 4 derniers écarts entre tapes (réagit vite, sans trembler)
       let r = 0
-      if (l.length >= 3 && t - l[l.length - 1] < 2500) {
-        const ecarts = l.slice(1).map((x, i) => x - l[i])
+      if (l.length >= 3 && t - l[l.length - 1] < 2200) {
+        const recent = l.slice(-5)
+        const ecarts = recent.slice(1).map((x, i) => x - recent[i])
         r = Math.round(60000 / (ecarts.reduce((a, b) => a + b, 0) / ecarts.length))
       }
       const e = etat.current
-      e.bpm = r
-      const debit = (r * act.volume) / 1000 // L/min envoyés
-      const ratio = debit / act.debit
-      e.jauge = Math.max(0, Math.min(1, e.jauge + (ratio - 1) * dt * 0.35 + (ratio >= 0.9 && ratio <= 1.35 ? (0.75 - e.jauge) * dt * 0.8 : 0)))
-      const dansZone = ratio >= 0.9 && ratio <= 1.35
+      const cible = (r * act.volume) / 1000 / act.debit // 1 = juste ce qu'il faut
+      // la jauge suit le débit sans à-coups (monte vite, redescend un peu moins vite)
+      e.niveau += (cible - e.niveau) * Math.min(1, dt * (cible > e.niveau ? 7 : 3))
+      const dansZone = e.niveau >= ZONE_MIN && e.niveau <= ZONE_MAX
       e.tenu = dansZone ? e.tenu + dt : Math.max(0, e.tenu - dt * 2)
       setBpm(r)
-      setJauge(e.jauge)
+      setNiveau(e.niveau)
       setTenu(e.tenu)
       if (e.tenu >= TENIR) {
         e.tenu = 0
@@ -86,12 +90,15 @@ export default function PompeView() {
   }
 
   const debit = ((bpm * act.volume) / 1000).toFixed(1)
-  const ratio = bpm ? (bpm * act.volume) / 1000 / act.debit : 0
-  const zone = ratio >= 0.9 && ratio <= 1.35 ? 'ok' : ratio > 1.35 ? 'trop' : 'peu'
+  const zone = niveau >= ZONE_MIN && niveau <= ZONE_MAX ? 'ok' : niveau > ZONE_MAX ? 'trop' : 'peu'
+  const hauteur = Math.min(1, niveau / ECHELLE)
 
   return (
-    <PageCirc code="C6" titre="Le cœur-pompe" attendus={[68, 69]}>
+    <PageCirc code="C6" titre="Le cœur-pompe" attendus={[68, 69]} ecran large>
       <Eclat message={eclat.message} sousTitre={eclat.sousTitre} cle={eclat.cle} couleur="#FF8AD8" />
+      <Duo droite={420}
+        commandes={
+          <>
       <Consigne couleur="#FF8AD8">
         Tu es le cœur ! <b>Chaque fois que tu tapes, il bat</b> et envoie du sang vers les muscles. Choisis une activité, puis tape au bon rythme pour garder la jauge des muscles dans le vert pendant {TENIR} secondes.
       </Consigne>
@@ -128,39 +135,32 @@ export default function PompeView() {
             <Wind size={13} /> Respiration : ≈ {act.souffle} mouvements / min
           </p>
         </Carte>
-        {/* Jauge des muscles */}
-        <div className="flex w-16 flex-col items-center gap-1">
+        {/* Jauge des muscles : le niveau = sang envoyé ÷ sang demandé */}
+        <div className="flex w-[112px] flex-col items-start gap-1">
           <span className="labo-mono text-[9px] text-[#B9C1E3]">MUSCLES</span>
-          <div className="relative w-9 flex-1 overflow-hidden rounded-full border border-white/20 bg-[#0B1122]">
-            <div className="absolute inset-x-0 bottom-0 transition-[height] duration-100" style={{ height: `${jauge * 100}%`, background: zone === 'ok' ? '#9DFF8A' : jauge < 0.3 ? '#FF6B7A' : '#FFD27A' }} />
-            <div className="absolute inset-x-0" style={{ bottom: '60%', height: '30%', border: '1px dashed rgba(255,255,255,.4)' }} />
+          <div className="relative min-h-[150px] w-9 flex-1">
+            <div className="absolute inset-0 overflow-hidden rounded-full border border-white/20 bg-[#0B1122]">
+              <div
+                className="absolute inset-x-0 bottom-0 transition-[height] duration-100"
+                style={{ height: `${hauteur * 100}%`, background: zone === 'ok' ? '#9DFF8A' : zone === 'trop' ? '#FFD27A' : '#FF6B7A' }}
+              />
+              {/* zone verte à viser */}
+              <div className="absolute inset-x-0 border-y-2 border-dashed border-[#9DFF8A]" style={{ bottom: `${(ZONE_MIN / ECHELLE) * 100}%`, height: `${((ZONE_MAX - ZONE_MIN) / ECHELLE) * 100}%`, background: 'rgba(157,255,138,.14)' }} />
+            </div>
+            <span className="labo-mono pointer-events-none absolute left-full ml-1.5 text-[9px] font-bold text-[#9DFF8A]" style={{ bottom: `${((ZONE_MIN + ZONE_MAX) / 2 / ECHELLE) * 100}%`, transform: 'translateY(50%)' }}>
+              ◂ VISE ICI
+            </span>
+            <span className="labo-mono pointer-events-none absolute left-full ml-1.5 text-[9px] text-[#FFD27A]" style={{ top: 0 }}>
+              trop
+            </span>
+            <span className="labo-mono pointer-events-none absolute bottom-0 left-full ml-1.5 text-[9px] text-[#FF8A9C]">pas assez</span>
           </div>
-          <span className="labo-mono text-[9px] text-[#9DFF8A]">{Math.round((tenu / TENIR) * 100)}%</span>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+            <div className="h-full rounded-full bg-[#9DFF8A] transition-[width] duration-100" style={{ width: `${Math.min(100, (tenu / TENIR) * 100)}%` }} />
+          </div>
+          <span className="labo-mono text-[9px] text-[#9DFF8A] self-center">{Math.round((tenu / TENIR) * 100)} %</span>
         </div>
       </div>
-
-      {/* Le cœur à taper */}
-      <button
-        type="button"
-        onPointerDown={battre}
-        className="relative mx-auto flex h-64 w-64 select-none items-center justify-center rounded-full active:scale-[.98]"
-        style={{ touchAction: 'manipulation' }}
-        aria-label="Faire battre le cœur"
-      >
-        <CoeurSchema battement={battement} />
-        <span className="labo-mono absolute bottom-2 rounded-full bg-black/60 px-2 py-0.5 text-[11px] text-white">TAPE ICI</span>
-      </button>
-
-      <div className="text-center">
-        <p className="labo-titre text-4xl font-black text-white">
-          {bpm || '—'} <span className="text-base text-[#B9C1E3]">battements / min</span>
-        </p>
-        <p className="text-[13px] text-[#8A93B8]">{zone === 'peu' ? 'Plus vite : les muscles manquent de dioxygène !' : zone === 'trop' ? 'Doucement, c’est plus que nécessaire.' : 'Parfait, garde ce rythme !'}</p>
-      </div>
-
-      <button type="button" onClick={() => setSon((s) => !s)} className="mx-auto text-[12px] text-[#8A93B8] underline">
-        {son ? 'Couper le son' : 'Activer le son'}
-      </button>
 
       <Carte couleur="rgba(255,255,255,.14)">
         <p className="labo-mono text-[11px] text-[#FF8AD8]">MON TABLEAU</p>
@@ -175,9 +175,9 @@ export default function PompeView() {
           <tbody>
             {ACTIVITES.map((a) => (
               <tr key={a.id} className="border-t border-white/10">
-                <td className="py-1.5 text-white">{a.nom}</td>
-                <td className="py-1.5 text-[#DDE2F7]">{a.debit} L/min</td>
-                <td className="labo-mono py-1.5 text-right" style={{ color: reussis[a.id] ? '#9DFF8A' : '#4A5375' }}>
+                <td className="py-1 text-white">{a.nom}</td>
+                <td className="py-1 text-[#DDE2F7]">{a.debit} L/min</td>
+                <td className="labo-mono py-1 text-right" style={{ color: reussis[a.id] ? '#9DFF8A' : '#4A5375' }}>
                   {reussis[a.id] ? `${reussis[a.id]} /min` : '?'}
                 </td>
               </tr>
@@ -190,6 +190,35 @@ export default function PompeView() {
           </p>
         )}
       </Carte>
+          </>
+        }
+      >
+        <div className="flex flex-col items-center justify-center gap-2 rounded-3xl border border-white/10 bg-[#070B16]/60 py-3 tab:min-h-0 tab:flex-1">
+      {/* Le cœur à taper */}
+      <button
+        type="button"
+        onPointerDown={battre}
+        className="relative mx-auto flex h-64 w-64 select-none tab:h-[min(50dvh,360px)] tab:w-[min(50dvh,360px)] items-center justify-center rounded-full active:scale-[.98]"
+        style={{ touchAction: 'manipulation' }}
+        aria-label="Faire battre le cœur"
+      >
+        <CoeurSchema battement={battement} />
+        <span className="labo-mono absolute bottom-2 rounded-full bg-black/60 px-2 py-0.5 text-[11px] text-white">TAPE ICI</span>
+      </button>
+
+      <div className="text-center">
+        <p className="labo-titre text-4xl font-black text-white">
+          {bpm || '—'} <span className="text-base text-[#B9C1E3]">battements / min</span>
+        </p>
+        <p className="text-[13px] text-[#8A93B8]">{!bpm && niveau < 0.05 ? 'Tape sur le cœur !' : zone === 'peu' ? 'Plus vite : les muscles manquent de dioxygène !' : zone === 'trop' ? 'Doucement, c’est plus que nécessaire.' : 'Parfait, garde ce rythme !'}</p>
+      </div>
+
+      <button type="button" onClick={() => setSon((s) => !s)} className="mx-auto text-[12px] text-[#8A93B8] underline">
+        {son ? 'Couper le son' : 'Activer le son'}
+      </button>
+
+        </div>
+      </Duo>
     </PageCirc>
   )
 }

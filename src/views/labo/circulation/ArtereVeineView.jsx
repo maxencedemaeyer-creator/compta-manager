@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ArrowRight, RotateCcw } from 'lucide-react'
+import { ArrowRight, Eye, EyeOff, RotateCcw } from 'lucide-react'
 import * as THREE from 'three'
 import { Bouton, Carte, Eclat, melanger } from '../../../components/labo/CadreJeu.jsx'
 import Circulation3D from '../../../components/labo/circulation/Circulation3D.jsx'
@@ -8,9 +8,12 @@ import { Consigne, PageCirc } from './commun.jsx'
 
 // =============================================================
 //  C3 · Artère ou veine ?
-//  Tout le réseau est gris : un vaisseau s'allume et des globules
-//  y circulent DANS LE VRAI SENS du sang. S'éloignent-ils du cœur
-//  (artère) ou y reviennent-ils (veine) ? Puis on révèle la couleur.
+//  Par défaut les vaisseaux sont COLORÉS (rouge = sang riche en dioxygène,
+//  bleu = pauvre) : sinon il faudrait connaître par cœur toutes les artères
+//  et veines du corps (retour de Max : « injouable »). Un vaisseau clignote
+//  et des globules y circulent DANS LE VRAI SENS du sang. S'éloignent-ils du
+//  cœur (artère) ou y reviennent-ils (veine) ?
+//  Bouton « Sans couleurs » = mode expert (tout gris, comme avant).
 //  Les vaisseaux des poumons sont volontairement laissés de côté
 //  (choix pédagogique : on travaille seulement le sens du sang).
 //  Attendus 66, 70.
@@ -46,6 +49,7 @@ export default function ArtereVeineView() {
   const [score, setScore] = useState(0)
   const [outils, setOutils] = useState(null)
   const [eclat, setEclat] = useState({ message: '', cle: 0 })
+  const [couleurs, setCouleurs] = useState(true)
   const fini = n >= serie.length
   const v = serie[Math.min(n, serie.length - 1)]
 
@@ -81,7 +85,8 @@ export default function ArtereVeineView() {
     setReponse(null)
   }
 
-  const etats = fini ? {} : { [`${v.groupe}${v.cote ? `_${v.cote}` : ''}`]: reponse ? 'reel' : 'actif' }
+  // Avec couleurs : le vaisseau garde sa couleur et clignote (« eclaire »). Sans couleurs : il clignote en cyan.
+  const etats = fini ? {} : { [`${v.groupe}${v.cote ? `_${v.cote}` : ''}`]: reponse ? 'reel' : couleurs ? 'eclaire' : 'actif' }
 
   return (
     <PageCirc code="C3" titre="Artère ou veine ?" attendus={[66, 70]} large>
@@ -91,7 +96,7 @@ export default function ArtereVeineView() {
           <Circulation3D
             className="h-[58vh] min-h-[380px] max-h-[680px] w-full"
             rotation
-            couleurs={fini ? 'type' : 'neutre'}
+            couleurs={fini || couleurs ? 'type' : 'neutre'}
             afficher={['coeur', 'artere', 'veine', 'os']}
             opacites={{ os: 0.1 }}
             cadrage={fini ? 'corps' : v.cadre}
@@ -104,7 +109,7 @@ export default function ArtereVeineView() {
           />
           {!fini && (
             <div className="pointer-events-none absolute left-3 top-3 rounded-xl bg-black/60 px-2 py-1 text-[11px] text-[#B9C1E3]">
-              Le <b className="text-[#FF8A9C]">cœur</b> est en rouge. Regarde dans quel sens vont les globules <b className="text-white">blancs</b>.
+              Regarde dans quel sens vont les globules <b className="text-white">blancs</b>.
             </div>
           )}
         </div>
@@ -131,6 +136,13 @@ export default function ArtereVeineView() {
                 <br />
                 Le vaisseau qui clignote : le sang <b>part du cœur</b> ou <b>revient au cœur</b> ?
               </Consigne>
+              <button
+                type="button"
+                onClick={() => setCouleurs((c) => !c)}
+                className="flex min-h-[40px] items-center justify-center gap-2 rounded-2xl border border-white/15 bg-[#0B1122]/90 px-3 text-[13px] font-bold text-[#B9C1E3] active:scale-[.97]"
+              >
+                {couleurs ? <EyeOff size={16} /> : <Eye size={16} />} {couleurs ? 'Sans couleurs (mode expert)' : 'Remettre les couleurs'}
+              </button>
               <div className="grid grid-cols-2 gap-2">
                 {[
                   ['artere', 'Il part du cœur', 'ARTÈRE', '#E8394A'],
@@ -159,7 +171,7 @@ export default function ArtereVeineView() {
             </>
           )}
           <p className="text-[12px] leading-snug text-[#8A93B8]">
-            À retenir : ce n’est pas la couleur qui fait une artère ou une veine, c’est le <b>sens</b> du sang. Artère = part du cœur. Veine = revient au cœur.
+            À retenir : <b>artère</b> = le sang part du cœur. <b>Veine</b> = le sang revient au cœur. Ce qui compte, c’est le <b>sens</b> du sang ; la couleur (rouge ou bleu) dit seulement s’il est riche ou pauvre en dioxygène.
           </p>
         </div>
       </div>

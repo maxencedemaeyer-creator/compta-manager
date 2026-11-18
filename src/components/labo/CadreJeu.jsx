@@ -66,6 +66,22 @@ export default function CadreJeu({ code, titre, attendus = [], couleur = '#7CFF6
   )
 }
 
+// Disposition « un seul écran » pour tablette en paysage / ordinateur (variante Tailwind « tab: »).
+//  - children = la zone de jeu (3D, dessin…) : elle occupe toute la hauteur à gauche ;
+//    elle doit utiliser « tab:h-full » (le parent a une hauteur fixée par la grille).
+//  - commandes = consignes, boutons, scores : colonne de droite (elle défile à l'intérieur si besoin).
+//  Sur téléphone / portrait : les commandes puis la zone de jeu, l'une sous l'autre, comme avant.
+//  À utiliser avec <CadreJeu ecran large>.
+export function Duo({ commandes, children, droite = 380 }) {
+  const cols = { 340: 'tab:grid-cols-[minmax(0,1fr)_340px]', 380: 'tab:grid-cols-[minmax(0,1fr)_380px]', 440: 'tab:grid-cols-[minmax(0,1fr)_440px]' }[droite] || 'tab:grid-cols-[minmax(0,1fr)_380px]'
+  return (
+    <div className={`flex flex-col gap-3 tab:grid tab:min-h-0 tab:flex-1 tab:grid-rows-[minmax(0,1fr)] tab:gap-3 ${cols}`}>
+      <div className="flex flex-col gap-3 tab:col-start-2 tab:row-start-1 tab:min-h-0 tab:overflow-y-auto">{commandes}</div>
+      <div className="flex flex-col gap-3 tab:col-start-1 tab:row-start-1 tab:min-h-0">{children}</div>
+    </div>
+  )
+}
+
 // Grand message de réussite avec onde lumineuse (s'efface tout seul)
 export function Eclat({ message, sousTitre, couleur = '#7CFF6B', cle }) {
   const [visible, setVisible] = useState(false)

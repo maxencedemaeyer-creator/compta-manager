@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Languages, Play, RotateCcw, ShieldCheck, Volume2 } from 'lucide-react'
-import CadreJeu, { Bouton, Carte, Eclat, melanger } from '../../components/labo/CadreJeu.jsx'
+import CadreJeu, { Bouton, Carte, Duo, Eclat, melanger } from '../../components/labo/CadreJeu.jsx'
 import { COULEUR_GENRE, LANGUES, MOT, avecArticle, parler } from '../../components/labo/vocabulaire/corps.js'
 import PlateauCorps from '../../components/labo/vocabulaire/PlateauCorps.jsx'
 import { cadreDe, estJuste } from '../../components/labo/vocabulaire/zonesCorps.js'
@@ -31,15 +31,19 @@ const DANSES = [
   (o) => ({ epaule_d: { abd: 95 + 45 * o }, epaule_g: { abd: 95 - 45 * o }, coude_d: 25, coude_g: 25 }),
 ]
 
-function tirage(ids) {
-  const l = []
-  while (l.length < TOURS) l.push(...melanger(ids))
+// Mots dans un ordre différent à chaque partie, et jamais deux fois le même mot dans une partie.
+// (Niveau 1 : 7 mots = 7 tours.) Le premier mot change aussi d'une partie à l'autre.
+const premiersMots = {}
+function tirage(ids, niveau) {
+  const l = melanger(ids)
+  if (l.length > 1 && l[0] === premiersMots[niveau]) l.push(l.shift())
+  premiersMots[niveau] = l[0]
   return l.slice(0, TOURS)
 }
 
 function nouvellePartie(niveau) {
   const n = NIVEAUX.find((x) => x.n === niveau)
-  return { niveau, liste: tirage(n.ids), tour: 0, score: 0, collees: [], statut: 'consigne', erreurs: 0, indice: false, touche: null, piege: false, cible: null, depart: 0 }
+  return { niveau, liste: tirage(n.ids, niveau), tour: 0, score: 0, collees: [], statut: 'consigne', erreurs: 0, indice: false, touche: null, piege: false, cible: null, depart: 0 }
 }
 
 function preparerTour(j, i) {
@@ -98,7 +102,7 @@ export default function JacquesView() {
         setTimeout(() => {
           const x = jRef.current
           if (!x) return
-          if (x.tour + 1 >= TOURS) {
+          if (x.tour + 1 >= x.liste.length) {
             setJ({ ...x, statut: 'fini' })
             parler('Fini ! Bravo !')
           } else setJ(preparerTour(x, x.tour + 1))
@@ -132,8 +136,8 @@ export default function JacquesView() {
     }
     if (estJuste(x.cible, id)) {
       setJ({ ...x, statut: 'bravo', score: x.score + (ecoule < 5000 ? 2 : 1), collees: x.collees.includes(x.cible) ? x.collees : [...x.collees, x.cible], touche: id })
-      parler(`Bravo ! ${avecArticle(MOT[x.cible])}`)
-      setEclat((e) => ({ message: 'Bravo !', sous: avecArticle(MOT[x.cible]), cle: e.cle + 1 }))
+      parler('Bravo !')
+      setEclat((e) => ({ message: 'Bravo !', sous: '', cle: e.cle + 1 }))
       return
     }
     // Mauvaise partie : on dit comment elle s'appelle (on apprend en explorant)
@@ -164,7 +168,7 @@ export default function JacquesView() {
   }
 
   return (
-    <CadreJeu code="A12" titre="Jacques a dit !" couleur={CYAN} large>
+    <CadreJeu code="A12" titre="Jacques a dit !" couleur={CYAN} large ecran>
       <Eclat message={eclat.message} sousTitre={eclat.sous} cle={eclat.cle} couleur={CYAN} />
       {phase === 'accueil' && (
         <>
@@ -218,12 +222,14 @@ export default function JacquesView() {
       )}
 
       {phase === 'jeu' && j && (
-        <>
+          <Duo
+            commandes={
+              <>
           {!fini && m && (
             <div className="rounded-2xl border bg-[#070B16]/88 px-3 py-2 text-center" style={{ borderColor: j.statut === 'rate' ? '#FF6B7A' : j.statut === 'bravo' ? '#9DFF8A' : `${CYAN}66` }}>
               <div className="flex items-center justify-between text-[11px] text-[#8A93B8]">
                 <span className="labo-mono">
-                  {j.tour + 1}/{TOURS}
+                  {j.tour + 1}/{j.liste.length}
                 </span>
                 <span className="labo-mono text-[#FFE45E]">★ {j.score}</span>
               </div>
@@ -260,16 +266,21 @@ export default function JacquesView() {
               </div>
             </div>
           )}
+              </>
+            }
+          >
+            <div className="flex flex-col gap-3 tab:min-h-0 tab:flex-1">
           <PlateauCorps
-            className="h-[62dvh] w-full rounded-3xl border border-[#6FEFFF]/40 bg-[radial-gradient(circle_at_50%_38%,#17284F,#070B16_75%)]"
+            className="h-[62dvh] w-full tab:h-full rounded-3xl border border-[#6FEFFF]/40 bg-[radial-gradient(circle_at_50%_38%,#17284F,#070B16_75%)]"
             cadre={fini || !j.cible ? 'corps' : cadreDe(j.cible)}
             trouves={j.collees}
             anneaux={anneaux}
             poses={poses}
             onToucher={toucher}
           />
-          <p className="-mt-2 text-center text-[12px] text-[#8A93B8]">Le squelette est un vrai modèle 3D : la caméra zoome toute seule sur la tête ou la main.</p>
-        </>
+          <p className="-mt-2 text-center text-[12px] text-[#8A93B8] tab:hidden">Le squelette est un vrai modèle 3D : la caméra zoome toute seule sur la tête ou la main.</p>
+            </div>
+          </Duo>
       )}
     </CadreJeu>
   )

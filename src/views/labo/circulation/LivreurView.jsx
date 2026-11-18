@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowRight, Brain, Dumbbell, RotateCcw, Star } from 'lucide-react'
-import { Bouton, Carte, Eclat } from '../../../components/labo/CadreJeu.jsx'
+import { Bouton, Carte, Eclat, Duo } from '../../../components/labo/CadreJeu.jsx'
 import { BLEU_SANG, Consigne, PageCirc, ROUGE_SANG } from './commun.jsx'
 
 // =============================================================
@@ -150,8 +150,11 @@ export default function LivreurView() {
   const couleurGoutte = jeu.o2 ? ROUGE_SANG : BLEU_SANG
 
   return (
-    <PageCirc code="C5" titre="Le sang livreur" attendus={[67, 69]}>
+    <PageCirc code="C5" titre="Le sang livreur" attendus={[67, 69]} ecran large>
       <Eclat message={eclat.message} cle={eclat.cle} couleur="#9DFF8A" />
+      <Duo
+        commandes={
+          <>
       <div className="flex items-center justify-between">
         <span className="labo-mono text-[11px] text-[#9DFF8A]">
           NIVEAU {niveau + 1}/{NIVEAUX.length} · {NIVEAUX[niveau].titre.toUpperCase()}
@@ -180,8 +183,39 @@ export default function LivreurView() {
         </Carte>
       </div>
 
-      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#070B16]/85">
-        <svg viewBox="0 0 360 560" className="w-full" role="img" aria-label="Schéma de la double circulation">
+      <Consigne couleur={message.ton === 'erreur' ? '#FF6B7A' : message.ton === 'ok' ? '#9DFF8A' : '#4DA3FF'}>{message.texte}</Consigne>
+
+      {gagne && (
+        <Carte couleur="rgba(157,255,138,.5)" className="labo-apparait text-center">
+          <div className="flex justify-center gap-1">
+            {[0, 1, 2].map((i) => (
+              <Star key={i} size={30} className={i < etoiles ? 'fill-[#FFD27A] text-[#FFD27A]' : 'text-[#4A5375]'} />
+            ))}
+          </div>
+          <p className="mt-1 text-[14px] text-[#DDE2F7]">
+            {jeu.coups} trajets (record possible : {NIVEAUX[niveau].optimal}). Le sang a relié les systèmes <b>respiratoire</b> (poumons), <b>digestif</b> (intestin) et <b>circulatoire</b> !
+          </p>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <Bouton variante="secondaire" onClick={() => charger(niveau)}>
+              <RotateCcw size={16} /> Rejouer
+            </Bouton>
+            {niveau + 1 < NIVEAUX.length ? (
+              <Bouton couleur="#9DFF8A" onClick={() => charger(niveau + 1)}>
+                Niveau suivant <ArrowRight size={17} />
+              </Bouton>
+            ) : (
+              <Bouton couleur="#9DFF8A" onClick={() => charger(0)}>
+                Recommencer
+              </Bouton>
+            )}
+          </div>
+        </Carte>
+      )}
+          </>
+        }
+      >
+      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#070B16]/85 tab:flex tab:min-h-0 tab:flex-1 tab:justify-center">
+        <svg viewBox="0 0 360 560" className="w-full tab:h-full tab:w-auto" role="img" aria-label="Schéma de la double circulation">
           <defs>
             <pattern id="liv-capillaires" width="10" height="10" patternUnits="userSpaceOnUse">
               <path d="M0 5 Q2.5 0 5 5 T10 5" fill="none" stroke="rgba(255,255,255,.18)" strokeWidth=".8" />
@@ -290,34 +324,7 @@ export default function LivreurView() {
         </svg>
       </div>
 
-      <Consigne couleur={message.ton === 'erreur' ? '#FF6B7A' : message.ton === 'ok' ? '#9DFF8A' : '#4DA3FF'}>{message.texte}</Consigne>
-
-      {gagne && (
-        <Carte couleur="rgba(157,255,138,.5)" className="labo-apparait text-center">
-          <div className="flex justify-center gap-1">
-            {[0, 1, 2].map((i) => (
-              <Star key={i} size={30} className={i < etoiles ? 'fill-[#FFD27A] text-[#FFD27A]' : 'text-[#4A5375]'} />
-            ))}
-          </div>
-          <p className="mt-1 text-[14px] text-[#DDE2F7]">
-            {jeu.coups} trajets (record possible : {NIVEAUX[niveau].optimal}). Le sang a relié les systèmes <b>respiratoire</b> (poumons), <b>digestif</b> (intestin) et <b>circulatoire</b> !
-          </p>
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <Bouton variante="secondaire" onClick={() => charger(niveau)}>
-              <RotateCcw size={16} /> Rejouer
-            </Bouton>
-            {niveau + 1 < NIVEAUX.length ? (
-              <Bouton couleur="#9DFF8A" onClick={() => charger(niveau + 1)}>
-                Niveau suivant <ArrowRight size={17} />
-              </Bouton>
-            ) : (
-              <Bouton couleur="#9DFF8A" onClick={() => charger(0)}>
-                Recommencer
-              </Bouton>
-            )}
-          </div>
-        </Carte>
-      )}
+      </Duo>
     </PageCirc>
   )
 }

@@ -85,13 +85,13 @@ export default function PlateauCorps({ cadre = 'corps', trouves = [], actif = nu
     return () => cancelAnimationFrame(raf)
   }, [pret])
 
-  // Les vrais os des mots trouvés s'allument
+  // Seul l'os à nommer s'allume (en cyan). Les mots trouvés ne colorent PAS le squelette en vert :
+  // certains mots (yeux, nez…) n'ont pas d'os propre, le vert aurait touché seulement bras, jambes…
   const etats = useMemo(() => {
     const e = {}
-    for (const id of trouves) for (const g of OS_MOT[id] || []) e[g] = 'ok'
     if (actif) for (const g of OS_MOT[actif] || []) e[g] = 'actif'
     return e
-  }, [trouves, actif])
+  }, [actif])
 
   function bas(e) {
     depart.current = { x: e.clientX, y: e.clientY }

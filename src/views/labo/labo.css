@@ -12,6 +12,7 @@
 .labo-titre { font-family: 'Unbounded', system-ui, sans-serif; }
 .labo-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
 /* Police des noms d'activités (identité « appli » de chaque jeu) */
+.labo-lettres { font-family: 'Fredoka', 'Nunito', system-ui, sans-serif; font-weight: 600; letter-spacing: .02em; font-feature-settings: normal; }
 .labo-jeu { font-family: 'Lilita One', 'Unbounded', system-ui, sans-serif; font-weight: 400; letter-spacing: .01em; }
 
 /* Grille hexagonale façon molécules */

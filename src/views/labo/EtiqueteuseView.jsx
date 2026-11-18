@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Camera, Check, Delete, Download, ImagePlus, Languages, Lightbulb, RefreshCw, RotateCcw, ShieldCheck, Tags, Volume2 } from 'lucide-react'
-import CadreJeu, { Bouton, Carte, Eclat, melanger } from '../../components/labo/CadreJeu.jsx'
+import CadreJeu, { Bouton, Carte, Duo, Eclat, melanger } from '../../components/labo/CadreJeu.jsx'
 import { COULEUR_GENRE, LANGUES, MOTS, avecArticle, parler, zones } from '../../components/labo/vocabulaire/corps.js'
 import { creerPose, messageErreurCamera, ouvrirCamera } from '../../components/labo/vocabulaire/pose.js'
 import PlateauCorps from '../../components/labo/vocabulaire/PlateauCorps.jsx'
@@ -18,6 +18,7 @@ import { cadreDe } from '../../components/labo/vocabulaire/zonesCorps.js'
 // =============================================================
 const ORANGE = '#FFB86B'
 const MAX_MOTS = 10
+let premierMot = null // premier mot de la partie précédente (module : dure toute la séance)
 const NIVEAUX = [
   { n: 1, titre: 'Les lettres', texte: 'Touche les lettres dans le bon ordre' },
   { n: 2, titre: 'Le clavier', texte: 'Écris le mot tout seul' },
@@ -193,7 +194,11 @@ export default function EtiqueteuseView() {
   }
 
   function commencer(possibles) {
-    const l = melanger(possibles).slice(0, MAX_MOTS)
+    // ordre différent à chaque partie, et premier mot différent de celui de la partie précédente
+    const l = melanger(possibles)
+    if (l.length > 1 && l[0].id === premierMot) l.push(l.shift())
+    premierMot = l[0].id
+    l.splice(MAX_MOTS)
     setListe(l)
     setFaits([])
     preparer(l, 0)
@@ -373,7 +378,7 @@ export default function EtiqueteuseView() {
   // ---------- Écrans ----------
   if (phase === 'accueil' || phase === 'erreur')
     return (
-      <CadreJeu code="A13" titre="L’étiqueteuse" couleur={ORANGE} large>
+      <CadreJeu code="A13" titre="L’étiqueteuse" couleur={ORANGE} large ecran>
         <Carte couleur={`${ORANGE}66`}>
           <p className="text-[15px] leading-snug text-[#DDE2F7]">
             <b>Jacques</b>, le squelette, a perdu ses étiquettes ! Une partie de son corps s’allume : <b>écris son nom</b>. Chaque mot juste sort de l’étiqueteuse et se colle sur Jacques. À la fin, l’affiche est prête&nbsp;!
@@ -399,6 +404,11 @@ export default function EtiqueteuseView() {
             </button>
           ))}
         </div>
+        {phase === 'erreur' && <p className="rounded-xl bg-[#FF6B7A]/15 px-3 py-2 text-[14px] text-[#FFC2C8]">{erreur}</p>}
+        <Bouton couleur={ORANGE} onClick={jouerSquelette}>
+          <Tags size={18} /> Jouer avec Jacques le squelette
+        </Bouton>
+        <div className="flex flex-col gap-3 tab:grid tab:grid-cols-2">
         <Carte couleur="rgba(255,255,255,.15)">
           <p className="flex items-center gap-1.5 text-[13px] font-bold text-[#E8ECFF]">
             <Languages size={15} /> Aide dans ma langue
@@ -417,10 +427,6 @@ export default function EtiqueteuseView() {
             ))}
           </div>
         </Carte>
-        {phase === 'erreur' && <p className="rounded-xl bg-[#FF6B7A]/15 px-3 py-2 text-[14px] text-[#FFC2C8]">{erreur}</p>}
-        <Bouton couleur={ORANGE} onClick={jouerSquelette}>
-          <Tags size={18} /> Jouer avec Jacques le squelette
-        </Bouton>
         <Carte couleur="rgba(255,255,255,.12)">
           <p className="text-[13px] font-bold text-[#E8ECFF]">Ou avec une vraie photo de toi (ou d’un copain)</p>
           <div className="mt-2 grid gap-2 sm:grid-cols-2">
@@ -433,6 +439,7 @@ export default function EtiqueteuseView() {
           </div>
           <p className="mt-2 text-[12px] text-[#8A93B8]">Conseil : debout, en entier sur la photo, bras un peu écartés. La photo reste sur la tablette.</p>
         </Carte>
+        </div>
         <input ref={fichierRef} type="file" accept="image/*" className="hidden" onChange={importer} />
       </CadreJeu>
     )
@@ -480,6 +487,7 @@ export default function EtiqueteuseView() {
       titre="L’étiqueteuse"
       couleur={ORANGE}
       large
+      ecran
       droite={
         <span className="labo-mono rounded-full bg-white/10 px-3 py-1 text-sm text-[#FFE45E]">
           {faits.length}/{liste.length}
@@ -487,22 +495,9 @@ export default function EtiqueteuseView() {
       }
     >
       <Eclat message={eclat.message} sousTitre={eclat.sous} cle={eclat.cle} couleur={ORANGE} />
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_360px]">
-        {mode === 'os' ? (
-          <PlateauCorps
-            ruban
-            titreAffiche="LE CORPS HUMAIN"
-            capturerRef={capturerRef}
-            className="h-[56dvh] w-full rounded-3xl border border-[#FFB86B]/40 bg-[radial-gradient(circle_at_50%_38%,#2A2140,#070B16_75%)] md:h-[78dvh]"
-            cadre={phase === 'fin' || !mot ? 'corps' : cadreDe(mot.id)}
-            trouves={faits.map((f) => f.id)}
-            actif={phase === 'jeu' && mot && revele && !faits.some((f) => f.id === mot.id) ? mot.id : null}
-            anneaux={phase === 'jeu' && mot && revele && !faits.some((f) => f.id === mot.id) ? [{ id: mot.id, couleur: '#FFE45E' }] : []}
-          />
-        ) : (
-          <canvas ref={canvasRef} className="block h-[52dvh] w-full rounded-3xl border border-[#FFB86B]/40 bg-black md:h-[78dvh]" />
-        )}
-
+      <Duo
+        commandes={
+          <>
         {phase === 'fin' ? (
           <Carte couleur={`${ORANGE}88`} className="text-center">
             <p className="labo-titre text-3xl font-black text-white">
@@ -545,12 +540,12 @@ export default function EtiqueteuseView() {
 
               {/* le mot à construire */}
               <div className="mt-3 flex flex-wrap items-end justify-center gap-1.5">
-                <span className="labo-titre mr-1 text-2xl font-black" style={{ color: COULEUR_GENRE[mot.genre] }}>
+                <span className="labo-lettres mr-1 text-[28px]" style={{ color: COULEUR_GENRE[mot.genre] }}>
                   {mot.article}
                 </span>
                 {niveau === 1
                   ? [...mot.mot].map((c, i) => (
-                      <span key={i} className="labo-titre flex h-11 w-9 items-center justify-center rounded-lg border-b-4 text-2xl font-black text-white" style={{ borderColor: i < saisie.length ? '#9DFF8A' : 'rgba(255,255,255,.3)', background: 'rgba(7,11,22,.6)' }}>
+                      <span key={i} className="labo-lettres flex h-11 w-9 items-center justify-center rounded-lg border-b-4 text-[28px] text-white" style={{ borderColor: i < saisie.length ? '#9DFF8A' : 'rgba(255,255,255,.3)', background: 'rgba(7,11,22,.6)' }}>
                         {saisie[i] ?? ''}
                       </span>
                     ))
@@ -565,7 +560,7 @@ export default function EtiqueteuseView() {
                       type="button"
                       disabled={t.utilisee}
                       onClick={() => toucherTuile(t)}
-                      className={`labo-titre h-14 w-12 rounded-xl text-2xl font-black shadow-[0_4px_0_#7A4A12] transition active:translate-y-1 active:shadow-none disabled:opacity-0 ${secoue === t.k ? 'animate-[elec-sonne_.09s_linear_4]' : ''}`}
+                      className={`labo-lettres h-14 w-12 rounded-xl text-[30px] leading-none shadow-[0_4px_0_#7A4A12] transition active:translate-y-1 active:shadow-none disabled:opacity-0 ${secoue === t.k ? 'animate-[elec-sonne_.09s_linear_4]' : ''}`}
                       style={{ background: secoue === t.k ? '#FF6B7A' : '#FFD9A8', color: '#2A1600' }}
                     >
                       {t.c}
@@ -583,11 +578,11 @@ export default function EtiqueteuseView() {
                     spellCheck={false}
                     autoComplete="off"
                     placeholder="écris ici…"
-                    className="labo-titre h-14 w-full rounded-2xl border-2 border-[#FFB86B]/50 bg-[#070B16] px-4 text-center text-2xl font-black text-white outline-none focus:border-[#FFB86B]"
+                    className="labo-lettres h-14 w-full rounded-2xl border-2 border-[#FFB86B]/50 bg-[#070B16] px-4 text-center text-[28px] text-white outline-none focus:border-[#FFB86B]"
                   />
                   <div className="mt-2 flex flex-wrap justify-center gap-1.5">
                     {ACCENTS.map((a) => (
-                      <button key={a} type="button" onClick={() => setSaisie((s) => s + a)} className="labo-titre h-10 w-10 rounded-xl bg-white/10 text-lg font-bold text-white">
+                      <button key={a} type="button" onClick={() => setSaisie((s) => s + a)} className="labo-lettres h-10 w-10 rounded-xl bg-white/10 text-[22px] text-white">
                         {a}
                       </button>
                     ))}
@@ -596,7 +591,7 @@ export default function EtiqueteuseView() {
                     </button>
                   </div>
                   {essais.map((e, i) => (
-                    <p key={i} className="labo-titre mt-2 text-center text-xl font-black tracking-wider">
+                    <p key={i} className="labo-lettres mt-2 text-center text-[26px] tracking-wider">
                       {essaiColore(e)}
                     </p>
                   ))}
@@ -624,14 +619,34 @@ export default function EtiqueteuseView() {
                 )}
                 {niveau > 1 && indices >= 1 && (
                   <p className="text-[13px] text-[#B9C1E3]">
-                    Il commence par <b className="text-white">{mot.mot[0]}</b> et a <b className="text-white">{mot.mot.length}</b> lettres.
+                    Il commence par <b className="labo-lettres text-[18px] text-white">{mot.mot[0]}</b> et a <b className="text-white">{mot.mot.length}</b> lettres.
                   </p>
                 )}
               </div>
             </Carte>
           )
         )}
-      </div>
+          </>
+        }
+      >
+        <div className="tab:min-h-0 tab:flex-1">
+        {mode === 'os' ? (
+          <PlateauCorps
+            ruban
+            titreAffiche="LE CORPS HUMAIN"
+            capturerRef={capturerRef}
+            className="h-[56dvh] w-full rounded-3xl border border-[#FFB86B]/40 bg-[radial-gradient(circle_at_50%_38%,#2A2140,#070B16_75%)] md:h-[78dvh] tab:h-full"
+            cadre={phase === 'fin' || !mot ? 'corps' : cadreDe(mot.id)}
+            trouves={faits.map((f) => f.id)}
+            actif={phase === 'jeu' && mot && revele && !faits.some((f) => f.id === mot.id) ? mot.id : null}
+            anneaux={phase === 'jeu' && mot && revele && !faits.some((f) => f.id === mot.id) ? [{ id: mot.id, couleur: '#FFE45E' }] : []}
+          />
+        ) : (
+          <canvas ref={canvasRef} className="block h-[52dvh] w-full rounded-3xl border border-[#FFB86B]/40 bg-black md:h-[78dvh] tab:h-full" />
+        )}
+
+        </div>
+      </Duo>
     </CadreJeu>
   )
 }

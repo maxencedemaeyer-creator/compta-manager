@@ -64,23 +64,47 @@ export function contexteAudio() {
 export function boumTac(volume = 0.9, ecart = 0.32) {
   const ac = contexteAudio()
   if (!ac) return
+  // Les haut-parleurs de tablette ne rendent presque rien sous ~150 Hz : chaque bruit est donc un
+  // « boum » grave PLUS ses harmoniques (×2,5 et ×4) qui, elles, s'entendent bien partout.
   const bruit = (debut, freq, duree, fort) => {
-    const o = ac.createOscillator()
-    const g = ac.createGain()
+    const sortie = ac.createGain()
+    sortie.gain.value = 1
     const f = ac.createBiquadFilter()
-    o.type = 'sine'
-    o.frequency.setValueAtTime(freq, debut)
-    o.frequency.exponentialRampToValueAtTime(freq * 0.55, debut + duree)
     f.type = 'lowpass'
-    f.frequency.value = 180
-    g.gain.setValueAtTime(0.0001, debut)
-    g.gain.exponentialRampToValueAtTime(fort * volume, debut + 0.012)
-    g.gain.exponentialRampToValueAtTime(0.0001, debut + duree)
-    o.connect(f).connect(g).connect(ac.destination)
-    o.start(debut)
-    o.stop(debut + duree + 0.02)
+    f.frequency.value = 900
+    f.connect(sortie).connect(ac.destination)
+    for (const [mult, part] of [[1, 1], [2.5, 0.8], [4, 0.45]]) {
+      const o = ac.createOscillator()
+      const g = ac.createGain()
+      o.type = 'sine'
+      o.frequency.setValueAtTime(freq * mult, debut)
+      o.frequency.exponentialRampToValueAtTime(freq * mult * 0.6, debut + duree)
+      g.gain.setValueAtTime(0.0001, debut)
+      g.gain.exponentialRampToValueAtTime(fort * part * volume * 0.55, debut + 0.01)
+      g.gain.exponentialRampToValueAtTime(0.0001, debut + duree)
+      o.connect(g).connect(f)
+      o.start(debut)
+      o.stop(debut + duree + 0.03)
+    }
   }
   const t = ac.currentTime + 0.01
-  bruit(t, 62, 0.16, 1)
-  bruit(t + ecart, 85, 0.11, 0.7)
+  bruit(t, 78, 0.18, 1)
+  bruit(t + ecart, 105, 0.12, 0.75)
+}
+
+// Petit « tic » net pour les cœurs très rapides (colibri, musaraigne…) : audible sur une tablette
+export function tic(volume = 0.9) {
+  const ac = contexteAudio()
+  if (!ac) return
+  const o = ac.createOscillator()
+  const g = ac.createGain()
+  o.type = 'triangle'
+  o.frequency.setValueAtTime(520, ac.currentTime)
+  o.frequency.exponentialRampToValueAtTime(300, ac.currentTime + 0.035)
+  g.gain.setValueAtTime(0.0001, ac.currentTime)
+  g.gain.exponentialRampToValueAtTime(0.55 * volume, ac.currentTime + 0.004)
+  g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + 0.04)
+  o.connect(g).connect(ac.destination)
+  o.start()
+  o.stop(ac.currentTime + 0.05)
 }

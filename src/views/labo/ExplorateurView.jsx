@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Bone, Dumbbell } from 'lucide-react'
-import CadreJeu, { Carte } from '../../components/labo/CadreJeu.jsx'
+import CadreJeu, { Carte, Duo } from '../../components/labo/CadreJeu.jsx'
 import Corps3D from '../../components/labo/Corps3D.jsx'
 import { MUSCLES, NOMS, OS } from '../../components/labo/anatomie.js'
 
@@ -47,7 +47,10 @@ export default function ExplorateurView() {
   const etats = choisi ? { [choisi]: 'actif' } : {}
 
   return (
-    <CadreJeu code="" titre="L’explorateur 3D" attendus={[112, 116]} couleur="#9DE7C2">
+    <CadreJeu code="" titre="L’explorateur 3D" attendus={[112, 116]} couleur="#9DE7C2" ecran large>
+      <Duo
+        commandes={
+          <>
       <div className="grid grid-cols-2 gap-2">
         <button
           type="button"
@@ -74,9 +77,13 @@ export default function ExplorateurView() {
           <p className="text-[15px] text-[#E8ECFF]">Fais tourner le corps avec un doigt, zoome avec deux doigts, et touche un os ou un muscle pour savoir ce que c’est.</p>
         )}
       </Carte>
-      <div className="rounded-3xl border border-white/10 bg-[#070B16]/75">
-        <Corps3D className="h-[60vh] max-h-[680px] w-full" rotation afficher={muscles ? [...OS, ...MUSCLES] : OS} etats={etats} onChoisir={(g) => setChoisi(g)} />
+          </>
+        }
+      >
+      <div className="rounded-3xl border border-white/10 bg-[#070B16]/75 tab:min-h-0 tab:flex-1">
+        <Corps3D className="h-[60vh] max-h-[680px] w-full tab:h-full tab:max-h-none" rotation afficher={muscles ? [...OS, ...MUSCLES] : OS} etats={etats} onChoisir={(g) => setChoisi(g)} />
       </div>
+      </Duo>
     </CadreJeu>
   )
 }

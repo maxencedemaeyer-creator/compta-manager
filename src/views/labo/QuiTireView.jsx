@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ArrowRight, RotateCcw } from 'lucide-react'
-import CadreJeu, { Bouton, Carte, Eclat } from '../../components/labo/CadreJeu.jsx'
+import CadreJeu, { Bouton, Carte, Eclat, Duo } from '../../components/labo/CadreJeu.jsx'
 import Corps3D from '../../components/labo/Corps3D.jsx'
 import { NOMS, OS } from '../../components/labo/anatomie.js'
 
@@ -104,8 +104,11 @@ export default function QuiTireView() {
   }
 
   return (
-    <CadreJeu code="A4" titre="Qui tire ?" attendus={[120, 121]} couleur="#FFB86B" droite={<span className="labo-mono text-lg text-[#FFB86B]">{score}</span>}>
+    <CadreJeu code="A4" titre="Qui tire ?" attendus={[120, 121]} couleur="#FFB86B" droite={<span className="labo-mono text-lg text-[#FFB86B]">{score}</span>} ecran large>
       <Eclat message={eclat.message} cle={eclat.cle} couleur="#FFB86B" />
+      <Duo
+        commandes={
+          <>
       <Carte couleur="rgba(255,184,107,.45)">
         <p className="labo-mono text-[11px] text-[#FFB86B]">
           SCÈNE {index + 1} / {SCENES.length} · {scene.mouvement.toUpperCase()}
@@ -113,22 +116,6 @@ export default function QuiTireView() {
         <p className="labo-titre mt-1 text-xl font-bold text-white">« {scene.titre} »</p>
         <p className="mt-1 text-sm text-[#B9C1E3]">Observe bien : quel muscle raccourcit et gonfle ? Touche-le, ou choisis ci-dessous.</p>
       </Carte>
-
-      <div className="rounded-3xl border border-white/10 bg-[#070B16]/75">
-        <Corps3D
-          key={scene.cadrage}
-          className="h-[52vh] max-h-[560px] w-full"
-          vue="profil"
-          cadrage={scene.cadrage}
-          marge={1.25}
-          afficher={[...OS, ...scene.muscles, ...(scene.extra || [])]}
-          etats={etats}
-          posesInstantanees
-          poses={{ [scene.articulation]: angle, ...(scene.autre || {}) }}
-          contractions={{ [`${scene.bon}_d`]: prog, [`${autre}_d`]: 0 }}
-          onChoisir={(g) => repondre(g === 'tendon_achille' ? 'mollet' : g)}
-        />
-      </div>
 
       {!revele ? (
         <div className="grid grid-cols-2 gap-2">
@@ -151,6 +138,26 @@ export default function QuiTireView() {
         </Carte>
       )}
       <p className="text-center text-xs text-[#8A93B8]">Vrais os et vrais muscles, vus de profil (devant à droite).</p>
+          </>
+        }
+      >
+      <div className="rounded-3xl border border-white/10 bg-[#070B16]/75 tab:min-h-0 tab:flex-1">
+        <Corps3D
+          key={scene.cadrage}
+          className="h-[52vh] max-h-[560px] w-full tab:h-full tab:max-h-none"
+          vue="profil"
+          cadrage={scene.cadrage}
+          marge={1.25}
+          afficher={[...OS, ...scene.muscles, ...(scene.extra || [])]}
+          etats={etats}
+          posesInstantanees
+          poses={{ [scene.articulation]: angle, ...(scene.autre || {}) }}
+          contractions={{ [`${scene.bon}_d`]: prog, [`${autre}_d`]: 0 }}
+          onChoisir={(g) => repondre(g === 'tendon_achille' ? 'mollet' : g)}
+        />
+      </div>
+
+      </Duo>
     </CadreJeu>
   )
 }

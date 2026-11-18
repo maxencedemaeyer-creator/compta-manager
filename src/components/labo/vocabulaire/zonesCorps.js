@@ -12,7 +12,8 @@ const sym = (f) => [-1, 1].flatMap((s) => [].concat(f(s, s < 0 ? 'd' : 'g')))
 // Chaque zone : un point (a) ou un segment (a → b) et un rayon r.
 // priorite : les petites zones passent avant les grandes (les yeux avant la tête).
 export const ZONES = {
-  yeux: { fin: true, priorite: 0, zones: sym((s) => ({ a: [s * 0.031, 1.63, 0.07], r: 0.024 })) },
+  // orbites : centre relevé sur le vrai crâne (cavités des yeux, à ~1,614 m de haut)
+  yeux: { fin: true, priorite: 0, zones: sym((s) => ({ a: [s * 0.031, 1.614, 0.07], r: 0.02 })) },
   nez: { fin: true, priorite: 0, zones: [{ a: [0, 1.585, 0.08], r: 0.02 }] },
   oreille: { fin: true, priorite: 0, zones: sym((s) => ({ a: [s * 0.078, 1.6, -0.02], r: 0.03 })) },
   // les 5 doigts de chaque main (positions relevées sur les vrais os de la main)

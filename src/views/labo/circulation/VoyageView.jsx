@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Brain, Check, Footprints, Hand, Pause, Play, RotateCcw, Stamp, Video } from 'lucide-react'
+import { Brain, Check, Footprints, Gauge, Hand, Pause, Play, RotateCcw, Stamp, Video } from 'lucide-react'
 import { Bouton, Carte, Eclat } from '../../../components/labo/CadreJeu.jsx'
 import Circulation3D from '../../../components/labo/circulation/Circulation3D.jsx'
 import { TRAJETS, construireChemin, longueurs, pointSur } from '../../../components/labo/circulation/modele.js'
@@ -117,7 +117,16 @@ const REGIONS = {
 }
 const regionDe = (nom) => Object.entries(REGIONS).find(([, l]) => l.includes(nom))?.[0] || 'corps'
 
-const VITESSE = 0.42 // mètres par seconde dans le film (en vrai, le sang va jusqu'à ~0,4 m/s dans l'aorte)
+// Vitesse du film : volontairement lente, pour avoir le temps de lire chaque étape
+// (en vrai, le sang va jusqu'à ~0,4 m/s dans l'aorte). Trois allures au choix.
+const VITESSE = 0.13 // mètres de modèle par seconde
+const ALLURES = [
+  { nom: 'Lent', k: 0.6 },
+  { nom: 'Normal', k: 1 },
+  { nom: 'Rapide', k: 2 },
+]
+// Temps d'arrêt à chaque nouvelle étape : proportionnel à la longueur du texte à lire
+const pauseEtape = (nom) => Math.min(3.6, 0.9 + (LEGENDES[nom]?.[1]?.length || 20) / 34)
 
 export default function VoyageView() {
   const [outils, setOutils] = useState(null)
@@ -125,6 +134,7 @@ export default function VoyageView() {
   const [phase, setPhase] = useState('choix') // choix | voyage | questions | fin
   const [lecture, setLecture] = useState(true)
   const [suivre, setSuivre] = useState(true)
+  const [allure, setAllure] = useState(1)
   const [repere, setRepere] = useState(null)
   const [charge, setCharge] = useState({ o2: true, co2: false, n: false })
   const [distance, setDistance] = useState(0)
@@ -135,6 +145,8 @@ export default function VoyageView() {
   const anim = useRef({ d: 0, pause: 0, dernier: 0, iRep: -1, trace: 0 })
   const lectureRef = useRef(lecture)
   lectureRef.current = lecture
+  const allureRef = useRef(allure)
+  allureRef.current = allure
 
   const chemin = useMemo(() => {
     if (!outils || !dest) return null
@@ -156,8 +168,9 @@ export default function VoyageView() {
       const dt = a.dernier ? Math.min(0.05, (t - a.dernier) / 1000) : 0
       a.dernier = t
       if (lectureRef.current) {
-        if (a.pause > 0) a.pause -= dt
-        else a.d += dt * VITESSE
+        const k = ALLURES[allureRef.current].k
+        if (a.pause > 0) a.pause -= dt * k
+        else a.d += dt * VITESSE * k
       }
       const u = a.d / chemin.total
       const p = pointSur(chemin.points, chemin.cumul, u)
@@ -169,7 +182,7 @@ export default function VoyageView() {
         ch = chargement(nom, ch, dest)
         setCharge(ch)
         setRepere(nom)
-        if (['cerveau', 'main', 'pied', 'intestin', 'rein_g', 'poumon_g'].includes(nom)) a.pause = 2.2
+        a.pause = ['cerveau', 'main', 'pied', 'intestin', 'rein_g', 'poumon_g'].includes(nom) ? Math.max(3.4, pauseEtape(nom)) : pauseEtape(nom)
       }
       a.iRep = i
       outils.goutte('sang', p.toArray(), ch.o2 ? '#FF4D5E' : '#5B8CFF', 0.026)
@@ -287,12 +300,15 @@ export default function VoyageView() {
                 {leg[0]}
               </p>
               <p className="mt-1 min-h-[60px] text-[15px] leading-snug text-[#DDE2F7]">{leg[1]}</p>
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                <Bouton variante="secondaire" onClick={() => setLecture((l) => !l)}>
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                <Bouton variante="secondaire" className="!px-2 !text-[14px]" onClick={() => setLecture((l) => !l)}>
                   {lecture ? <Pause size={17} /> : <Play size={17} />} {lecture ? 'Pause' : 'Reprendre'}
                 </Bouton>
-                <Bouton variante="secondaire" onClick={() => setSuivre((x) => !x)}>
-                  <Video size={17} /> {suivre ? 'Caméra : suit' : 'Caméra : fixe'}
+                <Bouton variante="secondaire" className="!px-2 !text-[14px]" onClick={() => setAllure((x) => (x + 1) % ALLURES.length)}>
+                  <Gauge size={17} /> {ALLURES[allure].nom}
+                </Bouton>
+                <Bouton variante="secondaire" className="!px-2 !text-[14px]" onClick={() => setSuivre((x) => !x)}>
+                  <Video size={17} /> {suivre ? 'Caméra' : 'Fixe'}
                 </Bouton>
               </div>
             </Carte>

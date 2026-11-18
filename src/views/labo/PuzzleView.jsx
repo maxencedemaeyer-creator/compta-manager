@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Move3d, RotateCcw } from 'lucide-react'
-import CadreJeu, { Bouton, Carte, Eclat, melanger } from '../../components/labo/CadreJeu.jsx'
+import CadreJeu, { Bouton, Carte, Duo, Eclat, melanger } from '../../components/labo/CadreJeu.jsx'
 import Corps3D from '../../components/labo/Corps3D.jsx'
 import { NOMS, NOMS_ARTICULATIONS } from '../../components/labo/anatomie.js'
 
@@ -101,8 +101,11 @@ export default function PuzzleView() {
       : []
 
   return (
-    <CadreJeu code="A2" titre="Squelette explosé" attendus={[112, 113]} couleur="#9DFF8A">
+    <CadreJeu code="A2" titre="Squelette explosé" attendus={[112, 113]} couleur="#9DFF8A" ecran large>
       <Eclat message={eclat.message} sousTitre={erreurs === 0 ? 'Sans aucune erreur, bravo !' : `${erreurs} erreur(s)`} cle={eclat.cle} />
+      <Duo
+        commandes={
+          <>
       <div className="grid grid-cols-2 gap-2">
         {[1, 2].map((n) => (
           <button
@@ -135,9 +138,12 @@ export default function PuzzleView() {
         )}
       </Carte>
 
-      <div className="relative rounded-3xl border border-white/10 bg-[#070B16]/70">
+          </>
+        }
+      >
+      <div className="relative rounded-3xl border border-white/10 bg-[#070B16]/70 tab:min-h-0 tab:flex-1">
         <Corps3D
-          className="h-[64vh] max-h-[680px] w-full"
+          className="h-[64vh] max-h-[680px] w-full tab:h-full tab:max-h-none"
           afficher={AFFICHES}
           etats={etats}
           decalages={decalages}
@@ -155,7 +161,8 @@ export default function PuzzleView() {
           <Move3d size={16} /> {tourner ? 'Rotation activée' : 'Faire tourner'}
         </button>
       </div>
-      <p className="text-center text-xs text-[#8A93B8]">Vrai squelette humain en 3D, vu de face : la droite de la personne est à gauche de l’écran.</p>
+      <p className="text-center text-xs text-[#8A93B8] tab:hidden">Vrai squelette humain en 3D, vu de face : la droite de la personne est à gauche de l’écran.</p>
+      </Duo>
     </CadreJeu>
   )
 }

@@ -681,7 +681,7 @@ export default function MiroirView() {
       {video}
       <div className="labo relative min-h-[100dvh] overflow-hidden">
         <DecorLabo flash={false} />
-        <div className="relative mx-auto flex min-h-[100dvh] max-w-xl flex-col gap-5 px-5 pb-10 pt-[max(16px,env(safe-area-inset-top))]">
+        <div className="relative mx-auto flex min-h-[100dvh] max-w-xl flex-col gap-5 px-5 pb-10 tab:gap-3 tab:pb-4 pt-[max(16px,env(safe-area-inset-top))]">
           <header className="flex items-center gap-3">
             <Link to={retour} aria-label="Retour au labo" className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/15">
               <ArrowLeft size={20} strokeWidth={2.5} />
@@ -693,7 +693,7 @@ export default function MiroirView() {
             </div>
           </header>
 
-          <div className="relative mx-auto mt-4 flex h-48 w-48 items-center justify-center">
+          <div className="relative mx-auto mt-4 flex h-48 w-48 tab:mt-0 tab:h-32 tab:w-32 items-center justify-center">
             <span className="labo-pulse absolute inset-0 rounded-full" style={{ background: 'radial-gradient(circle, rgba(111,239,255,.35), transparent 65%)' }} />
             <ScanFace size={110} strokeWidth={1.2} className="relative text-[#6FEFFF]" />
           </div>

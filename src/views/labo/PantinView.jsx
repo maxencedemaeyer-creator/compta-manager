@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Music, RotateCcw } from 'lucide-react'
-import CadreJeu, { Bouton, Carte, Eclat, melanger } from '../../components/labo/CadreJeu.jsx'
+import CadreJeu, { Bouton, Carte, Eclat, melanger, Duo } from '../../components/labo/CadreJeu.jsx'
 import Corps3D from '../../components/labo/Corps3D.jsx'
 import { NOMS_ARTICULATIONS } from '../../components/labo/anatomie.js'
 
@@ -100,8 +100,11 @@ export default function PantinView() {
   }
 
   return (
-    <CadreJeu code="A5" titre="Le pantin du savant fou" attendus={[113, 120]} couleur="#FF8AD8">
+    <CadreJeu code="A5" titre="Le pantin du savant fou" attendus={[113, 120]} couleur="#FF8AD8" ecran large>
       <Eclat message={eclat.message} cle={eclat.cle} couleur="#FF8AD8" />
+      <Duo
+        commandes={
+          <>
       <Carte couleur="rgba(255,138,216,.45)">
         {etape ? (
           <>
@@ -137,9 +140,12 @@ export default function PantinView() {
         )}
       </Carte>
 
-      <div className="rounded-3xl border border-white/10 bg-[#070B16]/70">
+          </>
+        }
+      >
+      <div className="rounded-3xl border border-white/10 bg-[#070B16]/70 tab:min-h-0 tab:flex-1">
         <Corps3D
-          className="h-[62vh] max-h-[660px] w-full"
+          className="h-[62vh] max-h-[660px] w-full tab:h-full tab:max-h-none"
           marge={danse ? 1.35 : 1.08}
           etats={etats}
           poses={poses}
@@ -150,6 +156,7 @@ export default function PantinView() {
           onPret={setOutils}
         />
       </div>
+      </Duo>
     </CadreJeu>
   )
 }

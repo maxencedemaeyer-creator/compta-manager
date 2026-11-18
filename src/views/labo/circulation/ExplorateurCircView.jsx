@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Bone, Brain, Droplet, HeartPulse, Waves } from 'lucide-react'
-import { Carte } from '../../../components/labo/CadreJeu.jsx'
+import { Carte, Duo } from '../../../components/labo/CadreJeu.jsx'
 import Circulation3D from '../../../components/labo/circulation/Circulation3D.jsx'
 import { COULEUR_PART, COULEUR_REVIENT, NOMS, fluxSens, sangRiche } from '../../../components/labo/circulation/modele.js'
 import { FICHES, NATURES } from '../../../components/labo/circulation/fiches.js'
@@ -36,7 +36,10 @@ export default function ExplorateurCircView() {
   const riche = choisi ? sangRiche(choisi.groupe, choisi.nature) : null
 
   return (
-    <PageCirc code="" titre="Le système circulatoire en 3D" attendus={[66, 70]} large>
+    <PageCirc code="" titre="Le système circulatoire en 3D" attendus={[66, 70]} large ecran>
+      <Duo
+        commandes={
+          <>
       <div className="flex flex-wrap gap-1.5">
         {CALQUES.map(([c, Icone, nom]) => {
           const actif = calques.includes(c)
@@ -108,9 +111,16 @@ export default function ExplorateurCircView() {
         )}
       </Carte>
 
-      <div className="rounded-3xl border border-white/10 bg-[#070B16]/75">
+      <p className="text-center text-xs text-[#8A93B8]">
+        Il y a environ 100 000 km de vaisseaux sanguins dans un corps adulte : le modèle montre les plus gros. Couleurs : <span style={{ color: ROUGE_SANG }}>rouge</span> /{' '}
+        <span style={{ color: BLEU_SANG }}>bleu</span>, comme dans les livres de sciences (en vrai, le sang est toujours rouge, plus ou moins foncé).
+      </p>
+          </>
+        }
+      >
+      <div className="rounded-3xl border border-white/10 bg-[#070B16]/75 tab:min-h-0 tab:flex-1">
         <Circulation3D
-          className="h-[68vh] max-h-[760px] w-full"
+          className="h-[68vh] max-h-[760px] w-full tab:h-full tab:max-h-none"
           rotation
           afficher={calques}
           etats={{ ...etatsSens, ...(choisi ? { [`${choisi.groupe}_${choisi.cote}`]: 'actif' } : {}) }}
@@ -121,10 +131,7 @@ export default function ExplorateurCircView() {
           onChoisir={(groupe, cote, nature) => setChoisi(groupe ? { groupe, cote, nature } : null)}
         />
       </div>
-      <p className="text-center text-xs text-[#8A93B8]">
-        Il y a environ 100 000 km de vaisseaux sanguins dans un corps adulte : le modèle montre les plus gros. Couleurs : <span style={{ color: ROUGE_SANG }}>rouge</span> /{' '}
-        <span style={{ color: BLEU_SANG }}>bleu</span>, comme dans les livres de sciences (en vrai, le sang est toujours rouge, plus ou moins foncé).
-      </p>
+      </Duo>
     </PageCirc>
   )
 }

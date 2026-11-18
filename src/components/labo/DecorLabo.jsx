@@ -6,7 +6,7 @@
 
 // Polices du labo (chargées une seule fois ; si le réseau de l'école bloque
 // Google Fonts, le labo s'affiche quand même avec les polices du système)
-const POLICES = 'https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@500&family=Lilita+One&display=swap'
+const POLICES = 'https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@500&family=Lilita+One&family=Fredoka:wght@500;600;700&display=swap'
 if (typeof document !== 'undefined' && !document.getElementById('polices-labo')) {
   const lien = document.createElement('link')
   lien.id = 'polices-labo'

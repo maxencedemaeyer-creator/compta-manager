@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ArrowRight, Footprints, RotateCcw, Shield, Building2 } from 'lucide-react'
-import CadreJeu, { Bouton, Carte, Eclat } from '../../components/labo/CadreJeu.jsx'
+import CadreJeu, { Bouton, Carte, Eclat, Duo } from '../../components/labo/CadreJeu.jsx'
 import Corps3D from '../../components/labo/Corps3D.jsx'
 import { NOMS } from '../../components/labo/anatomie.js'
 
@@ -78,8 +78,11 @@ export default function ProtectionView() {
   }
 
   return (
-    <CadreJeu code="A6" titre="Mission protection" attendus={[115]} couleur="#7CB8FF" droite={<span className="labo-mono text-lg text-[#7CB8FF]">{score}</span>}>
+    <CadreJeu code="A6" titre="Mission protection" attendus={[115]} couleur="#7CB8FF" droite={<span className="labo-mono text-lg text-[#7CB8FF]">{score}</span>} ecran large>
       <Eclat message={eclat.message} cle={eclat.cle} couleur="#7CB8FF" />
+      <Duo
+        commandes={
+          <>
       <Carte couleur="rgba(124,184,255,.45)">
         <p className="labo-mono text-[11px] text-[#7CB8FF]">
           OS {index + 1} / {CAS.length}
@@ -87,10 +90,6 @@ export default function ProtectionView() {
         <p className="labo-titre mt-1 text-2xl font-black text-white">{NOMS[cas.os]}</p>
         <p className="mt-1 text-sm text-[#B9C1E3]">Quelle(s) mission(s) pour cet os ? Il peut y en avoir plusieurs.</p>
       </Carte>
-      <div className="rounded-3xl border border-white/10 bg-[#070B16]/70">
-        <Corps3D className="h-[34vh] w-full" etats={{ [cas.os]: 'actif', ...(cas.os === 'cotes' ? { cartilages: 'actif' } : {}) }} rotation tourner={!valide} marge={1.05} />
-      </div>
-
       <div className="grid gap-2">
         {Object.entries(FONCTIONS).map(([id, f]) => {
           const actif = choix.includes(id)
@@ -131,6 +130,14 @@ export default function ProtectionView() {
           </Bouton>
         </Carte>
       )}
+          </>
+        }
+      >
+      <div className="rounded-3xl border border-white/10 bg-[#070B16]/70 tab:min-h-0 tab:flex-1">
+        <Corps3D className="h-[34vh] w-full tab:h-full" etats={{ [cas.os]: 'actif', ...(cas.os === 'cotes' ? { cartilages: 'actif' } : {}) }} rotation tourner={!valide} marge={1.05} />
+      </div>
+
+      </Duo>
     </CadreJeu>
   )
 }

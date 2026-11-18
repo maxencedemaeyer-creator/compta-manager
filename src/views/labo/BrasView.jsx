@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ArrowRight, Check, Eye, Lightbulb, RotateCcw, Wand2 } from 'lucide-react'
-import CadreJeu, { Bouton, Carte, Eclat } from '../../components/labo/CadreJeu.jsx'
+import CadreJeu, { Bouton, Carte, Eclat, Duo } from '../../components/labo/CadreJeu.jsx'
 import Corps3D from '../../components/labo/Corps3D.jsx'
 
 // =============================================================
@@ -233,9 +233,12 @@ export default function BrasView() {
   }
 
   return (
-    <CadreJeu code="A3" titre="Le bras mécanique" attendus={[111, 117, 118, 120]} couleur="#C9A3FF">
+    <CadreJeu code="A3" titre="Le bras mécanique" attendus={[111, 117, 118, 120]} couleur="#C9A3FF" ecran large>
       <Eclat message={eclat.message} sousTitre={eclat.sous} cle={eclat.cle} couleur="#C9A3FF" />
 
+      <Duo
+        commandes={
+          <>
       <div className="flex gap-1.5">
         {DEFIS.map((x, i) => (
           <div key={x.id} className="h-1.5 flex-1 rounded-full" style={{ background: i < defi || (i === defi && reussi) ? '#9DFF8A' : i === defi ? '#C9A3FF' : 'rgba(232,236,255,.15)' }} />
@@ -248,25 +251,6 @@ export default function BrasView() {
         <p className="labo-titre mt-1 text-xl font-bold text-white">{d.titre}</p>
         <p className="mt-1 text-sm text-[#B9C1E3]">{d.consigne}</p>
       </Carte>
-
-      <div className="relative rounded-3xl border border-white/10 bg-[#070B16]/75">
-        <Corps3D
-          className="h-[46vh] max-h-[500px] w-full"
-          vue="profil"
-          cadrage="bras"
-          marge={1.3}
-          afficher={['omoplate', 'clavicule', 'humerus', 'radius', 'cubitus', 'main', ...(vraisMuscles ? ['biceps', 'triceps'] : [])]}
-          etats={vraisMuscles ? { biceps: flechisseur ? 'contracte' : 'attenue', triceps: extenseur ? 'contracte' : 'attenue' } : {}}
-          poses={{ coude_d: phi }}
-          contractions={vraisMuscles ? { biceps_d: flechisseur ? contraction : 0, triceps_d: extenseur ? contraction : 0 } : {}}
-          marqueurs={marqueurs}
-          tubes={vraisMuscles ? [] : tubes}
-          onMarqueur={toucher}
-          onPret={setOutils}
-          etiquettes={etiquettes}
-        />
-        <span className="labo-mono absolute right-3 top-3 text-[11px] text-[#8A93B8]">vue de profil · devant →</span>
-      </div>
 
       <Carte couleur={reussi ? 'rgba(157,255,138,.5)' : 'rgba(201,163,255,.4)'}>
         {reussi ? (
@@ -344,6 +328,29 @@ export default function BrasView() {
           <Check size={14} /> Dernier défi réussi
         </p>
       )}
+          </>
+        }
+      >
+      <div className="relative rounded-3xl border border-white/10 bg-[#070B16]/75 tab:min-h-0 tab:flex-1">
+        <Corps3D
+          className="h-[46vh] max-h-[500px] w-full tab:h-full tab:max-h-none"
+          vue="profil"
+          cadrage="bras"
+          marge={1.3}
+          afficher={['omoplate', 'clavicule', 'humerus', 'radius', 'cubitus', 'main', ...(vraisMuscles ? ['biceps', 'triceps'] : [])]}
+          etats={vraisMuscles ? { biceps: flechisseur ? 'contracte' : 'attenue', triceps: extenseur ? 'contracte' : 'attenue' } : {}}
+          poses={{ coude_d: phi }}
+          contractions={vraisMuscles ? { biceps_d: flechisseur ? contraction : 0, triceps_d: extenseur ? contraction : 0 } : {}}
+          marqueurs={marqueurs}
+          tubes={vraisMuscles ? [] : tubes}
+          onMarqueur={toucher}
+          onPret={setOutils}
+          etiquettes={etiquettes}
+        />
+        <span className="labo-mono absolute right-3 top-3 text-[11px] text-[#8A93B8]">vue de profil · devant →</span>
+      </div>
+
+      </Duo>
     </CadreJeu>
   )
 }
