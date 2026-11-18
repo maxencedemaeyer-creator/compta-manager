@@ -2,7 +2,10 @@
 //  Décor du labo de sciences : grille de molécules, halos,
 //  fumée qui monte, et la fiole Erlenmeyer qui tremble puis
 //  explose toutes les 7 secondes.
+//  fond="espace" : ciel étoilé avec galaxies par-dessus le décor
+//  (expérience « L'espace », voir espace/FondEspace.jsx).
 // =============================================================
+import FondEspace from './espace/FondEspace.jsx'
 
 // Polices du labo (chargées une seule fois ; si le réseau de l'école bloque
 // Google Fonts, le labo s'affiche quand même avec les polices du système)
@@ -23,7 +26,7 @@ const FUMEES = [
   { sx: '-20px', left: '52%', taille: 200, couleur: '124,255,107', alpha: 0.28, delai: '1.5s' },
 ]
 
-export function DecorLabo({ flash = true, rgb = '124,255,107', rgb2 = '181,123,255' }) {
+export function DecorLabo({ flash = true, rgb = '124,255,107', rgb2 = '181,123,255', fond }) {
   return (
     <div aria-hidden="true" className="pointer-events-none fixed inset-0 overflow-hidden">
       <div
@@ -34,7 +37,8 @@ export function DecorLabo({ flash = true, rgb = '124,255,107', rgb2 = '181,123,2
         className="labo-pulse absolute -right-40 top-64 h-[420px] w-[420px] rounded-full"
         style={{ background: `radial-gradient(circle, rgba(${rgb2},.22), rgba(${rgb2},0) 65%)`, animationDelay: '1.3s' }}
       />
-      <div className="labo-hex absolute inset-0" />
+      {fond !== 'espace' && <div className="labo-hex absolute inset-0" />}
+      {fond === 'espace' && <FondEspace />}
       {FUMEES.map((f) => ({ ...f, couleur: f.couleur === "124,255,107" ? rgb : f.couleur === "181,123,255" ? rgb2 : f.couleur })).map((f, i) => (
         <span
           key={i}

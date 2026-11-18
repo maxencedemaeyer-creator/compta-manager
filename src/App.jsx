@@ -73,6 +73,7 @@ const LABO_JEUX = {
   'circulation/pompe': lazy(() => import('./views/labo/circulation/PompeView.jsx')),
   'circulation/animaux': lazy(() => import('./views/labo/circulation/AnimauxView.jsx')),
   'circulation/defi': lazy(() => import('./views/labo/circulation/DefiCircView.jsx')),
+  'espace/systeme': lazy(() => import('./views/labo/espace/SystemeView.jsx')),
 }
 
 function Labo({ children }) {

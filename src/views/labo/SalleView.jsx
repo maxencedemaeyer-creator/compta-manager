@@ -42,7 +42,7 @@ export default function SalleView() {
 
   return (
     <div className="labo relative min-h-[100dvh] overflow-x-hidden">
-      <DecorLabo rgb={e.rgb} rgb2={e.rgb2} flash={false} />
+      <DecorLabo rgb={e.rgb} rgb2={e.rgb2} flash={false} fond={e.fond} />
       <div className="relative mx-auto flex max-w-5xl flex-col gap-5 px-5 pb-12 pt-[max(16px,env(safe-area-inset-top))]">
         <header className="flex items-center gap-3">
           <Link to="/labo" aria-label="Retour au hall du labo" className="flex h-11 w-11 flex-none items-center justify-center rounded-2xl border border-white/15 text-[#E8ECFF] active:scale-95">

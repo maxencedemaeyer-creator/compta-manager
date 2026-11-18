@@ -119,3 +119,16 @@
 .elec-defile { animation: elec-defile 1.6s linear infinite; }
 .elec-membrane { transform-box: view-box; animation: elec-membrane .18s ease-in-out infinite; }
 .elec-note { animation: elec-note 1.8s ease-out infinite; }
+
+/* ---------- Ciel étoilé de l'expérience « L'espace » (FondEspace.jsx) ---------- */
+@keyframes espace-scintille { 0%, 100% { opacity: .2; transform: scale(.7); } 50% { opacity: 1; transform: scale(1.25); } }
+@keyframes espace-galaxie { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes espace-filante {
+  0%, 82% { transform: translate(0, 0) rotate(28deg); opacity: 0; }
+  84% { opacity: 1; }
+  93%, 100% { transform: translate(260px, 150px) rotate(28deg); opacity: 0; }
+}
+.espace-scintille { animation: espace-scintille 3s ease-in-out infinite; }
+.espace-galaxie { animation: espace-galaxie 300s linear infinite; }
+.espace-filante { width: 90px; height: 2px; border-radius: 2px; background: linear-gradient(90deg, rgba(255,255,255,0), #fff); box-shadow: 0 0 8px #fff; animation: espace-filante 13s linear infinite; opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .espace-galaxie, .espace-filante, .espace-scintille { animation: none; } }

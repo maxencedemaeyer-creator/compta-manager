@@ -58,6 +58,7 @@ export default function PiedLabo({ className = '' }) {
                   <li>Rythmes cardiaques des animaux (au repos, ordres de grandeur) : manuels de physiologie animale ; baleine bleue : Goldbogen et al., PNAS, 2019 ; musaraigne étrusque : Jürgens et al., 1996.</li>
                   <li>Radiographies : jeu de données FracAtlas (Abedeen et al., Scientific Data, 2023), licence CC BY 4.0.</li>
                   <li>Détection du corps et des mains : MediaPipe (Google), licence Apache 2.0.</li>
+                  <li>Textures des astres (expérience « L’espace ») : Terre, carte « Blue Marble » de la NASA ; lumières des villes et Lune : NASA ; Mercure, Vénus, Mars, Jupiter, Saturne, Uranus, Neptune et Soleil : cartes de Planet Pixel Emporium (J. Hastings-Trew) d’après des images NASA/JPL/USGS, usage non commercial. Données des planètes : NASA ; définitions : Union astronomique internationale.</li>
                   <li>Affichage 3D : three.js (licence MIT). Icônes : Lucide (licence ISC).</li>
                 </ul>
               </div>

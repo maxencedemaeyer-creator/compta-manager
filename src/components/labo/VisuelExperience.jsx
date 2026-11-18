@@ -1,5 +1,7 @@
 import Corps3D from './Corps3D.jsx'
 import Circulation3D from './circulation/Circulation3D.jsx'
+import Scene3D from './espace/Scene3D.jsx'
+import { ambiance, creerAstre, creerTerre, deg } from './espace/outils3d.js'
 
 // =============================================================
 //  Le visuel animé de chaque expérience (hall et salle) :
@@ -9,6 +11,7 @@ import Circulation3D from './circulation/Circulation3D.jsx'
 export default function VisuelExperience({ type, className = '' }) {
   if (type === 'squelette') return <Corps3D className={`pointer-events-none ${className}`} tourner credit={false} marge={1.02} />
   if (type === 'ampoule') return <Ampoule className={className} />
+  if (type === 'espace') return <Espace className={className} />
   if (type === 'coeur')
     return (
       <Circulation3D
@@ -75,4 +78,31 @@ function Ampoule({ className }) {
       </svg>
     </div>
   )
+}
+
+// Visuel de l'expérience « L'espace » : la Terre (jour / nuit, nuages) qui tourne, la Lune autour
+function Espace({ className }) {
+  return <Scene3D className={`pointer-events-none ${className}`} construire={construireEspace} position={[0, 0.6, 4.6]} fov={34} orbite={{ rotation: false, zoom: false }} />
+}
+
+function construireEspace(ctx) {
+  const { THREE, scene } = ctx
+  const soleil = new THREE.Vector3(8, 3, 6)
+  ambiance(scene, 0.1)
+  const lumiere = new THREE.PointLight('#FFF3E0', 3.4, 0, 0)
+  lumiere.position.copy(soleil)
+  scene.add(lumiere)
+  const terre = creerTerre(1, soleil)
+  terre.rotation.z = deg(23.4)
+  scene.add(terre)
+  const lune = creerAstre('lune', 0.27, { sunPos: soleil })
+  scene.add(lune)
+  return {
+    maj(dt, t) {
+      terre.userData.surface.rotation.y += dt * 0.35
+      terre.userData.nuages.rotation.y += dt * 0.4
+      lune.position.set(Math.cos(t * 0.35) * 2.1, 0.25, -Math.sin(t * 0.35) * 2.1)
+      lune.rotation.y = t * 0.35 + Math.PI
+    },
+  }
 }

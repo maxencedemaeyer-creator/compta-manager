@@ -27,10 +27,10 @@ export function useRetourSalle() {
 export default function CadreJeu({ code, titre, attendus = [], couleur = '#7CFF6B', droite, children, large = false, ecran = false, rgb, rgb2 }) {
   const retour = useRetourSalle()
   const { pathname } = useLocation()
-  const { activite } = activiteDepuisAdresse(pathname)
+  const { activite, experience } = activiteDepuisAdresse(pathname)
   return (
     <div className={`labo relative min-h-[100dvh] overflow-x-hidden ${ecran ? 'tab:h-[100dvh] tab:overflow-hidden' : ''}`}>
-      <DecorLabo flash={false} rgb={rgb} rgb2={rgb2} />
+      <DecorLabo flash={false} rgb={rgb} rgb2={rgb2} fond={experience?.fond} />
       <div
         className={`relative mx-auto flex min-h-[100dvh] flex-col gap-4 px-4 pb-10 pt-[max(16px,env(safe-area-inset-top))] ${large ? 'max-w-5xl' : 'max-w-xl'} ${
           ecran ? `tab:h-[100dvh] tab:min-h-0 tab:gap-2 tab:px-5 tab:pb-1 tab:pt-[max(8px,env(safe-area-inset-top))] ${large ? 'tab:max-w-[1500px]' : ''}` : ''
@@ -70,14 +70,15 @@ export default function CadreJeu({ code, titre, attendus = [], couleur = '#7CFF6
 //  - children = la zone de jeu (3D, dessin…) : elle occupe toute la hauteur à gauche ;
 //    elle doit utiliser « tab:h-full » (le parent a une hauteur fixée par la grille).
 //  - commandes = consignes, boutons, scores : colonne de droite (elle défile à l'intérieur si besoin).
-//  Sur téléphone / portrait : les commandes puis la zone de jeu, l'une sous l'autre, comme avant.
+//  Sur téléphone / portrait : les commandes puis la zone de jeu, l'une sous l'autre, comme avant
+//  (visuelDabord : la zone de jeu d'abord, puis les commandes — utile pour les scènes 3D).
 //  À utiliser avec <CadreJeu ecran large>.
-export function Duo({ commandes, children, droite = 380 }) {
+export function Duo({ commandes, children, droite = 380, visuelDabord = false }) {
   const cols = { 340: 'tab:grid-cols-[minmax(0,1fr)_340px]', 380: 'tab:grid-cols-[minmax(0,1fr)_380px]', 440: 'tab:grid-cols-[minmax(0,1fr)_440px]' }[droite] || 'tab:grid-cols-[minmax(0,1fr)_380px]'
   return (
     <div className={`flex flex-col gap-3 tab:grid tab:min-h-0 tab:flex-1 tab:grid-rows-[minmax(0,1fr)] tab:gap-3 ${cols}`}>
-      <div className="flex flex-col gap-3 tab:col-start-2 tab:row-start-1 tab:min-h-0 tab:overflow-y-auto">{commandes}</div>
-      <div className="flex flex-col gap-3 tab:col-start-1 tab:row-start-1 tab:min-h-0">{children}</div>
+      <div className={`flex flex-col gap-3 tab:col-start-2 tab:row-start-1 tab:min-h-0 tab:overflow-y-auto ${visuelDabord ? 'order-2 tab:order-none' : ''}`}>{commandes}</div>
+      <div className={`flex flex-col gap-3 tab:col-start-1 tab:row-start-1 tab:min-h-0 ${visuelDabord ? 'order-1 tab:order-none' : ''}`}>{children}</div>
     </div>
   )
 }
