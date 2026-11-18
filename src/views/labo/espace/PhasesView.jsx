@@ -24,6 +24,19 @@ const TEXTES = {
 }
 const VITESSE = { lent: 20, normal: 9, rapide: 4 } // secondes pour un cycle
 const Rm = 3.5
+// Orbite de la Lune : inclinée de 5,1° sur le plan Terre–Soleil. La ligne des nœuds (là où la Lune traverse ce plan) n'est PAS alignée
+// avec la direction du Soleil (elle ne l'est que deux fois par an, pendant les saisons d'éclipses) : ici elle fait 60° avec elle.
+// → à la nouvelle et à la pleine Lune, la Lune passe presque toujours au-dessus ou en dessous de la ligne Soleil–Terre.
+// Le DESSIN exagère l'inclinaison (×3) pour qu'on la voie ; les PHASES, elles, sont toujours calculées avec la vraie inclinaison (voir apresRendu).
+const INCL_LUNE = 5.1
+const NOEUD = 60
+const EXAGERATION = 3
+const latitudeLune = (eDeg) => INCL_LUNE * Math.sin(deg(eDeg - NOEUD)) // latitude de la Lune au-dessus/en dessous du plan (degrés)
+function positionLune(eDeg, k, out) {
+  const a = deg(eDeg)
+  const b = deg(latitudeLune(eDeg) * k)
+  return out.set(-Math.cos(a) * Math.cos(b) * Rm, Math.sin(b) * Rm, Math.sin(a) * Math.cos(b) * Rm)
+}
 
 // Petite icône de phase (SVG), vue de l'hémisphère Nord : croissant qui grossit = éclairé à droite
 export function IconePhase({ e, taille = 44, couleur = '#FFE9B8' }) {
@@ -69,8 +82,23 @@ function construire(ctx) {
   const terre = creerTerre(1, soleilPos, { nuages: true })
   terre.rotation.x = deg(23.4)
   scene.add(terre)
-  const ring = orbite(Rm, '#C9A3FF', 0.5)
+  const ring = orbite(Rm, '#C9A3FF', 0.5, 240)
+  {
+    const pa = ring.geometry.attributes.position
+    const tmp = new THREE.Vector3()
+    for (let i = 0; i < pa.count; i++) {
+      positionLune((i / pa.count) * 360, EXAGERATION, tmp)
+      pa.setXYZ(i, tmp.x, tmp.y, tmp.z)
+    }
+    pa.needsUpdate = true
+  }
   scene.add(ring)
+  // plan de l'orbite de la Terre (disque très pâle) + petit trait qui relie la Lune à ce plan
+  const plan = new THREE.Mesh(new THREE.CircleGeometry(Rm + 0.6, 64), new THREE.MeshBasicMaterial({ color: '#8FA0FF', transparent: true, opacity: 0.07, side: THREE.DoubleSide, depthWrite: false }))
+  plan.rotation.x = -Math.PI / 2
+  scene.add(plan)
+  const fil = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]), new THREE.LineBasicMaterial({ color: '#FFE9B8', transparent: true, opacity: 0.55 }))
+  scene.add(fil)
   const lune = creerAstre('lune', 0.36, { sunPos: soleilPos })
   scene.add(lune)
   // point orange : la face de la Lune tournée vers la Terre (toujours la même)
@@ -84,14 +112,31 @@ function construire(ctx) {
   const v = new THREE.Vector3()
 
   const cam2 = new THREE.PerspectiveCamera(13, 1, 0.5, 100)
+  const vers = new THREE.Vector3()
+  const base = new THREE.Vector3()
+  const qBase = new THREE.Quaternion()
+  const qCorr = new THREE.Quaternion()
+  // la Lune montre toujours la même face à la Terre (point orange), nord vers le haut
+  function orienter(a) {
+    qBase.setFromAxisAngle(new THREE.Vector3(0, 1, 0), a)
+    base.set(Math.cos(a), 0, -Math.sin(a))
+    vers.copy(lune.position).negate().normalize()
+    qCorr.setFromUnitVectors(base, vers)
+    lune.quaternion.copy(qCorr).multiply(qBase)
+  }
+  const lunePosDessin = new THREE.Vector3()
 
   return {
     maj(dt, t) {
       const e = ctx.d().etat
       if (e.joue) e.e = (e.e + (dt * 360) / VITESSE[e.vitesse]) % 360
       const a = deg(e.e)
-      lune.position.set(-Math.cos(a) * Rm, 0, Math.sin(a) * Rm)
-      lune.rotation.y = a
+      positionLune(e.e, EXAGERATION, lune.position)
+      orienter(a)
+      const g = fil.geometry.attributes.position
+      g.setXYZ(0, lune.position.x, lune.position.y, lune.position.z)
+      g.setXYZ(1, lune.position.x, 0, lune.position.z)
+      g.needsUpdate = true
       terre.userData.surface.rotation.y = t * 0.25
       if (terre.userData.nuages) terre.userData.nuages.rotation.y = t * 0.27
       etiT.place(v.set(0, -1.5, 0), 0, 0)
@@ -110,12 +155,18 @@ function construire(ctx) {
       const x = ir.left - cr.left
       const y = cr.bottom - ir.bottom
       // caméra posée sur la Terre, qui regarde la Lune (hémisphère Nord : le haut = le Nord)
+      // vue depuis la Terre : la Lune est placée à sa VRAIE position (inclinaison réelle de 5,1°) pour que la phase soit exacte
+      lunePosDessin.copy(lune.position)
+      positionLune(d.etat.e, 1, lune.position)
+      orienter(deg(d.etat.e))
       cam2.position.set(0, 0, 0)
       cam2.up.set(0, 1, 0)
       cam2.lookAt(lune.position)
       cam2.aspect = w / h
       cam2.updateProjectionMatrix()
       terre.visible = false
+      plan.visible = false
+      fil.visible = false
       ring.visible = false
       rayons.visible = false
       lueur.visible = false
@@ -130,7 +181,11 @@ function construire(ctx) {
       renderer.setScissorTest(false)
       renderer.setViewport(0, 0, cr.width, cr.height)
       renderer.setClearColor(0x000000, 0)
+      lune.position.copy(lunePosDessin)
+      orienter(deg(d.etat.e))
       terre.visible = true
+      plan.visible = true
+      fil.visible = true
       ring.visible = true
       rayons.visible = true
       lueur.visible = true
@@ -239,7 +294,7 @@ export default function PhasesView() {
                     <Vitesses valeur={vitesse} onChange={(v) => { etat.current.vitesse = v; setVitesse(v) }} couleur={ORANGE} />
                   </div>
                 </div>
-                <p className="labo-mono text-[10px] leading-snug text-[#8A93B8]">Le Soleil éclaire toujours la moitié de la Lune. Le point orange montre qu’on voit toujours la même face. Il faut 29,5 jours pour revenir à la même phase.</p>
+                <p className="labo-mono text-[10px] leading-snug text-[#8A93B8]">Le Soleil éclaire toujours la moitié de la Lune. Le point orange montre qu’on voit toujours la même face. Il faut 29,5 jours pour revenir à la même phase. L’orbite de la Lune est un peu inclinée (5° en vrai) : à la nouvelle Lune, elle passe presque toujours au-dessus ou en dessous du Soleil, donc pas d’éclipse chaque mois.</p>
               </>
             )}
             {jeu && !termine && q && (
@@ -280,7 +335,7 @@ export default function PhasesView() {
         }
       >
         <Vue3D construire={construire} donnees={donnees.current} position={[0, 7.2, 7.4]} fov={42} orbite={{ min: 6, max: 16 }}>
-          <PasEchelle texte="Pas à l’échelle · vue du dessus" />
+          <PasEchelle texte="Pas à l’échelle · inclinaison de l’orbite exagérée" />
           {(!jeu || reponse != null || termine) && (
             <div ref={encart} className="pointer-events-none absolute bottom-3 right-3 aspect-square w-[32%] max-w-[220px] min-w-[110px] rounded-2xl border-2" style={{ borderColor: 'rgba(255,233,184,.7)' }}>
               <span className="labo-jeu absolute left-2 top-1.5 text-[12px] text-[#FFE9B8]">Vue depuis la Terre</span>

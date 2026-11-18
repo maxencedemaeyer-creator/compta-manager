@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { Calendar, RefreshCcw, Orbit, Sun as SunIcon } from 'lucide-react'
 import { Carte, Duo } from '../../../components/labo/CadreJeu.jsx'
-import { construireOrrery } from '../../../components/labo/espace/orrery.js'
+import { construireOrrery, distanceSoleil, vitesseOrbitale } from '../../../components/labo/espace/orrery.js'
 import { dateDuJour, nombre, ORANGE, OR } from '../../../components/labo/espace/donnees.js'
 import { BoutonLecture, Curseur, Onglets, PageEspace, PasEchelle, Vitesses, Vue3D, useLecture } from './commun.jsx'
 
@@ -15,7 +15,7 @@ const JOUR_SEC = { lent: 12, normal: 7, rapide: 3.5 } // secondes pour un jour
 
 function construire(ctx) {
   const { THREE } = ctx
-  const o = construireOrrery(ctx, { R: 5, rTerre: 0.62, rSoleil: 0.8, mois: true, trace: true, axeVisible: true })
+  const o = construireOrrery(ctx, { R: 5, rTerre: 0.62, rSoleil: 0.8, mois: true, fetes: true, trace: true, axeVisible: true, ellipse: true })
   // un drapeau sur la Terre (Bruxelles) pour voir les tours
   const surface = o.terre.userData.surface
   const phi = (50.85 * Math.PI) / 180
@@ -34,6 +34,13 @@ function construire(ctx) {
   return {
     maj(dt, t) {
       const e = ctx.d().etat
+      // l'orbite se déforme doucement entre « vraie » (e = 0,0167) et « exagérée » (e = 0,2)
+      if (Math.abs(e.exc - e.excCible) > 0.0003 || !e.dessinee) {
+        e.exc += (e.excCible - e.exc) * Math.min(1, dt * 5)
+        if (Math.abs(e.exc - e.excCible) <= 0.0003) e.exc = e.excCible
+        o.reglerExcentricite(e.exc)
+        e.dessinee = true
+      }
       if (e.joue) e.total += e.mode === 'an' ? (dt * 365.25) / AN_SEC[e.vitesse] : dt / JOUR_SEC[e.vitesse]
       const jour = e.total % 365.25
       const spin = e.mode === 'an' ? jour * 2 * Math.PI * 0.09 : e.total * 2 * Math.PI
@@ -43,15 +50,17 @@ function construire(ctx) {
 }
 
 export default function RevolutionView() {
-  const etat = useRef({ total: 171, joue: true, mode: 'an', vitesse: 'normal' })
+  const etat = useRef({ total: 171, joue: true, mode: 'an', vitesse: 'normal', exc: 0.2, excCible: 0.2, dessinee: false })
   const [joue, setJoue] = useState(true)
   const [vitesse, setVitesse] = useState('normal')
   const [mode, setMode] = useState('an')
+  const [exagere, setExagere] = useState(true)
   const [glisse, setGlisse] = useState(null)
   const donnees = useRef({})
   donnees.current = { etat: etat.current }
   const l = useLecture(etat, (e) => ({ total: e.total }))
   const jour = glisse ?? l.total % 365.25
+  const dSoleil = distanceSoleil(jour)
   const tours = Math.floor(l.total)
   const heure = Math.floor(((l.total % 1) * 24) % 24)
 
@@ -90,6 +99,24 @@ export default function RevolutionView() {
                 </div>
               </div>
               {mode === 'jour' && <p className="mt-1.5 text-center text-[12px] text-[#DDE2F7]">Il est <b className="text-white">{heure} h</b> : la Terre a tourné de {nombre(((l.total % 1) * 360), 0)}° et avancé de {nombre(360 / 365.25, 1)}° sur son orbite seulement.</p>}
+            </Carte>
+            <Carte couleur="rgba(166,107,255,.4)" className="!p-3">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <p className="labo-mono text-[10px] text-[#B9C1E3]">DISTANCE AU SOLEIL</p>
+                  <p className="labo-jeu text-[24px] leading-none" style={{ color: ORANGE }}>{nombre(dSoleil, 1)} <span className="text-[14px]">millions de km</span></p>
+                </div>
+                <div className="text-right">
+                  <p className="labo-mono text-[10px] text-[#B9C1E3]">VITESSE</p>
+                  <p className="labo-jeu text-[24px] leading-none text-white">{nombre(vitesseOrbitale(dSoleil), 1)} <span className="text-[14px]">km/s</span></p>
+                </div>
+              </div>
+              <div className="mt-2 flex gap-2">
+                {[[true, 'Ellipse exagérée'], [false, 'Vraie orbite']].map(([v, nom]) => (
+                  <button key={nom} type="button" onClick={() => { etat.current.excCible = v ? 0.2 : 0.0167; setExagere(v) }} className="min-h-[40px] flex-1 rounded-2xl border text-[13px] font-bold active:scale-95" style={exagere === v ? { background: ORANGE, color: '#12062A', borderColor: ORANGE } : { color: '#FFD9B0', borderColor: '#FFA24D66', background: 'rgba(11,10,30,.85)' }}>{nom}</button>
+                ))}
+              </div>
+              <p className="mt-1.5 text-[12px] leading-snug text-[#DDE2F7]">{exagere ? <>Ici l’ellipse est <b className="text-white">exagérée 12 fois</b> pour qu’on la voie. </> : <>La vraie orbite est <b className="text-white">presque ronde</b> : seulement 3 % d’écart. </>}Plus près vers le <b className="text-white">3 janvier</b> (147,1 M km), plus loin vers le <b className="text-white">4 juillet</b> (152,1 M km).</p>
             </Carte>
             <Curseur label="Jour de l’année" valeur={Math.round(jour)} min={0} max={364} onChange={(v) => { etat.current.total = v; etat.current.joue = false; setJoue(false); setGlisse(v); clearTimeout(donnees.current.t); donnees.current.t = setTimeout(() => setGlisse(null), 400) }} format={(v) => dateDuJour(v)} couleur={ORANGE} />
             <div className="flex items-center gap-2">

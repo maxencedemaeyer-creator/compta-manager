@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { Pause, Play, RotateCcw } from 'lucide-react'
 import { Carte, Duo } from '../../../components/labo/CadreJeu.jsx'
-import { construireOrrery, declinaison, distanceSoleil, ensoleillement, fmtDuree, FETES, saisonNord } from '../../../components/labo/espace/orrery.js'
+import { construireOrrery, declinaison, distanceSoleil, ensoleillement, fmtDuree, FETES, jourDepuisAngle, saisonNord } from '../../../components/labo/espace/orrery.js'
 import { dateDuJour, nombre, ORANGE, MENTHE, OR, CORAIL, LILAS } from '../../../components/labo/espace/donnees.js'
 import { Curseur, PageEspace, Vitesses, Vue3D, useLecture } from './commun.jsx'
 
@@ -29,7 +29,7 @@ const INCL_REELLE = 23.4
 
 function construire(ctx) {
   const { THREE, scene, camera, renderer } = ctx
-  const o = construireOrrery(ctx, { R: 5, rTerre: 0.72, rSoleil: 0.8, mois: true, fetes: true, trace: true })
+  const o = construireOrrery(ctx, { R: 5, rTerre: 0.72, rSoleil: 0.8, mois: true, fetes: true, trace: true, ellipse: true })
   // aide visuelle : direction fixe de l'axe (repère au centre, ne bouge pas)
   const plan = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0)
   const rayon = new THREE.Raycaster()
@@ -38,10 +38,7 @@ function construire(ctx) {
     rayon.setFromCamera(ndc, camera)
     if (!rayon.ray.intersectPlane(plan, pt)) return
     const a = Math.atan2(-pt.z, pt.x)
-    // a = 2π (j − 171)/365,25 + π  →  j
-    let j = ((a - Math.PI) / (2 * Math.PI)) * 365.25 + 171
-    j = ((j % 365.25) + 365.25) % 365.25
-    ctx.d().aller(Math.round(j))
+    ctx.d().aller(Math.round(jourDepuisAngle(a)))
   })
 
   // vue de côté de la Terre (encart)
@@ -55,6 +52,13 @@ function construire(ctx) {
   return {
     maj(dt, t) {
       const e = ctx.d().etat
+      // l'orbite se déforme doucement entre « vraie » (e = 0,0167) et « exagérée » (e = 0,2)
+      if (Math.abs(e.exc - e.excCible) > 0.0003 || !e.dessinee) {
+        e.exc += (e.excCible - e.exc) * Math.min(1, dt * 5)
+        if (Math.abs(e.exc - e.excCible) <= 0.0003) e.exc = e.excCible
+        o.reglerExcentricite(e.exc)
+        e.dessinee = true
+      }
       if (e.joue) e.jour = (e.jour + (dt * 365.25) / JOURS_SEC[e.vitesse]) % 365.25
       o.maj({ jour: e.jour, spin: t * 0.7, tilt: e.incl, t })
     },
@@ -99,12 +103,13 @@ function construire(ctx) {
 }
 
 export default function SaisonsView() {
-  const etat = useRef({ jour: 171, joue: false, vitesse: 'normal', incl: INCL_REELLE })
+  const etat = useRef({ jour: 171, joue: false, vitesse: 'normal', incl: INCL_REELLE, exc: 0.2, excCible: 0.2, dessinee: false })
   const encart = useRef(null)
   const [joue, setJoue] = useState(false)
   const [vitesse, setVitesse] = useState('normal')
   const [incl, setIncl] = useState(INCL_REELLE)
   const [lieu, setLieu] = useState(1)
+  const [exagere, setExagere] = useState(true)
   const [glisse, setGlisse] = useState(null)
   const donnees = useRef({})
   donnees.current = { etat: etat.current, encart, aller: (j) => { etat.current.jour = j; etat.current.joue = false; setJoue(false) } }
@@ -196,7 +201,12 @@ export default function SaisonsView() {
             <Carte couleur="rgba(201,163,255,.35)" className="!p-3">
               <p className="labo-mono text-[10px] text-[#B9C1E3]">DISTANCE TERRE – SOLEIL</p>
               <p className="labo-jeu text-[24px] leading-none text-white">{nombre(dist, 1)} <span className="text-[14px] text-[#B9C1E3]">millions de km</span></p>
-              <p className="mt-1.5 text-[11px] leading-snug text-[#B9C1E3]">C’est en janvier que la Terre est la plus proche du Soleil, et pourtant c’est l’hiver chez nous. <b className="text-white">Ce n’est pas la distance qui fait les saisons : c’est l’inclinaison de l’axe.</b></p>
+              <div className="mt-2 flex gap-2">
+                {[[true, 'Ellipse exagérée'], [false, 'Vraie orbite']].map(([v, nom]) => (
+                  <button key={nom} type="button" onClick={() => { etat.current.excCible = v ? 0.2 : 0.0167; setExagere(v) }} className="min-h-[40px] flex-1 rounded-2xl border text-[13px] font-bold active:scale-95" style={exagere === v ? { background: ORANGE, color: '#12062A', borderColor: ORANGE } : { color: '#FFD9B0', borderColor: '#FFA24D66', background: 'rgba(11,10,30,.85)' }}>{nom}</button>
+                ))}
+              </div>
+              <p className="mt-1.5 text-[11px] leading-snug text-[#B9C1E3]">{exagere ? 'Ellipse exagérée 12 fois pour qu’on la voie. ' : 'La vraie orbite est presque ronde (3 % d’écart). '}C’est vers le 3 janvier que la Terre est la plus proche du Soleil, et pourtant c’est l’hiver chez nous. <b className="text-white">Ce n’est pas la distance qui fait les saisons : c’est l’inclinaison de l’axe.</b></p>
             </Carte>
           </>
         }

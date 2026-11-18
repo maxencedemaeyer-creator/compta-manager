@@ -77,7 +77,7 @@ export function Duo({ commandes, children, droite = 380, visuelDabord = false })
   const cols = { 340: 'tab:grid-cols-[minmax(0,1fr)_340px]', 380: 'tab:grid-cols-[minmax(0,1fr)_380px]', 440: 'tab:grid-cols-[minmax(0,1fr)_440px]' }[droite] || 'tab:grid-cols-[minmax(0,1fr)_380px]'
   return (
     <div className={`flex flex-col gap-3 tab:grid tab:min-h-0 tab:flex-1 tab:grid-rows-[minmax(0,1fr)] tab:gap-3 ${cols}`}>
-      <div className={`flex flex-col gap-3 tab:col-start-2 tab:row-start-1 tab:min-h-0 tab:overflow-y-auto ${visuelDabord ? 'order-2 tab:order-none' : ''}`}>{commandes}</div>
+      <div className={`flex flex-col gap-3 tab:col-start-2 tab:row-start-1 tab:min-h-0 tab:overflow-y-auto [&>*]:shrink-0 ${visuelDabord ? 'order-2 tab:order-none' : ''}`}>{commandes}</div>
       <div className={`flex flex-col gap-3 tab:col-start-1 tab:row-start-1 tab:min-h-0 ${visuelDabord ? 'order-1 tab:order-none' : ''}`}>{children}</div>
     </div>
   )
