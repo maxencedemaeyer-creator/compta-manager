@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import { DecorLabo, Fiole } from '../../components/labo/DecorLabo.jsx'
@@ -5,6 +6,9 @@ import VisuelExperience from '../../components/labo/VisuelExperience.jsx'
 import { EXPERIENCES } from '../../config/laboAteliers.js'
 import './labo.css'
 import PiedLabo from '../../components/labo/PiedLabo.jsx'
+import CodeProf from '../../components/labo/prof/CodeProf.jsx'
+import AdminLabo from '../../components/labo/prof/AdminLabo.jsx'
+import { useLaboConfig } from '../../components/labo/prof/useLaboConfig.js'
 
 // =============================================================
 //  Le hall du labo de sciences (/labo) : public, sans code PIN.
@@ -12,8 +16,19 @@ import PiedLabo from '../../components/labo/PiedLabo.jsx'
 //  Toutes les expériences sont ouvertes (pas de verrouillage).
 //  Volontairement épuré : pas de niveau (P3…), pas de nombre
 //  d'activités, pas de phrase d'explication (demande de Max).
+//  Espace prof : toucher l'erlenmeyer → code (celui de la plateforme)
+//  → page où le prof coche les expériences visibles par les élèves
+//  (réglage enregistré dans Firebase : laboConfig/experiences).
 // =============================================================
 export default function LaboView() {
+  const [etape, setEtape] = useState(null) // null | 'code' | 'admin'
+  const { masquees, pret } = useLaboConfig()
+
+  if (etape === 'admin') return <AdminLabo onQuitter={() => setEtape(null)} />
+
+  // On attend la réponse de Firebase pour ne pas montrer une expérience masquée une seconde
+  const visibles = pret ? EXPERIENCES.filter((e) => !masquees.includes(e.id)) : []
+
   return (
     <div className="labo relative min-h-[100dvh] overflow-x-hidden">
       <DecorLabo />
@@ -34,13 +49,20 @@ export default function LaboView() {
               <span className="text-[#7CFF6B]">de sciences</span>
             </h1>
           </div>
-          <Fiole />
+          <button
+            type="button"
+            onClick={() => setEtape('code')}
+            aria-label="Accès professeur"
+            className="flex-none cursor-default select-none bg-transparent p-0 outline-none [-webkit-tap-highlight-color:transparent] focus-visible:ring-2 focus-visible:ring-[#7CFF6B]/60"
+          >
+            <Fiole />
+          </button>
         </div>
 
         <h2 className="labo-titre text-[15px] font-medium text-[#F4F6FF]">Les expériences</h2>
 
         <div className="grid gap-3 md:grid-cols-2">
-          {EXPERIENCES.map((e, i) => (
+          {visibles.map((e, i) => (
               <Link
                 key={e.id}
                 to={`/labo/${e.id}`}
@@ -69,8 +91,13 @@ export default function LaboView() {
           ))}
         </div>
 
+        {pret && visibles.length === 0 && (
+          <p className="labo-titre py-10 text-center text-base text-[#8A93B8]">Le labo se prépare…</p>
+        )}
+
         <PiedLabo className="pt-2" />
       </div>
+      {etape === 'code' && <CodeProf onFermer={() => setEtape(null)} onOuvert={() => setEtape('admin')} />}
     </div>
   )
 }

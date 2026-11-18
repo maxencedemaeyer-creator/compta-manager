@@ -34,7 +34,8 @@ import CoutureArticleView from './views/couture/CoutureArticleView.jsx'
 import CoutureAtelierView from './views/couture/CoutureAtelierView.jsx'
 import CodeAcces from './components/couture/CodeAcces.jsx'
 import { estSiteGalerie } from './hooks/useCouture.js'
-import { ANCIENNES_ADRESSES } from './config/laboAteliers.js'
+import { ANCIENNES_ADRESSES, EXPERIENCE as EXPERIENCES_LABO } from './config/laboAteliers.js'
+import { useLaboConfig } from './components/labo/prof/useLaboConfig.js'
 
 // Le labo de sciences (public, sans PIN) : chargé seulement quand on l'ouvre
 const LaboView = lazy(() => import('./views/labo/LaboView.jsx'))
@@ -76,10 +77,18 @@ const LABO_JEUX = {
   'espace/systeme': lazy(() => import('./views/labo/espace/SystemeView.jsx')),
 }
 
+// Une expérience masquée par le prof (Espace prof du labo) n'est plus accessible,
+// même en tapant son adresse : retour au hall.
 function Labo({ children }) {
-  return (
-    <Suspense fallback={<div style={{ minHeight: '100dvh', background: '#070b16' }} />}>{children}</Suspense>
-  )
+  const { pathname } = useLocation()
+  const { masquees, pret } = useLaboConfig()
+  const experience = pathname.split('/')[2]
+  const fond = <div style={{ minHeight: '100dvh', background: '#070b16' }} />
+  if (experience && EXPERIENCES_LABO[experience]) {
+    if (!pret) return fond
+    if (masquees.includes(experience)) return <Navigate to="/labo" replace />
+  }
+  return <Suspense fallback={fond}>{children}</Suspense>
 }
 
 // Chaque espace (/maxence, /julie…) est protégé par le code PIN de son profil
