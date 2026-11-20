@@ -6,6 +6,7 @@ import { creerLecture, useLectures } from '../../hooks/useLecture.js'
 import { ACCEPT_DOCUMENT } from '../../utils/document.js'
 import { nettoyerMemoireVoix, useQuotaVoix } from '../../utils/voixQuota.js'
 import EcranAnalyse from '../../components/lecture/EcranAnalyse.jsx'
+import Recadrage from '../../components/lecture/Recadrage.jsx'
 import { chargerPolices } from '../../components/lecture/reglages.js'
 
 // =============================================================
@@ -49,6 +50,7 @@ export default function LectureView() {
   const entrees = { camera: useRef(null), galerie: useRef(null), document: useRef(null) }
   const [menuPhoto, setMenuPhoto] = useState(false)
   const [analyse, setAnalyse] = useState(null) // { file, origine, progression, erreur }
+  const [recadrage, setRecadrage] = useState(null) // { file, origine } : photo à recadrer avant lecture
 
   useEffect(() => {
     chargerPolices()
@@ -77,8 +79,12 @@ export default function LectureView() {
       type="file"
       className="hidden"
       onChange={(e) => {
-        traiter(e.target.files?.[0], origine)
+        const file = e.target.files?.[0]
         e.target.value = ''
+        if (!file) return
+        // Une photo passe d'abord par le recadrage ; un document est lu directement
+        if (origine === 'document') traiter(file, origine)
+        else setRecadrage({ file, origine })
       }}
       {...props}
     />
@@ -221,6 +227,18 @@ export default function LectureView() {
             </div>
           </div>
         </div>
+      )}
+
+      {recadrage && (
+        <Recadrage
+          file={recadrage.file}
+          onAnnuler={() => setRecadrage(null)}
+          onValider={(f) => {
+            const { origine } = recadrage
+            setRecadrage(null)
+            traiter(f, origine)
+          }}
+        />
       )}
 
       {analyse && (

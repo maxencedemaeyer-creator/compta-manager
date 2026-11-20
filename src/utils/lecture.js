@@ -52,15 +52,46 @@ export function decouperMots(texte) {
     let m
     MOT.lastIndex = 0
     while ((m = MOT.exec(contenu))) {
-      if (m.index > dernier) morceaux.push({ mot: false, texte: contenu.slice(dernier, m.index) })
+      if (m.index > dernier) morceaux.push({ mot: false, texte: contenu.slice(dernier, m.index), debut: base + dernier })
       morceaux.push({ mot: true, texte: m[0], debut: base + m.index, fin: base + m.index + m[0].length, index: index++ })
       dernier = m.index + m[0].length
     }
-    if (dernier < contenu.length) morceaux.push({ mot: false, texte: contenu.slice(dernier) })
+    if (dernier < contenu.length) morceaux.push({ mot: false, texte: contenu.slice(dernier), debut: base + dernier })
     paragraphes.push(morceaux)
   }
   const mots = paragraphes.flat().filter((m) => m.mot)
   return { paragraphes, mots }
+}
+
+// Phrase qui contient une position : { debut, fin } (fin non comprise).
+// Une phrase se termine par . ! ? … ou par un retour à la ligne.
+export function phraseAutour(texte, position) {
+  const n = texte.length
+  if (n === 0) return { debut: 0, fin: 0 }
+  const p = Math.max(0, Math.min(n - 1, position))
+  // début du paragraphe, puis on avance phrase par phrase jusqu'à celle qui contient p
+  let debut = texte.lastIndexOf('\n', p - 1) + 1
+  for (;;) {
+    let fin = debut
+    while (fin < n && texte[fin] !== '\n') {
+      if (/[.!?…]/.test(texte[fin])) {
+        let j = fin + 1
+        while (j < n && /[.!?…]/.test(texte[j])) j++
+        const guillemet = /^\s?[»”")]+/.exec(texte.slice(j, j + 4)) // « … ? » reste dans la phrase
+        if (guillemet) j += guillemet[0].length
+        if (j >= n || /\s/.test(texte[j])) {
+          fin = j
+          break
+        }
+      }
+      fin++
+    }
+    if (p < fin || fin >= n || texte[fin] === '\n') {
+      while (debut < fin && /\s/.test(texte[debut])) debut++
+      return { debut, fin }
+    }
+    debut = fin
+  }
 }
 
 // Index du mot qui contient (ou suit) une position du texte

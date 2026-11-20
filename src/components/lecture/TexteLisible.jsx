@@ -1,22 +1,22 @@
 import { memo, useEffect, useRef } from 'react'
 
 // =============================================================
-//  Appli « Lis-moi » : le texte reconnu, mot par mot
-//  - toucher un mot → onToucherMot(index)
-//  - les mots de la sélection sont colorés en bleu
-//  - le mot prononcé est surligné en jaune (géré directement dans
-//    la page pour rester fluide, même sur un long texte)
+//  Appli « Lis-moi » : le texte, mot par mot
+//  - toucher un mot → onToucherMot(index, élément)
+//  - sélection en bleu (bande continue)
+//  - pendant la lecture : la phrase en cours est surlignée doucement,
+//    le mot prononcé en jaune ; en mode Focus, le reste s'estompe.
+//  (surlignages gérés directement dans la page : fluide même sur un long texte)
 // =============================================================
 const Paragraphe = memo(function Paragraphe({ morceaux, debutSel, finSel }) {
+  const dansSel = (x) => x?.mot && debutSel !== null && x.index >= debutSel && x.index <= finSel
   return (
     <p className="mb-[0.9em] last:mb-0">
       {morceaux.map((m, k) => {
-        const dansSel = (x) => x?.mot && debutSel !== null && x.index >= debutSel && x.index <= finSel
         if (!m.mot) {
-          // espace / ponctuation entre deux mots choisis : coloré aussi (bande continue)
           const lie = dansSel(morceaux[k - 1]) && dansSel(morceaux[k + 1])
           return (
-            <span key={k} className={lie ? 'bg-sky-200/80' : undefined}>
+            <span key={k} data-d={m.debut} className={lie ? 'sel' : undefined}>
               {m.texte}
             </span>
           )
@@ -27,9 +27,8 @@ const Paragraphe = memo(function Paragraphe({ morceaux, debutSel, finSel }) {
           <span
             key={k}
             data-i={m.index}
-            className={`mot cursor-pointer rounded-[0.3em] px-[0.06em] -mx-[0.06em] transition-colors duration-150 ${
-              dedans ? (bord ? 'bg-sky-300/80' : 'bg-sky-200/80') : 'hover:bg-indigo-100/70'
-            }`}
+            data-d={m.debut}
+            className={`mot cursor-pointer rounded-[0.3em] transition-colors duration-150 ${dedans ? (bord ? 'sel sel-bord' : 'sel') : ''}`}
           >
             {m.texte}
           </span>
@@ -39,11 +38,32 @@ const Paragraphe = memo(function Paragraphe({ morceaux, debutSel, finSel }) {
   )
 })
 
-export default function TexteLisible({ paragraphes, selection, motActif, onToucherMot, taillePx, famille }) {
+const STYLES = `
+.lis .mot:hover{background:rgba(99,102,241,.12)}
+.lis .sel{background:rgba(125,211,252,.55)}
+.lis .sel-bord{background:rgba(56,189,248,.65)}
+.lis .phrase-active{background:rgba(253,230,138,.55)}
+.lis .mot-actif{background:#fbbf24 !important;box-shadow:0 0 0 .12em #fbbf24;color:#1f1d36}
+.lis.focus-actif span{opacity:.28;transition:opacity .25s}
+.lis.focus-actif span.phrase-active{opacity:1}
+`
+
+export default function TexteLisible({
+  paragraphes,
+  selection,
+  motActif,
+  phraseActive,
+  focus,
+  onToucherMot,
+  taillePx,
+  famille,
+  interligne,
+  espacement,
+  couleur,
+}) {
   const boite = useRef(null)
   const precedent = useRef(null)
 
-  // Bornes de la sélection (dans l'ordre)
   let debutSel = null
   let finSel = null
   if (selection.a !== null) {
@@ -51,7 +71,18 @@ export default function TexteLisible({ paragraphes, selection, motActif, onTouch
     finSel = selection.b === null ? selection.a : Math.max(selection.a, selection.b)
   }
 
-  // Mot prononcé : surlignage + défilement pour qu'il reste visible
+  // Phrase en cours
+  const phDebut = phraseActive?.debut ?? -1
+  const phFin = phraseActive?.fin ?? -1
+  useEffect(() => {
+    if (!boite.current) return
+    boite.current.querySelectorAll('[data-d]').forEach((el) => {
+      const d = Number(el.dataset.d)
+      el.classList.toggle('phrase-active', d >= phDebut && d < phFin)
+    })
+  }, [phDebut, phFin, paragraphes])
+
+  // Mot prononcé + défilement pour qu'il reste visible
   useEffect(() => {
     precedent.current?.classList.remove('mot-actif')
     precedent.current = null
@@ -61,8 +92,7 @@ export default function TexteLisible({ paragraphes, selection, motActif, onTouch
     el.classList.add('mot-actif')
     precedent.current = el
     const r = el.getBoundingClientRect()
-    const marge = 160 // laisse de la place pour la barre de lecture en bas
-    if (r.top < 80 || r.bottom > window.innerHeight - marge) {
+    if (r.top < 90 || r.bottom > window.innerHeight - 190) {
       el.scrollIntoView({ block: 'center', behavior: 'smooth' })
     }
   }, [motActif])
@@ -72,12 +102,20 @@ export default function TexteLisible({ paragraphes, selection, motActif, onTouch
       ref={boite}
       onClick={(e) => {
         const el = e.target.closest('[data-i]')
-        if (el) onToucherMot(Number(el.dataset.i))
+        if (el) onToucherMot(Number(el.dataset.i), el)
       }}
-      className="select-none leading-[1.75] text-[#1f1d36]"
-      style={{ fontSize: taillePx, fontFamily: famille, WebkitTouchCallout: 'none', wordSpacing: '0.08em' }}
+      className={`lis select-none ${focus && phDebut >= 0 ? 'focus-actif' : ''}`}
+      style={{
+        fontSize: taillePx,
+        fontFamily: famille,
+        lineHeight: interligne,
+        letterSpacing: espacement.lettres,
+        wordSpacing: espacement.mots,
+        color: couleur,
+        WebkitTouchCallout: 'none',
+      }}
     >
-      <style>{`.mot-actif{background:#fcd34d !important;box-shadow:0 0 0 0.12em #fcd34d;}`}</style>
+      <style>{STYLES}</style>
       {paragraphes.map((morceaux, i) => (
         <Paragraphe key={i} morceaux={morceaux} debutSel={debutSel} finSel={finSel} />
       ))}

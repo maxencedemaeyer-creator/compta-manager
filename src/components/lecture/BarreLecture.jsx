@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { Loader2, Pause, Play, Rabbit, Square, Turtle, X } from 'lucide-react'
+import { Loader2, Pause, Play, Rabbit, RotateCcw, Square, Turtle, X } from 'lucide-react'
 import { VITESSES, VOIX } from '../../config/lectureVoix.js'
 
 // =============================================================
 //  Appli « Lis-moi » : la barre de lecture (en bas de l'écran)
 //  ▶ / ⏸, arrêt, vitesse, voix, et ce qui va être lu.
 // =============================================================
-export default function BarreLecture({ etat, resume, aSelection, onEffacerSelection, onPlay, onStop, reglages, changer, erreur }) {
+export default function BarreLecture({ etat, resume, aSelection, onEffacerSelection, onPlay, onStop, onRevenir, reglages, changer, erreur }) {
   const [choixVoix, setChoixVoix] = useState(false)
   const voix = VOIX.find((v) => v.id === reglages.voix) || VOIX[0]
   const enCours = etat === 'lecture' || etat === 'pause' || etat === 'chargement'
@@ -59,6 +59,17 @@ export default function BarreLecture({ etat, resume, aSelection, onEffacerSelect
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Revenir à la phrase précédente */}
+            {enCours && (
+              <button
+                onClick={onRevenir}
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-indigo-700 active:bg-indigo-100"
+                aria-label="Revenir à la phrase précédente"
+                title="Revenir en arrière"
+              >
+                <RotateCcw size={20} />
+              </button>
+            )}
             {/* Lecture / pause */}
             <button
               onClick={onPlay}

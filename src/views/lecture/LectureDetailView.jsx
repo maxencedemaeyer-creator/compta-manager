@@ -1,33 +1,37 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { AArrowDown, AArrowUp, ArrowLeft, Check, FilePlus2, Pencil, Trash2, Type, X } from 'lucide-react'
+import { ArrowLeft, Check, FilePlus2, Pencil, Trash2, Type, X } from 'lucide-react'
 import { ajouterPage, modifierTexte, supprimerLecture, useLecture } from '../../hooks/useLecture.js'
-import { decouperMots, motALaPosition } from '../../utils/lecture.js'
-import { TAILLES_TEXTE, VITESSES } from '../../config/lectureVoix.js'
+import { decouperMots, motALaPosition, phraseAutour } from '../../utils/lecture.js'
+import { VITESSES } from '../../config/lectureVoix.js'
 import TexteLisible from '../../components/lecture/TexteLisible.jsx'
 import BarreLecture from '../../components/lecture/BarreLecture.jsx'
+import BulleMot from '../../components/lecture/BulleMot.jsx'
+import PanneauAffichage from '../../components/lecture/PanneauAffichage.jsx'
 import PhotoPages from '../../components/lecture/PhotoPages.jsx'
 import EcranAnalyse from '../../components/lecture/EcranAnalyse.jsx'
+import Recadrage from '../../components/lecture/Recadrage.jsx'
 import useLecteur from '../../components/lecture/useLecteur.js'
-import { POLICES, chargerPolices, useReglages } from '../../components/lecture/reglages.js'
+import { chargerPolices, useReglages } from '../../components/lecture/reglages.js'
 
 // =============================================================
 //  Lis-moi — page de lecture
 //  Photo (à gauche en paysage, en haut en portrait) + texte reconnu.
-//  Choisir un passage : toucher le premier mot, puis le dernier.
-//  ▶ lit le passage (ou tout le texte), le mot prononcé est surligné.
+//  - Toucher un mot : début du passage + bulle (🔊 mot, phrase, ✏️ corriger).
+//    Toucher un 2e mot : fin du passage.  ▶ lit le passage (ou tout).
+//  - Pendant la lecture : phrase surlignée doucement, mot en jaune,
+//    ⟲ revient à la phrase précédente.
+//  - Aa : police, taille, interligne, espacement, fond doux, focus.
 // =============================================================
 const SANS_SELECTION = { a: null, b: null }
 
-function BoutonOutil({ onClick, label, children, actif = false }) {
+function BoutonOutil({ onClick, label, children }) {
   return (
     <button
       onClick={onClick}
       aria-label={label}
       title={label}
-      className={`flex h-11 w-11 items-center justify-center rounded-full transition ${
-        actif ? 'bg-indigo-600 text-white' : 'bg-white text-indigo-800 shadow-sm ring-1 ring-indigo-950/5 active:bg-indigo-50'
-      }`}
+      className="flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-indigo-800 shadow-sm ring-1 ring-indigo-950/5 transition active:bg-indigo-50"
     >
       {children}
     </button>
@@ -38,12 +42,16 @@ export default function LectureDetailView() {
   const { lectureId } = useParams()
   const navigate = useNavigate()
   const lecture = useLecture(lectureId)
-  const { reglages, changer, taillePx } = useReglages()
+  const { reglages, changer, taillePx, police, interligne, espacement, fond } = useReglages()
   const [selection, setSelection] = useState(SANS_SELECTION)
-  const [edition, setEdition] = useState(null) // texte en cours de correction
+  const [bulle, setBulle] = useState(null) // { index, element }
+  const [panneau, setPanneau] = useState(false)
+  const [edition, setEdition] = useState(null) // texte complet en cours de correction
   const [enregistrement, setEnregistrement] = useState(false)
-  const [analyse, setAnalyse] = useState(null) // ajout d'une page
+  const [recadrage, setRecadrage] = useState(null) // photo d'une nouvelle page
+  const [analyse, setAnalyse] = useState(null)
   const nouvellePage = useRef(null)
+  const derniere = useRef(null) // dernière lecture lancée { debut, fin } (pour ⟲)
 
   useEffect(() => {
     chargerPolices()
@@ -52,40 +60,53 @@ export default function LectureDetailView() {
   const texte = lecture?.texte || ''
   const { paragraphes, mots } = useMemo(() => decouperMots(texte), [texte])
   const lecteur = useLecteur(texte)
-  const motActif = lecteur.position < 0 || mots.length === 0 ? -1 : motALaPosition(mots, lecteur.position)
+  const enLecture = lecteur.position >= 0
+  const motActif = !enLecture || mots.length === 0 ? -1 : motALaPosition(mots, lecteur.position)
+  const phraseActive = useMemo(() => (enLecture ? phraseAutour(texte, lecteur.position) : null), [enLecture, texte, lecteur.position])
 
   // Le texte change (correction, nouvelle page) : on repart de zéro
   useEffect(() => {
     lecteur.arreter()
     setSelection(SANS_SELECTION)
+    setBulle(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [texte])
 
-  if (lecture === undefined) {
-    return <div className="min-h-[100dvh] bg-[#fbf7f0]" />
-  }
+  const fermerBulle = useCallback(() => setBulle(null), [])
+
+  if (lecture === undefined) return <div className="min-h-[100dvh]" style={{ background: fond.page }} />
   if (lecture === null) {
     return (
-      <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-4 bg-[#fbf7f0] text-indigo-950">
+      <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-4 text-indigo-950" style={{ background: fond.page }}>
         <p className="text-lg">Cette lecture n’existe plus.</p>
         <Link to="/lecture" className="rounded-2xl bg-indigo-600 px-5 py-3 font-semibold text-white">Retour aux lectures</Link>
       </div>
     )
   }
 
+  const options = () => ({
+    voix: reglages.voix,
+    vitesse: VITESSES.find((v) => v.id === reglages.vitesse)?.valeur ?? -8,
+  })
+  const lire = (debut, fin) => {
+    derniere.current = { debut, fin }
+    lecteur.lire(debut, fin, options())
+  }
+
   // ---------- Sélection : premier mot, puis dernier mot ----------
-  const toucherMot = (i) => {
+  const toucherMot = (i, element) => {
     if (lecteur.etat !== 'arret') lecteur.arreter()
     setSelection((s) => {
       if (s.a === null) return { a: i, b: null }
       if (s.b === null) return { a: s.a, b: i }
       return { a: i, b: null }
     })
+    setBulle({ index: i, element })
   }
 
   let debut = 0
   let fin = texte.length
-  let resume = 'Tout le texte · touche un mot pour choisir un passage'
+  let resume = 'Tout le texte · touche un mot pour choisir'
   if (selection.a !== null && mots[selection.a]) {
     if (selection.b === null) {
       debut = mots[selection.a].debut
@@ -101,11 +122,46 @@ export default function LectureDetailView() {
   }
 
   const play = () => {
+    setBulle(null)
     if (lecteur.etat === 'lecture') return lecteur.pause()
     if (lecteur.etat === 'pause') return lecteur.reprendre()
     if (lecteur.etat === 'chargement') return
-    const vitesse = VITESSES.find((v) => v.id === reglages.vitesse)?.valeur ?? -8
-    lecteur.lire(debut, fin, { voix: reglages.voix, vitesse })
+    lire(debut, fin)
+  }
+
+  // ⟲ : début de la phrase en cours, ou phrase précédente si on vient de la commencer
+  const revenir = () => {
+    const d = derniere.current
+    if (!d) return
+    const pos = lecteur.position >= 0 ? lecteur.position : d.debut
+    let ph = phraseAutour(texte, pos)
+    if (pos - ph.debut < 12 && ph.debut > d.debut) ph = phraseAutour(texte, Math.max(0, ph.debut - 2))
+    lire(Math.max(d.debut, ph.debut), d.fin)
+  }
+
+  // ---------- Bulle du mot ----------
+  const motBulle = bulle ? mots[bulle.index] : null
+  const ecouterMot = () => {
+    setBulle(null)
+    lire(motBulle.debut, motBulle.fin)
+  }
+  const lirePhrase = () => {
+    const ph = phraseAutour(texte, motBulle.debut)
+    const a = motALaPosition(mots, ph.debut)
+    let b = motALaPosition(mots, Math.max(ph.debut, ph.fin - 1))
+    if (b > a && mots[b].debut >= ph.fin) b-- // dernier mot de la phrase (pas le premier de la suivante)
+    setSelection({ a, b })
+    setBulle(null)
+    lire(mots[a].debut, Math.max(mots[b].fin, ph.fin)) // avec le point final (bonne intonation)
+  }
+  const corrigerMot = async (nouveau) => {
+    const m = motBulle
+    setBulle(null)
+    try {
+      await modifierTexte(lecture.id, texte.slice(0, m.debut) + nouveau + texte.slice(m.fin))
+    } catch (e) {
+      alert(e.message)
+    }
   }
 
   // ---------- Outils ----------
@@ -133,7 +189,6 @@ export default function LectureDetailView() {
   }
 
   const traiterPage = async (file) => {
-    if (!file) return
     setAnalyse({ file, progression: 0, erreur: null })
     try {
       await ajouterPage(lecture, file, (p) => setAnalyse((a) => (a ? { ...a, progression: p } : a)))
@@ -143,17 +198,26 @@ export default function LectureDetailView() {
     }
   }
 
-  const police = POLICES[reglages.police] || POLICES.lexend
   const aPhotos = (typeof lecture.pages === 'number' ? lecture.pages : 1) > 0
 
   return (
-    <div className="min-h-[100dvh] bg-[#fbf7f0] text-indigo-950" style={{ fontFamily: "'Lexend', system-ui, sans-serif" }}>
+    <div
+      className="min-h-[100dvh] text-indigo-950 transition-colors"
+      style={{ fontFamily: "'Lexend', system-ui, sans-serif", background: fond.page }}
+      onClick={(e) => {
+        // toucher à côté d'un mot ferme la bulle
+        if (bulle && !e.target.closest('[data-i]')) setBulle(null)
+      }}
+    >
       {/* En-tête */}
-      <header className="sticky top-0 z-20 border-b border-indigo-950/5 bg-[#fbf7f0]/85 px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur-xl sm:px-5">
+      <header
+        className="sticky top-0 z-20 border-b border-indigo-950/5 px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur-xl sm:px-5"
+        style={{ background: `${fond.page}d9` }}
+      >
         <div className="mx-auto flex max-w-6xl items-center gap-2">
           <Link
             to="/lecture"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-indigo-800 shadow-sm ring-1 ring-indigo-950/5"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/90 text-indigo-800 shadow-sm ring-1 ring-indigo-950/5"
             aria-label="Retour aux lectures"
           >
             <ArrowLeft size={20} />
@@ -162,30 +226,27 @@ export default function LectureDetailView() {
           <span className="flex-1 sm:hidden" />
           {edition === null ? (
             <div className="flex shrink-0 items-center gap-1.5">
-              <BoutonOutil label="Texte plus petit" onClick={() => changer({ taille: Math.max(0, reglages.taille - 1) })}>
-                <AArrowDown size={20} />
-              </BoutonOutil>
-              <BoutonOutil label="Texte plus grand" onClick={() => changer({ taille: Math.min(TAILLES_TEXTE.length - 1, reglages.taille + 1) })}>
-                <AArrowUp size={20} />
-              </BoutonOutil>
-              <BoutonOutil
-                label={`Police : ${police.nom}`}
-                actif={reglages.police === 'andika'}
-                onClick={() => changer({ police: reglages.police === 'andika' ? 'lexend' : 'andika' })}
+              <button
+                onClick={() => {
+                  setBulle(null)
+                  setPanneau(true)
+                }}
+                className="flex h-11 items-center gap-1.5 rounded-full bg-white/90 px-4 font-semibold text-indigo-800 shadow-sm ring-1 ring-indigo-950/5"
+                aria-label="Affichage du texte"
               >
-                <Type size={19} />
-              </BoutonOutil>
-              <span className="mx-0.5 hidden h-6 w-px bg-indigo-950/10 sm:block" />
+                <Type size={18} /> Aa
+              </button>
               <BoutonOutil
-                label="Corriger le texte"
+                label="Corriger tout le texte"
                 onClick={() => {
                   lecteur.arreter()
+                  setBulle(null)
                   setEdition(texte)
                 }}
               >
                 <Pencil size={18} />
               </BoutonOutil>
-              <BoutonOutil label="Ajouter une page" onClick={() => nouvellePage.current?.click()}>
+              <BoutonOutil label="Ajouter une page (photo)" onClick={() => nouvellePage.current?.click()}>
                 <FilePlus2 size={19} />
               </BoutonOutil>
               <BoutonOutil label="Supprimer la lecture" onClick={supprimer}>
@@ -212,11 +273,11 @@ export default function LectureDetailView() {
         ref={nouvellePage}
         type="file"
         accept="image/*"
-        capture="environment"
         className="hidden"
         onChange={(e) => {
-          traiterPage(e.target.files?.[0])
+          const file = e.target.files?.[0]
           e.target.value = ''
+          if (file) setRecadrage(file)
         }}
       />
 
@@ -232,19 +293,24 @@ export default function LectureDetailView() {
           <PhotoPages
             lectureId={lecture.id}
             pages={lecture.pages}
-            className="h-[26dvh] md:landscape:sticky md:landscape:top-[4.75rem] md:landscape:h-[calc(100dvh-6rem-9rem)] lg:sticky lg:top-[4.75rem] lg:h-[calc(100dvh-6rem-9rem)]"
+            className="h-[24dvh] md:landscape:sticky md:landscape:top-[4.75rem] md:landscape:h-[calc(100dvh-6rem-9rem)] lg:sticky lg:top-[4.75rem] lg:h-[calc(100dvh-6rem-9rem)]"
           />
         )}
 
-        <section className="rounded-[2rem] bg-white px-5 py-6 shadow-sm ring-1 ring-indigo-950/5 sm:px-8 sm:py-8 mb-44">
+        <section
+          className="mb-48 rounded-[2rem] px-5 py-6 shadow-sm ring-1 ring-indigo-950/5 transition-colors sm:px-9 sm:py-9"
+          style={{ background: fond.carte }}
+        >
           {edition !== null ? (
             <>
-              <p className="mb-3 text-sm text-indigo-950/55">Corrige les mots mal reconnus. Laisse une ligne vide entre deux paragraphes.</p>
+              <p className="mb-3 text-sm text-indigo-950/55">
+                Corrige les mots mal reconnus. Laisse une ligne vide entre deux paragraphes. (Pour un seul mot : touche-le, puis ✏️.)
+              </p>
               <textarea
                 value={edition}
                 onChange={(e) => setEdition(e.target.value)}
-                className="min-h-[50dvh] w-full resize-y rounded-2xl border border-indigo-100 bg-indigo-50/30 p-4 leading-relaxed outline-none focus:border-indigo-400"
-                style={{ fontSize: Math.min(taillePx, 24), fontFamily: police.famille }}
+                className="min-h-[50dvh] w-full resize-y rounded-2xl border border-indigo-100 bg-white/60 p-4 leading-relaxed outline-none focus:border-indigo-400"
+                style={{ fontSize: Math.min(taillePx, 24), fontFamily: police.famille, color: fond.texte }}
               />
             </>
           ) : (
@@ -252,9 +318,14 @@ export default function LectureDetailView() {
               paragraphes={paragraphes}
               selection={selection}
               motActif={motActif}
+              phraseActive={phraseActive}
+              focus={reglages.focus}
               onToucherMot={toucherMot}
               taillePx={taillePx}
               famille={police.famille}
+              interligne={interligne}
+              espacement={espacement}
+              couleur={fond.texte}
             />
           )}
         </section>
@@ -267,13 +338,40 @@ export default function LectureDetailView() {
           aSelection={selection.a !== null}
           onEffacerSelection={() => {
             lecteur.arreter()
+            setBulle(null)
             setSelection(SANS_SELECTION)
           }}
           onPlay={play}
           onStop={lecteur.arreter}
+          onRevenir={revenir}
           reglages={reglages}
           changer={changer}
           erreur={lecteur.erreur}
+        />
+      )}
+
+      {bulle && motBulle && (
+        <BulleMot
+          key={bulle.index}
+          mot={motBulle}
+          ancre={bulle.element}
+          onEcouterMot={ecouterMot}
+          onPhrase={lirePhrase}
+          onCorriger={corrigerMot}
+          onFermer={fermerBulle}
+        />
+      )}
+
+      {panneau && <PanneauAffichage reglages={reglages} changer={changer} onFermer={() => setPanneau(false)} />}
+
+      {recadrage && (
+        <Recadrage
+          file={recadrage}
+          onAnnuler={() => setRecadrage(null)}
+          onValider={(f) => {
+            setRecadrage(null)
+            traiterPage(f)
+          }}
         />
       )}
 
