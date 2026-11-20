@@ -9,6 +9,7 @@ const COLLECTIONS = [
   'medecinEntries',
   'remboursementsEntries',
   'laboFrancaisP5P6Statuts',
+  'lectures', // Lis-moi : textes et miniatures (les photos en grand restent dans lectures_images)
   'config',
 ]
 

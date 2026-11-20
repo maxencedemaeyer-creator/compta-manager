@@ -1,4 +1,4 @@
-import { BookOpenCheck, FlaskConical, Gamepad2, GitBranch, MessageSquarePlus, Projector, Scissors, Sprout, Wallet } from 'lucide-react'
+import { BookAudio, BookOpenCheck, FlaskConical, Gamepad2, GitBranch, MessageSquarePlus, Projector, Scissors, Sprout, Wallet } from 'lucide-react'
 
 // =============================================================
 //  Liste des applications du site (adresses sous /maxence).
@@ -68,6 +68,15 @@ export const APPS = [
     description: 'Les activités des élèves (sans code)',
     icon: FlaskConical,
     couleur: 'from-lime-400 via-emerald-500 to-violet-600',
+    profils: ['maxence'],
+  },
+  {
+    id: 'lecture',
+    to: '/lecture',
+    nom: 'Lis-moi',
+    description: 'Photo d’un texte, lu à voix haute (élèves, sans code)',
+    icon: BookAudio,
+    couleur: 'from-indigo-500 to-violet-600',
     profils: ['maxence'],
   },
   {

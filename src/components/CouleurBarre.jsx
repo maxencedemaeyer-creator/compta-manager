@@ -15,6 +15,7 @@ function couleurPour(pathname, profilId, unlocked) {
   // Application Couture (galerie publique et atelier de Julie) : fond Vichy pastel
   if (estSiteGalerie() || pathname.startsWith('/couture') || (unlocked && pathname.startsWith('/julie/couture'))) return '#fffafc'
   if (pathname.startsWith('/labo')) return '#070b16'
+  if (pathname.startsWith('/lecture')) return '#fbf7f0'
   if (!profilId) return CREME.maxence
   if (!unlocked) return FOND_PIN[profilId] || FOND_PIN.maxence
   if (pathname.includes('/jeux/motus')) return '#0d2236'
