@@ -17,13 +17,19 @@ import { chargerPolices, useReglages } from '../../components/lecture/reglages.j
 // =============================================================
 //  Lis-moi — page de lecture
 //  Photo (à gauche en paysage, en haut en portrait) + texte reconnu.
-//  - Toucher un mot : début du passage + bulle (🔊 mot, phrase, ✏️ corriger).
-//    Toucher un 2e mot : fin du passage.  ▶ lit le passage (ou tout).
+//  - Toucher / cliquer un mot : bulle (🔊 mot, phrase, ▶ d'ici, ✏️ corriger).
+//  - Choisir un passage comme sur iPhone : souris = cliquer-glisser ;
+//    doigt = appui court sur le 1er mot puis glisser. Bulle « ▶ Lire ».
+//    ▶ de la barre lit le passage choisi (ou tout le texte).
 //  - Pendant la lecture : phrase surlignée doucement, mot en jaune,
 //    ⟲ revient à la phrase précédente.
 //  - Aa : police, taille, interligne, espacement, fond doux, focus.
+//  - Ordinateur, clavier : Espace (lire/pause), Échap (tout le texte), ← (revenir).
 // =============================================================
 const SANS_SELECTION = { a: null, b: null }
+// Ordinateur (souris) ou tablette (doigt) : seulement pour adapter les petites phrases d'aide
+const SOURIS = typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: fine)').matches
+const TOUCHE = SOURIS ? 'clique' : 'touche'
 
 function BoutonOutil({ onClick, label, children }) {
   return (
@@ -77,6 +83,22 @@ export default function LectureDetailView() {
 
   const fermerBulle = useCallback(() => setBulle(null), [])
 
+  // Raccourcis clavier (ordinateur) : Espace = lire / pause, Échap = tout le texte, ← = revenir
+  const raccourcis = useRef({})
+  useEffect(() => {
+    const touche = (e) => {
+      if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || e.target.isContentEditable) return
+      const r = raccourcis.current
+      if (e.key === ' ' && r.play) {
+        e.preventDefault()
+        r.play()
+      } else if (e.key === 'Escape' && r.effacer) r.effacer()
+      else if (e.key === 'ArrowLeft' && r.revenir) r.revenir()
+    }
+    window.addEventListener('keydown', touche)
+    return () => window.removeEventListener('keydown', touche)
+  }, [])
+
   if (lecture === undefined) return <div className="min-h-[100dvh]" style={{ background: fond.page }} />
   if (lecture === null) {
     return (
@@ -96,32 +118,27 @@ export default function LectureDetailView() {
     lecteur.lire(debut, fin, options())
   }
 
-  // ---------- Sélection : premier mot, puis dernier mot ----------
+  // ---------- Sélection ----------
+  // Toucher / cliquer un mot : ce mot + bulle (Mot, Phrase, D'ici, ✏️).
+  // Glisser (souris, ou doigt après un appui court) : un passage + bulle « Lire ».
   const toucherMot = (i, element) => {
     if (lecteur.etat !== 'arret') lecteur.arreter()
-    setSelection((s) => {
-      if (s.a === null) return { a: i, b: null }
-      if (s.b === null) return { a: s.a, b: i }
-      return { a: i, b: null }
-    })
-    setBulle({ index: i, element })
+    setSelection({ a: i, b: i })
+    setBulle({ type: 'mot', index: i, element })
   }
 
   let debut = 0
   let fin = texte.length
-  let resume = 'Tout le texte · touche un mot pour choisir'
-  if (selection.a !== null && mots[selection.a]) {
-    if (selection.b === null) {
-      debut = mots[selection.a].debut
-      resume = `À partir de « ${mots[selection.a].texte} » · touche le dernier mot`
-    } else {
-      const i = Math.min(selection.a, selection.b)
-      const j = Math.max(selection.a, selection.b)
-      debut = mots[i].debut
-      fin = mots[j].fin
-      const n = j - i + 1
-      resume = n === 1 ? `Le mot « ${mots[i].texte} »` : `Passage choisi : ${n} mots`
-    }
+  let resume = SOURIS
+    ? 'Tout le texte · clique sur un mot et glisse pour choisir un passage'
+    : 'Tout le texte · appuie sur un mot et glisse pour choisir un passage'
+  if (selection.a !== null && mots[selection.a] && mots[selection.b ?? selection.a]) {
+    const i = Math.min(selection.a, selection.b ?? selection.a)
+    const j = Math.max(selection.a, selection.b ?? selection.a)
+    debut = mots[i].debut
+    fin = mots[j].fin
+    const n = j - i + 1
+    resume = n === 1 ? `Le mot « ${mots[i].texte} »` : `Passage choisi : ${n} mots`
   }
 
   const play = () => {
@@ -142,11 +159,39 @@ export default function LectureDetailView() {
     lire(Math.max(d.debut, ph.debut), d.fin)
   }
 
+  const effacerSelection = () => {
+    lecteur.arreter()
+    setBulle(null)
+    setSelection(SANS_SELECTION)
+  }
+  const choisirPlage = (a, b) => {
+    if (lecteur.etat !== 'arret') lecteur.arreter()
+    setBulle(null)
+    setSelection({ a, b })
+  }
+  const finPlage = (a, b, element) => {
+    setSelection({ a, b })
+    setBulle(a === b ? { type: 'mot', index: a, element } : { type: 'passage', index: b, element })
+  }
+  raccourcis.current =
+    edition === null && !panneau
+      ? { play, effacer: effacerSelection, revenir: lecteur.etat !== 'arret' ? revenir : null }
+      : {}
+
   // ---------- Bulle du mot ----------
   const motBulle = bulle ? mots[bulle.index] : null
   const ecouterMot = () => {
     setBulle(null)
     lire(motBulle.debut, motBulle.fin)
+  }
+  const lireDIci = () => {
+    setBulle(null)
+    setSelection(SANS_SELECTION)
+    lire(motBulle.debut, texte.length)
+  }
+  const lirePassage = () => {
+    setBulle(null)
+    lire(debut, fin)
   }
   const lirePhrase = () => {
     const ph = phraseAutour(texte, motBulle.debut)
@@ -323,7 +368,7 @@ export default function LectureDetailView() {
             {nbDouteux > 0 && (
               <div className="mb-5 flex items-center gap-3 rounded-2xl bg-orange-50 px-4 py-3 text-sm text-orange-900 ring-1 ring-orange-200/70">
                 <span className="min-w-0 flex-1">
-                  <b>{nbDouteux === 1 ? '1 mot à vérifier' : `${nbDouteux} mots à vérifier`}</b> (soulignés en pointillé) : touche-le, puis ✏️ s’il est mal écrit.
+                  <b>{nbDouteux === 1 ? '1 mot à vérifier' : `${nbDouteux} mots à vérifier`}</b> (soulignés en pointillé) : {TOUCHE}-le, puis ✏️ s’il est mal écrit.
                 </span>
                 <button
                   onClick={() => majLecture(lecture.id, { douteux: [] }).catch(() => {})}
@@ -341,6 +386,8 @@ export default function LectureDetailView() {
               phraseActive={phraseActive}
               focus={reglages.focus}
               onToucherMot={toucherMot}
+              onChoisirPlage={choisirPlage}
+              onFinPlage={finPlage}
               taillePx={taillePx}
               famille={police.famille}
               interligne={interligne}
@@ -357,11 +404,7 @@ export default function LectureDetailView() {
           etat={lecteur.etat}
           resume={resume}
           aSelection={selection.a !== null}
-          onEffacerSelection={() => {
-            lecteur.arreter()
-            setBulle(null)
-            setSelection(SANS_SELECTION)
-          }}
+          onEffacerSelection={effacerSelection}
           onPlay={play}
           onStop={lecteur.arreter}
           onRevenir={revenir}
@@ -373,9 +416,12 @@ export default function LectureDetailView() {
 
       {bulle && motBulle && (
         <BulleMot
-          key={bulle.index}
+          key={`${bulle.type}-${bulle.index}`}
+          passage={bulle.type === 'passage'}
           mot={motBulle}
           ancre={bulle.element}
+          onLirePassage={lirePassage}
+          onLireDIci={lireDIci}
           onEcouterMot={ecouterMot}
           onPhrase={lirePhrase}
           onCorriger={corrigerMot}
