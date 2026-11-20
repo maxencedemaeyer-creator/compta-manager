@@ -70,7 +70,11 @@ function tournerCanvas(source, sens) {
 // tournée d'un quart de tour dans chaque sens et on garde la meilleure.
 // Renvoie { texte, confiance, rotation } (rotation : 0, 1 ou -1 quart de tour).
 export async function reconnaitreTexte(file, onProgression = () => {}) {
-  const canvas = await preparerImage(file)
+  return reconnaitreImage(await preparerImage(file), onProgression)
+}
+
+// Même chose à partir d'une image déjà dessinée (ex. page d'un PDF scanné)
+export async function reconnaitreImage(canvas, onProgression = () => {}) {
   const worker = await obtenirTravailleur()
 
   const essayer = async (image, part, total) => {

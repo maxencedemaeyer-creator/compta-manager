@@ -1,14 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, BookAudio, Camera, Images } from 'lucide-react'
+import { ArrowLeft, BookAudio, Camera, FileText, Image as ImageIcon, X } from 'lucide-react'
 import { usePin } from '../../context/PinContext.jsx'
 import { creerLecture, useLectures } from '../../hooks/useLecture.js'
+import { ACCEPT_DOCUMENT } from '../../utils/document.js'
+import { nettoyerMemoireVoix, useQuotaVoix } from '../../utils/voixQuota.js'
 import EcranAnalyse from '../../components/lecture/EcranAnalyse.jsx'
 import { chargerPolices } from '../../components/lecture/reglages.js'
 
 // =============================================================
 //  Lis-moi — écran d'accueil (public, pour les tablettes de la classe)
-//  « Nouvelle lecture » = photo → texte reconnu → page de lecture.
+//  Deux choix :
+//   - Photo    → « Prendre une photo » ou « Choisir dans la galerie »
+//   - Document → fichier de la tablette / de l'ordinateur (PDF, Word, texte)
 //  En dessous : l'historique des lectures de la classe.
 // =============================================================
 function dateCourte(ts) {
@@ -17,21 +21,48 @@ function dateCourte(ts) {
   return d.toLocaleDateString('fr-BE', { day: 'numeric', month: 'short' }) + ' · ' + d.toLocaleTimeString('fr-BE', { hour: '2-digit', minute: '2-digit' })
 }
 
+const ETIQUETTE_SOURCE = { pdf: 'PDF', word: 'Word', texte: 'Texte' }
+
+function GrandChoix({ onClick, icone: Icone, titre, detail, couleur }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`group relative flex items-center gap-5 overflow-hidden rounded-[2rem] bg-gradient-to-br ${couleur} px-6 py-7 text-left text-white shadow-xl transition active:scale-[0.98]`}
+    >
+      <span className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10" />
+      <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur">
+        <Icone size={34} />
+      </span>
+      <span className="relative">
+        <span className="block text-2xl font-bold">{titre}</span>
+        <span className="block text-white/80">{detail}</span>
+      </span>
+    </button>
+  )
+}
+
 export default function LectureView() {
   const { lectures, chargement } = useLectures()
   const { profilId, unlocked } = usePin()
+  const quota = useQuotaVoix()
   const navigate = useNavigate()
-  const photo = useRef(null)
-  const galerie = useRef(null)
-  const [analyse, setAnalyse] = useState(null) // { file, progression, erreur }
+  const entrees = { camera: useRef(null), galerie: useRef(null), document: useRef(null) }
+  const [menuPhoto, setMenuPhoto] = useState(false)
+  const [analyse, setAnalyse] = useState(null) // { file, origine, progression, erreur }
 
   useEffect(() => {
     chargerPolices()
+    nettoyerMemoireVoix().catch(() => {})
   }, [])
 
-  const traiter = async (file) => {
+  const ouvrir = (origine) => {
+    setMenuPhoto(false)
+    entrees[origine].current?.click()
+  }
+
+  const traiter = async (file, origine) => {
     if (!file) return
-    setAnalyse({ file, progression: 0, erreur: null })
+    setAnalyse({ file, origine, progression: 0, erreur: null })
     try {
       const id = await creerLecture(file, (p) => setAnalyse((a) => (a ? { ...a, progression: p } : a)))
       navigate(`/lecture/${id}`)
@@ -39,6 +70,19 @@ export default function LectureView() {
       setAnalyse((a) => (a ? { ...a, erreur: e } : a))
     }
   }
+
+  const entree = (origine, props) => (
+    <input
+      ref={entrees[origine]}
+      type="file"
+      className="hidden"
+      onChange={(e) => {
+        traiter(e.target.files?.[0], origine)
+        e.target.value = ''
+      }}
+      {...props}
+    />
+  )
 
   return (
     <div className="relative min-h-[100dvh] overflow-hidden bg-[#fbf7f0] text-indigo-950" style={{ fontFamily: "'Lexend', system-ui, sans-serif" }}>
@@ -58,40 +102,30 @@ export default function LectureView() {
           </span>
           <div>
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Lis-moi</h1>
-            <p className="text-indigo-950/55">Prends un texte en photo, je te le lis.</p>
+            <p className="text-indigo-950/55">Une photo ou un document : je te le lis.</p>
           </div>
         </header>
 
-        {/* Nouvelle lecture */}
-        <div className="mt-8 grid gap-3 sm:grid-cols-[2fr_1fr]">
-          <button
-            onClick={() => photo.current?.click()}
-            className="group relative flex items-center gap-5 overflow-hidden rounded-[2rem] bg-gradient-to-br from-indigo-500 via-indigo-600 to-violet-600 px-6 py-7 text-left text-white shadow-xl shadow-indigo-600/30 transition active:scale-[0.98]"
-          >
-            <span className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10" />
-            <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur">
-              <Camera size={34} />
-            </span>
-            <span>
-              <span className="block text-2xl font-bold">Nouvelle lecture</span>
-              <span className="block text-white/75">Prendre une photo du texte</span>
-            </span>
-          </button>
-          <button
-            onClick={() => galerie.current?.click()}
-            className="flex items-center justify-center gap-3 rounded-[2rem] bg-white px-6 py-5 font-semibold text-indigo-800 shadow-sm ring-1 ring-indigo-950/5 transition active:scale-[0.98]"
-          >
-            <Images size={22} /> Choisir une image
-          </button>
+        {/* Les deux choix */}
+        <div className="mt-8 grid gap-3 sm:grid-cols-2">
+          <GrandChoix
+            onClick={() => setMenuPhoto(true)}
+            icone={Camera}
+            titre="Photo"
+            detail="Prendre une photo ou choisir dans la galerie"
+            couleur="from-indigo-500 via-indigo-600 to-violet-600 shadow-indigo-600/30"
+          />
+          <GrandChoix
+            onClick={() => ouvrir('document')}
+            icone={FileText}
+            titre="Document"
+            detail="PDF, Word ou texte, depuis l’appareil"
+            couleur="from-sky-500 via-sky-600 to-indigo-600 shadow-sky-600/30"
+          />
         </div>
-        <input ref={photo} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => {
-          traiter(e.target.files?.[0])
-          e.target.value = ''
-        }} />
-        <input ref={galerie} type="file" accept="image/*" className="hidden" onChange={(e) => {
-          traiter(e.target.files?.[0])
-          e.target.value = ''
-        }} />
+        {entree('camera', { accept: 'image/*', capture: 'environment' })}
+        {entree('galerie', { accept: 'image/*' })}
+        {entree('document', { accept: ACCEPT_DOCUMENT })}
 
         {/* Historique de la classe */}
         <h2 className="mb-4 mt-12 text-lg font-semibold text-indigo-950/70">Lectures de la classe</h2>
@@ -101,7 +135,7 @@ export default function LectureView() {
           <div className="rounded-3xl border-2 border-dashed border-indigo-200 bg-white/60 px-6 py-12 text-center">
             <p className="text-5xl">📖</p>
             <p className="mt-3 text-lg font-semibold">Pas encore de lecture</p>
-            <p className="mt-1 text-sm text-indigo-950/55">Touche « Nouvelle lecture » et photographie un texte.</p>
+            <p className="mt-1 text-sm text-indigo-950/55">Choisis « Photo » ou « Document » pour commencer.</p>
           </div>
         ) : (
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
@@ -111,8 +145,19 @@ export default function LectureView() {
                   to={`/lecture/${l.id}`}
                   className="block overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-indigo-950/5 transition active:scale-[0.98] hover:shadow-md"
                 >
-                  <div className="aspect-[4/3] bg-indigo-50">
-                    {l.miniature && <img src={l.miniature} alt="" className="h-full w-full object-cover" loading="lazy" />}
+                  <div className="relative aspect-[4/3] bg-indigo-50">
+                    {l.miniature ? (
+                      <img src={l.miniature} alt="" className="h-full w-full object-cover" loading="lazy" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-sky-100 to-indigo-100 text-indigo-400">
+                        <FileText size={44} />
+                      </div>
+                    )}
+                    {ETIQUETTE_SOURCE[l.source] && (
+                      <span className="absolute left-2 top-2 rounded-full bg-white/90 px-2.5 py-0.5 text-xs font-semibold text-indigo-700 shadow-sm">
+                        {ETIQUETTE_SOURCE[l.source]}
+                      </span>
+                    )}
                   </div>
                   <div className="px-4 py-3">
                     <p className="line-clamp-2 min-h-[2.75em] font-semibold leading-snug">{l.titre}</p>
@@ -126,7 +171,57 @@ export default function LectureView() {
             ))}
           </ul>
         )}
+
+        {/* Jauge de la voix gratuite du mois */}
+        {quota.pourcent !== null && (
+          <div className="mx-auto mt-12 max-w-sm text-center text-xs text-indigo-950/45">
+            <p>Voix gratuite ce mois-ci : {quota.pourcent} % utilisés</p>
+            <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-indigo-100">
+              <div
+                className={`h-full rounded-full ${quota.pourcent >= 90 ? 'bg-rose-500' : quota.pourcent >= 70 ? 'bg-amber-400' : 'bg-indigo-400'}`}
+                style={{ width: `${Math.max(2, quota.pourcent)}%` }}
+              />
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Menu « Photo » */}
+      {menuPhoto && (
+        <div className="fixed inset-0 z-40 flex items-end justify-center bg-indigo-950/30 p-3 backdrop-blur-sm sm:items-center" onClick={() => setMenuPhoto(false)}>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-[2rem] bg-white p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-2xl"
+          >
+            <div className="flex items-center justify-between px-3 pb-2 pt-1">
+              <p className="text-lg font-bold">Photo</p>
+              <button onClick={() => setMenuPhoto(false)} className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-50 text-indigo-700" aria-label="Fermer">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="grid gap-2">
+              <button onClick={() => ouvrir('camera')} className="flex items-center gap-4 rounded-3xl bg-indigo-50 px-5 py-5 text-left active:bg-indigo-100">
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white">
+                  <Camera size={24} />
+                </span>
+                <span>
+                  <span className="block text-lg font-semibold">Prendre une photo</span>
+                  <span className="block text-sm text-indigo-950/55">Photographie le texte bien à plat</span>
+                </span>
+              </button>
+              <button onClick={() => ouvrir('galerie')} className="flex items-center gap-4 rounded-3xl bg-indigo-50 px-5 py-5 text-left active:bg-indigo-100">
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-rose-500 text-white">
+                  <ImageIcon size={24} />
+                </span>
+                <span>
+                  <span className="block text-lg font-semibold">Choisir dans la galerie</span>
+                  <span className="block text-sm text-indigo-950/55">Une photo déjà prise</span>
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {analyse && (
         <EcranAnalyse
@@ -135,8 +230,9 @@ export default function LectureView() {
           erreur={analyse.erreur}
           onFermer={() => setAnalyse(null)}
           onReprendre={() => {
+            const origine = analyse.origine
             setAnalyse(null)
-            photo.current?.click()
+            entrees[origine].current?.click()
           }}
         />
       )}

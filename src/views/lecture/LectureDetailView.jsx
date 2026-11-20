@@ -144,6 +144,7 @@ export default function LectureDetailView() {
   }
 
   const police = POLICES[reglages.police] || POLICES.lexend
+  const aPhotos = (typeof lecture.pages === 'number' ? lecture.pages : 1) > 0
 
   return (
     <div className="min-h-[100dvh] bg-[#fbf7f0] text-indigo-950" style={{ fontFamily: "'Lexend', system-ui, sans-serif" }}>
@@ -219,13 +220,21 @@ export default function LectureDetailView() {
         }}
       />
 
-      {/* Photo + texte */}
-      <main className="mx-auto grid max-w-6xl gap-4 px-3 pt-4 sm:px-5 md:landscape:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-        <PhotoPages
-          lectureId={lecture.id}
-          pages={lecture.pages || 1}
-          className="h-[26dvh] md:landscape:sticky md:landscape:top-[4.75rem] md:landscape:h-[calc(100dvh-6rem-9rem)] lg:sticky lg:top-[4.75rem] lg:h-[calc(100dvh-6rem-9rem)]"
-        />
+      {/* Photo + texte (un document Word / texte n'a pas de photo : texte seul, centré) */}
+      <main
+        className={`mx-auto grid gap-4 px-3 pt-4 sm:px-5 ${
+          aPhotos
+            ? 'max-w-6xl md:landscape:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]'
+            : 'max-w-3xl'
+        }`}
+      >
+        {aPhotos && (
+          <PhotoPages
+            lectureId={lecture.id}
+            pages={lecture.pages}
+            className="h-[26dvh] md:landscape:sticky md:landscape:top-[4.75rem] md:landscape:h-[calc(100dvh-6rem-9rem)] lg:sticky lg:top-[4.75rem] lg:h-[calc(100dvh-6rem-9rem)]"
+          />
+        )}
 
         <section className="rounded-[2rem] bg-white px-5 py-6 shadow-sm ring-1 ring-indigo-950/5 sm:px-8 sm:py-8 mb-44">
           {edition !== null ? (

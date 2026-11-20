@@ -7,6 +7,7 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  setDoc,
   updateDoc,
   writeBatch,
 } from 'firebase/firestore'
@@ -15,11 +16,13 @@ import { usePin } from '../context/PinContext.jsx'
 import { withTimeout } from '../utils/withTimeout.js'
 import { pivoterImage, preparerPhotoProjection } from '../utils/image.js'
 import { reconnaitreTexte } from '../utils/ocr.js'
+import { canvasEnFichier, lireDocument, typeFichier } from '../utils/document.js'
 import { titreDepuis } from '../utils/lecture.js'
 
 // =============================================================
 //  Données de l'appli « Lis-moi » (Firebase) — historique de la classe
-//  - lectures/{id}             : titre, texte, miniature, pages, dates
+//  - lectures/{id}             : titre, texte, miniature, pages, source
+//                                (photo | pdf | word | texte), nomFichier, dates
 //  - lectures_images/{id}_{n}  : la photo de la page n (n = 0, 1, …)
 // =============================================================
 const LECTURES = 'lectures'
@@ -30,41 +33,76 @@ export const PAS_DE_TEXTE = 'PAS_DE_TEXTE'
 // Photo → texte reconnu + image prête pour Firebase (redressée si besoin)
 async function traiterPhoto(file, onProgression) {
   const ocr = await reconnaitreTexte(file, onProgression)
-  if (ocr.texte.replace(/[^\p{L}]/gu, '').length < 3) {
-    const e = new Error("Je n'ai pas trouvé de texte sur cette photo.")
-    e.code = PAS_DE_TEXTE
-    throw e
-  }
+  pasDeTexte(ocr.texte)
   let photo = await preparerPhotoProjection(file)
   if (ocr.rotation) photo = await pivoterImage(photo.image, ocr.rotation)
   return { texte: ocr.texte, photo }
 }
 
+const MESSAGE_LENT = "L'enregistrement prend trop de temps. Vérifie la connexion et réessaie."
+
+function pasDeTexte(texte) {
+  if (texte.replace(/[^\p{L}]/gu, '').length >= 3) return
+  const e = new Error("Je n'ai pas trouvé de texte.")
+  e.code = PAS_DE_TEXTE
+  throw e
+}
+
+// Nouvelle lecture à partir d'une photo ou d'un document (PDF, Word, texte)
 export async function creerLecture(file, onProgression) {
-  const { texte, photo } = await traiterPhoto(file, onProgression)
+  const estImage = typeFichier(file) === 'image'
+  let texte
+  let photos = []
+  let source = 'photo'
+
+  if (estImage) {
+    const r = await traiterPhoto(file, onProgression)
+    texte = r.texte
+    photos = [r.photo]
+  } else {
+    // le texte compte pour 90 % de la progression, les images des pages pour le reste
+    const lu = await lireDocument(file, (p) => onProgression(p * 0.9))
+    pasDeTexte(lu.texte)
+    texte = lu.texte
+    source = lu.source
+    for (const canvas of lu.images) photos.push(await preparerPhotoProjection(await canvasEnFichier(canvas)))
+  }
+
   const id = doc(collection(db, LECTURES)).id
-  const batch = writeBatch(db)
-  batch.set(doc(db, IMAGES, `${id}_0`), { data: photo.image, largeur: photo.largeur, hauteur: photo.hauteur })
-  batch.set(doc(db, LECTURES, id), {
-    titre: titreDepuis(texte),
-    texte,
-    miniature: photo.miniature,
-    pages: 1,
-    creeLe: serverTimestamp(),
-    majLe: serverTimestamp(),
-  })
-  await withTimeout(batch.commit(), 60000, "L'enregistrement prend trop de temps. Vérifie la connexion et réessaie.")
+  // une page à la fois (chaque photo peut peser près de 1 Mo)
+  for (const [n, photo] of photos.entries()) {
+    await withTimeout(
+      setDoc(doc(db, IMAGES, `${id}_${n}`), { data: photo.image, largeur: photo.largeur, hauteur: photo.hauteur }),
+      60000,
+      MESSAGE_LENT
+    )
+  }
+  await withTimeout(
+    setDoc(doc(db, LECTURES, id), {
+      titre: titreDepuis(texte),
+      texte,
+      miniature: photos[0]?.miniature || null,
+      pages: photos.length,
+      source,
+      nomFichier: estImage ? null : file.name || null,
+      creeLe: serverTimestamp(),
+      majLe: serverTimestamp(),
+    }),
+    60000,
+    MESSAGE_LENT
+  )
   return id
 }
 
 export async function ajouterPage(lecture, file, onProgression) {
   const { texte, photo } = await traiterPhoto(file, onProgression)
-  const n = lecture.pages || 1
+  const n = typeof lecture.pages === 'number' ? lecture.pages : 1
   const batch = writeBatch(db)
   batch.set(doc(db, IMAGES, `${lecture.id}_${n}`), { data: photo.image, largeur: photo.largeur, hauteur: photo.hauteur })
   batch.update(doc(db, LECTURES, lecture.id), {
     texte: `${lecture.texte}\n\n${texte}`,
     pages: n + 1,
+    ...(n === 0 ? { miniature: photo.miniature } : {}),
     majLe: serverTimestamp(),
   })
   await withTimeout(batch.commit(), 60000, "L'enregistrement prend trop de temps. Vérifie la connexion et réessaie.")
@@ -76,7 +114,7 @@ export async function modifierTexte(id, texte) {
 
 export async function supprimerLecture(lecture) {
   const batch = writeBatch(db)
-  for (let n = 0; n < (lecture.pages || 1); n++) batch.delete(doc(db, IMAGES, `${lecture.id}_${n}`))
+  for (let n = 0; n < Math.max(1, lecture.pages || 0); n++) batch.delete(doc(db, IMAGES, `${lecture.id}_${n}`))
   batch.delete(doc(db, LECTURES, lecture.id))
   await withTimeout(batch.commit(), 30000)
 }

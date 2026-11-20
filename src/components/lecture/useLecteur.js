@@ -1,18 +1,67 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { decouperPourVoix, sonVide } from '../../utils/lecture.js'
+import {
+  PLAFOND_MENSUEL,
+  caracteresDuMois,
+  cleVoix,
+  compterCaracteres,
+  enregistrerMemoireVoix,
+  lireMemoireVoix,
+  moisSuivant,
+} from '../../utils/voixQuota.js'
 
 // =============================================================
 //  Appli « Lis-moi » : le lecteur (voix Azure via /api/tts)
 //  Lit un passage du texte morceau par morceau (le premier est court
 //  pour démarrer vite, le suivant est préparé pendant la lecture) et
 //  indique en continu la position du mot prononcé.
+//  Pour rester gratuit : mémoire partagée des voix + plafond mensuel
+//  (voir utils/voixQuota.js).
 // =============================================================
-const cache = new Map() // « voix|vitesse|texte » → { url, mots }
+const cache = new Map() // « voix|vitesse|texte » → { url, mots } (mémoire de la tablette)
 const CACHE_MAX = 60
+
+function enAudio(base64, mots) {
+  const octets = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))
+  return { url: URL.createObjectURL(new Blob([octets], { type: 'audio/mpeg' })), mots: mots || [] }
+}
+
+function garder(cle, resultat) {
+  cache.set(cle, resultat)
+  if (cache.size > CACHE_MAX) {
+    const [premiere, ancien] = cache.entries().next().value
+    URL.revokeObjectURL(ancien.url)
+    cache.delete(premiere)
+  }
+  return resultat
+}
 
 async function demanderVoix(texte, voix, vitesse) {
   const cle = `${voix}|${vitesse}|${texte}`
   if (cache.has(cle)) return cache.get(cle)
+
+  // 1) Déjà lu par quelqu'un de la classe ? On reprend la voix gardée (gratuit)
+  let empreinte = null
+  try {
+    empreinte = await cleVoix(voix, vitesse, texte)
+    const garde = await lireMemoireVoix(empreinte)
+    if (garde?.audio) return garder(cle, enAudio(garde.audio, garde.mots))
+  } catch {
+    /* pas grave : on demande à Azure */
+  }
+
+  // 2) Plafond du mois (pour rester dans le gratuit d'Azure)
+  let deja = 0
+  try {
+    deja = await caracteresDuMois()
+  } catch {
+    /* compteur illisible : on continue, Azure gratuit s'arrête de lui-même */
+  }
+  if (deja + texte.length > PLAFOND_MENSUEL) {
+    throw new Error(`La voix gratuite de ce mois est épuisée. Elle revient le 1er ${moisSuivant()}.`)
+  }
+
+  // 3) Azure
   const rep = await fetch('/api/tts', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -25,15 +74,10 @@ async function demanderVoix(texte, voix, vitesse) {
     /* réponse vide */
   }
   if (!rep.ok || !data?.audio) throw new Error(data?.erreur || 'La voix ne répond pas. Réessaie dans un instant.')
-  const octets = Uint8Array.from(atob(data.audio), (c) => c.charCodeAt(0))
-  const resultat = { url: URL.createObjectURL(new Blob([octets], { type: 'audio/mpeg' })), mots: data.mots || [] }
-  cache.set(cle, resultat)
-  if (cache.size > CACHE_MAX) {
-    const [premiere, ancien] = cache.entries().next().value
-    URL.revokeObjectURL(ancien.url)
-    cache.delete(premiere)
-  }
-  return resultat
+
+  compterCaracteres(texte.length).catch(() => {})
+  if (empreinte) enregistrerMemoireVoix(empreinte, data, texte.length).catch(() => {})
+  return garder(cle, enAudio(data.audio, data.mots))
 }
 
 export default function useLecteur(texte) {
