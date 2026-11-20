@@ -30,4 +30,7 @@ export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(VERSION),
   },
+  // Les « workers » (calculs en arrière-plan, ex. la voix Piper de Lis-moi)
+  // chargent des morceaux à la demande : format ES obligatoire.
+  worker: { format: 'es' },
 })

@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { decouperPourVoix, sonVide } from '../../utils/lecture.js'
+import { decouperPourVoix, dureeWav, estimerMots, sonVide } from '../../utils/lecture.js'
+import { MOTEUR_VOIX } from '../../config/lectureVoix.js'
+import { syntheseLocale } from '../../utils/voixPiper.js'
 import {
   PLAFOND_MENSUEL,
   caracteresDuMois,
@@ -15,8 +17,10 @@ import {
 //  Lit un passage du texte morceau par morceau (le premier est court
 //  pour démarrer vite, le suivant est préparé pendant la lecture) et
 //  indique en continu la position du mot prononcé.
-//  Pour rester gratuit : mémoire partagée des voix + plafond mensuel
-//  (voir utils/voixQuota.js).
+//  Deux moteurs (config/lectureVoix.js, MOTEUR_VOIX) :
+//   - 'piper' : voix libre calculée sur l'appareil (gratuit, illimité) ;
+//     les moments des mots sont estimés (utils/lecture.js, estimerMots) ;
+//   - 'azure' : /api/tts, avec mémoire partagée + plafond mensuel (utils/voixQuota.js).
 // =============================================================
 const cache = new Map() // « voix|vitesse|texte » → { url, mots } (mémoire de la tablette)
 const CACHE_MAX = 60
@@ -36,7 +40,17 @@ function garder(cle, resultat) {
   return resultat
 }
 
+// Voix Piper (sur l'appareil, gratuite) : son WAV + moments des mots estimés
+async function demanderVoixPiper(texte) {
+  const cle = `piper|${texte}`
+  if (cache.has(cle)) return cache.get(cle)
+  const buffer = await syntheseLocale(texte)
+  const mots = estimerMots(texte, dureeWav(buffer))
+  return garder(cle, { url: URL.createObjectURL(new Blob([buffer], { type: 'audio/wav' })), mots })
+}
+
 async function demanderVoix(texte, voix, vitesse) {
+  if (MOTEUR_VOIX === 'piper') return demanderVoixPiper(texte)
   const cle = `${voix}|${vitesse}|${texte}`
   if (cache.has(cle)) return cache.get(cle)
 
@@ -121,7 +135,7 @@ export default function useLecteur(texte) {
 
   // Lit le texte entre les positions debut et fin
   const lire = useCallback(
-    async (debut, fin, { voix, vitesse }) => {
+    async (debut, fin, { voix, vitesse, debit = 1 }) => {
       arreter()
       const session = sessionRef.current
       const audio = audioRef.current
@@ -134,7 +148,8 @@ export default function useLecteur(texte) {
       audio.src = silenceRef.current
       audio.play().catch(() => {})
 
-      const morceaux = decouperPourVoix(texte, debut, fin)
+      // Piper calcule sur l'appareil : morceaux plus courts (≈ une phrase) pour démarrer vite
+      const morceaux = decouperPourVoix(texte, debut, fin, MOTEUR_VOIX === 'piper' ? { premier: 140, suivants: 280 } : undefined)
       if (morceaux.length === 0) {
         setEtat('arret')
         return
@@ -156,6 +171,10 @@ export default function useLecteur(texte) {
 
           motsRef.current = mots.map((m) => ({ ms: m.ms, debut: morceaux[i].debut + m.debut }))
           audio.src = url
+          // vitesse de lecture (Piper) : sans changer la hauteur de la voix
+          audio.preservesPitch = true
+          audio.defaultPlaybackRate = MOTEUR_VOIX === 'piper' ? debit : 1
+          audio.playbackRate = audio.defaultPlaybackRate
           const fini = new Promise((resolve) => {
             const finir = () => {
               audio.removeEventListener('ended', finir)

@@ -191,3 +191,39 @@ export function sonVide() {
   for (let i = 0; i < n; i++) v.setUint8(44 + i, 128)
   return URL.createObjectURL(new Blob([buffer], { type: 'audio/wav' }))
 }
+
+// =============================================================
+//  Voix Piper : elle ne dit pas quand chaque mot est prononcé.
+//  On l'estime : la durée du son est répartie entre les mots selon
+//  leur longueur, avec un temps de pause après la ponctuation.
+//  (Les morceaux envoyés à la voix sont courts — une phrase environ —
+//  donc l'écart reste petit, et la phrase surlignée reste exacte.)
+// =============================================================
+export function dureeWav(buffer) {
+  const v = new DataView(buffer)
+  // en-tête WAV classique : octets/seconde à la position 28, données à partir de 44
+  const octetsParSeconde = v.getUint32(28, true)
+  return octetsParSeconde ? (buffer.byteLength - 44) / octetsParSeconde : 0
+}
+
+export function estimerMots(texte, dureeSecondes) {
+  const MOT_LOCAL = /\p{N}+(?:[.,]\p{N}+)+|[\p{L}\p{N}]+(?:['’\-‐][\p{L}\p{N}]+)*/gu
+  const mots = [...texte.matchAll(MOT_LOCAL)]
+  if (mots.length === 0) return []
+  const poids = mots.map((m, i) => {
+    const suite = texte.slice(m.index + m[0].length, i + 1 < mots.length ? mots[i + 1].index : texte.length)
+    let pause = 0
+    if (/[.!?…]/.test(suite)) pause = 6
+    else if (/[,;:]/.test(suite)) pause = 3.5
+    else if (/[«»"()—–-]/.test(suite)) pause = 1
+    return { parle: m[0].length + 1.5, pause }
+  })
+  const total = poids.reduce((t, p) => t + p.parle + p.pause, 0)
+  const utile = Math.max(0.2, dureeSecondes - 0.18) // petit silence en fin de son
+  let cumul = 0
+  return mots.map((m, i) => {
+    const ms = Math.round(50 + (cumul / total) * utile * 1000) // ~50 ms de silence au début
+    cumul += poids[i].parle + poids[i].pause
+    return { ms, debut: m.index, longueur: m[0].length }
+  })
+}

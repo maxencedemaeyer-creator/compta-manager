@@ -4,6 +4,7 @@ import { ArrowLeft, BookAudio, Camera, FileText, Image as ImageIcon, X } from 'l
 import { usePin } from '../../context/PinContext.jsx'
 import { creerLecture, useLectures } from '../../hooks/useLecture.js'
 import { ACCEPT_DOCUMENT } from '../../utils/document.js'
+import { MOTEUR_VOIX } from '../../config/lectureVoix.js'
 import { nettoyerMemoireVoix, useQuotaVoix } from '../../utils/voixQuota.js'
 import EcranAnalyse from '../../components/lecture/EcranAnalyse.jsx'
 import Recadrage from '../../components/lecture/Recadrage.jsx'
@@ -54,7 +55,7 @@ export default function LectureView() {
 
   useEffect(() => {
     chargerPolices()
-    nettoyerMemoireVoix().catch(() => {})
+    if (MOTEUR_VOIX === 'azure') nettoyerMemoireVoix().catch(() => {})
   }, [])
 
   const ouvrir = (origine) => {
@@ -179,7 +180,12 @@ export default function LectureView() {
         )}
 
         {/* Jauge de la voix gratuite du mois */}
-        {quota.pourcent !== null && (
+        {MOTEUR_VOIX === 'piper' && (
+          <p className="mx-auto mt-12 max-w-sm text-center text-xs text-indigo-950/40">
+            Voix : Piper « siwis » (logiciel libre, calculée sur l’appareil) · données SIWIS, licence CC BY 4.0
+          </p>
+        )}
+        {MOTEUR_VOIX === 'azure' && quota.pourcent !== null && (
           <div className="mx-auto mt-12 max-w-sm text-center text-xs text-indigo-950/45">
             <p>Voix gratuite ce mois-ci : {quota.pourcent} % utilisés</p>
             <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-indigo-100">

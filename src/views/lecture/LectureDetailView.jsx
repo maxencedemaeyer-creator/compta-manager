@@ -13,6 +13,8 @@ import EcranAnalyse from '../../components/lecture/EcranAnalyse.jsx'
 import Recadrage from '../../components/lecture/Recadrage.jsx'
 import useLecteur from '../../components/lecture/useLecteur.js'
 import { chargerPolices, useReglages } from '../../components/lecture/reglages.js'
+import { MOTEUR_VOIX } from '../../config/lectureVoix.js'
+import { ecouterPreparation, prechargerPiper } from '../../utils/voixPiper.js'
 
 // =============================================================
 //  Lis-moi — page de lecture
@@ -59,8 +61,14 @@ export default function LectureDetailView() {
   const nouvellePage = useRef(null)
   const derniere = useRef(null) // dernière lecture lancée { debut, fin } (pour ⟲)
 
+  // Voix Piper : préparée dès l'ouverture (1re fois : téléchargement ~60 Mo, ensuite instantané)
+  const [preparationVoix, setPreparationVoix] = useState(null)
   useEffect(() => {
     chargerPolices()
+    if (MOTEUR_VOIX !== 'piper') return
+    const arreter = ecouterPreparation((e) => setPreparationVoix(e.pret ? null : e.pourcent))
+    prechargerPiper()
+    return arreter
   }, [])
 
   const texte = lecture?.texte || ''
@@ -109,10 +117,10 @@ export default function LectureDetailView() {
     )
   }
 
-  const options = () => ({
-    voix: VOIX_DEFAUT, // pas de choix de voix pour l'élève
-    vitesse: VITESSES.find((v) => v.id === reglages.vitesse)?.valeur ?? -8,
-  })
+  const options = () => {
+    const v = VITESSES.find((x) => x.id === reglages.vitesse) || VITESSES[1]
+    return { voix: VOIX_DEFAUT, vitesse: v.valeur, debit: v.debit } // pas de choix de voix pour l'élève
+  }
   const lire = (debut, fin) => {
     derniere.current = { debut, fin }
     lecteur.lire(debut, fin, options())
@@ -423,6 +431,7 @@ export default function LectureDetailView() {
           reglages={reglages}
           changer={changer}
           erreur={lecteur.erreur}
+          preparationVoix={preparationVoix}
         />
       )}
 

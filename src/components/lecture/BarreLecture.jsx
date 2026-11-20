@@ -6,12 +6,23 @@ import { VITESSES } from '../../config/lectureVoix.js'
 //  ⟲, ▶ / ⏸, arrêt, vitesse, et ce qui va être lu.
 //  (Pas de choix de voix : décision de Max, voix fixée dans config/lectureVoix.js)
 // =============================================================
-export default function BarreLecture({ etat, resume, aSelection, onEffacerSelection, onPlay, onStop, onRevenir, reglages, changer, erreur }) {
+export default function BarreLecture({ etat, resume, aSelection, onEffacerSelection, onPlay, onStop, onRevenir, reglages, changer, erreur, preparationVoix = null }) {
   const enCours = etat === 'lecture' || etat === 'pause' || etat === 'chargement'
 
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
       <div className="pointer-events-auto mx-auto max-w-3xl">
+        {preparationVoix !== null && (
+          <div className="mb-2 rounded-2xl bg-indigo-950/90 px-4 py-2.5 text-sm text-white shadow-lg">
+            <div className="flex items-center justify-between gap-3">
+              <span>Je prépare la voix… (la première fois seulement)</span>
+              <span className="font-semibold">{preparationVoix} %</span>
+            </div>
+            <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/20">
+              <div className="h-full rounded-full bg-violet-400 transition-[width]" style={{ width: `${Math.max(3, preparationVoix)}%` }} />
+            </div>
+          </div>
+        )}
         {erreur && (
           <p className="mb-2 rounded-2xl bg-rose-600 px-4 py-2.5 text-center text-sm font-medium text-white shadow-lg">{erreur}</p>
         )}
