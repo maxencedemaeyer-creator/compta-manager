@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Check, FilePlus2, Pencil, Pointer, Trash2, Type, X } from 'lucide-react'
-import { ajouterPage, majLecture, modifierTexte, supprimerLecture, useLecture } from '../../hooks/useLecture.js'
+import { ajouterPage, majLecture, modifierTexte, supprimerLecture, useCorrectionsSons, useLecture } from '../../hooks/useLecture.js'
 import { decouperMots, motALaPosition, phraseAutour } from '../../utils/lecture.js'
 import { VITESSES, VOIX_DEFAUT } from '../../config/lectureVoix.js'
 import TexteLisible from '../../components/lecture/TexteLisible.jsx'
@@ -101,9 +101,12 @@ export default function LectureDetailView() {
     }
   }, [sonsActifs, dicoSons, changer])
   const basculerSons = (actif) => changer({ couleursSons: actif })
+  // corrections faites par Max dans l'Entraînement des sons : appliquées aussitôt
+  const { version: versionCorrections } = useCorrectionsSons()
   const sonsMots = useMemo(
     () => (sonsActifs && dicoSons ? sonsParMot(analyserTexte(texte, { sons: dicoSons }), mots) : null),
-    [sonsActifs, dicoSons, texte, mots]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sonsActifs, dicoSons, texte, mots, versionCorrections]
   )
 
   const listeDouteux = lecture?.douteux

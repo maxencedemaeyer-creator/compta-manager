@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, BookAudio, Camera, FileText, Image as ImageIcon, X } from 'lucide-react'
+import { ArrowLeft, BookAudio, Camera, FileText, Image as ImageIcon, Lock, Target, X } from 'lucide-react'
 import { usePin } from '../../context/PinContext.jsx'
 import { creerLecture, useLectures } from '../../hooks/useLecture.js'
 import { ACCEPT_DOCUMENT } from '../../utils/document.js'
@@ -97,11 +97,22 @@ export default function LectureView() {
       <div className="pointer-events-none absolute -left-40 top-64 h-80 w-80 rounded-full bg-amber-200/40 blur-3xl" />
 
       <div className="relative mx-auto max-w-5xl px-5 pb-16 pt-[max(1.5rem,env(safe-area-inset-top))] sm:px-8">
-        {profilId && unlocked && (
-          <Link to={`/${profilId}`} className="inline-flex items-center gap-1.5 text-sm text-indigo-950/50 hover:text-indigo-950">
-            <ArrowLeft size={16} /> Mon espace
+        <div className="flex items-center justify-between gap-3">
+          {profilId && unlocked ? (
+            <Link to={`/${profilId}`} className="inline-flex items-center gap-1.5 text-sm text-indigo-950/50 hover:text-indigo-950">
+              <ArrowLeft size={16} /> Mon espace
+            </Link>
+          ) : (
+            <span />
+          )}
+          {/* Entraînement des sons en couleur : réservé à Max (code PIN) */}
+          <Link
+            to="/maxence/lecture/entrainement"
+            className="inline-flex items-center gap-1.5 rounded-full bg-white/70 px-3 py-1.5 text-xs font-semibold text-indigo-950/50 ring-1 ring-indigo-950/5 hover:text-indigo-950"
+          >
+            <Target size={14} /> Entraînement <Lock size={12} />
           </Link>
-        )}
+        </div>
 
         <header className="mt-4 flex items-center gap-4">
           <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-600/30">

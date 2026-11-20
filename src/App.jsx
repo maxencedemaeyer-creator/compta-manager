@@ -45,6 +45,7 @@ const SalleView = lazy(() => import('./views/labo/SalleView.jsx'))
 // Lis-moi (aide à la lecture, public, pour les tablettes de la classe)
 const LectureView = lazy(() => import('./views/lecture/LectureView.jsx'))
 const LectureDetailView = lazy(() => import('./views/lecture/LectureDetailView.jsx'))
+const EntrainementSonsView = lazy(() => import('./views/lecture/EntrainementSonsView.jsx'))
 const fondLecture = <div style={{ minHeight: '100dvh', background: '#fbf7f0' }} />
 // Les jeux de chaque expérience : clé « expérience/paillasse »
 const LABO_JEUX = {
@@ -185,6 +186,9 @@ export default function App() {
         {/* ================= Lis-moi (public, pour les élèves) ================= */}
         <Route path="/lecture" element={<SansPin><Suspense fallback={fondLecture}><LectureView /></Suspense></SansPin>} />
         <Route path="/lecture/:lectureId" element={<SansPin><Suspense fallback={fondLecture}><LectureDetailView /></Suspense></SansPin>} />
+
+        {/* Lis-moi : entraînement des sons en couleur (Max seulement, avec son code PIN) */}
+        <Route path="/maxence/lecture/entrainement" element={<Protege><Suspense fallback={fondLecture}><EntrainementSonsView /></Suspense></Protege>} />
 
         {/* ================= Espace Maxence ================= */}
         {/* Application Compta */}

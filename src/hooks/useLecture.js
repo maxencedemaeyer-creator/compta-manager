@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import {
+  FieldPath,
   collection,
+  deleteField,
   doc,
   getDoc,
   onSnapshot,
@@ -18,6 +20,7 @@ import { pivoterImage, preparerPhotoProjection } from '../utils/image.js'
 import { reconnaitreTexte } from '../utils/ocr.js'
 import { canvasEnFichier, lireDocument, typeFichier } from '../utils/document.js'
 import { titreDepuis } from '../utils/lecture.js'
+import { definirCorrections } from '../utils/phonemes.js'
 
 // =============================================================
 //  Données de l'appli « Lis-moi » (Firebase) — historique de la classe
@@ -179,4 +182,68 @@ export function useLecture(id) {
   }, [authReady, id])
 
   return lecture
+}
+
+// =============================================================
+//  Entraînement des sons (Max, PIN) — corrections des « sons en couleur »
+//  - lectures_entrainement/corrections : { modeles: { mot: « monsi[eu:eu]r » } }
+//    → lu par toutes les tablettes, appliqué partout aussitôt
+//  - lectures_entrainement/progression : { verifies: { mot: 'ok' | 'corrige' } }
+// =============================================================
+const ENTRAINEMENT = 'lectures_entrainement'
+const DOC_CORRECTIONS = doc(db, ENTRAINEMENT, 'corrections')
+const DOC_PROGRESSION = doc(db, ENTRAINEMENT, 'progression')
+
+/** Suit les corrections (temps réel) et les donne au moteur ; renvoie un numéro qui change à chaque mise à jour. */
+export function useCorrectionsSons() {
+  const { authReady } = usePin()
+  const [version, setVersion] = useState(0)
+  const [modeles, setModeles] = useState({})
+  useEffect(() => {
+    if (!authReady) return
+    return onSnapshot(
+      DOC_CORRECTIONS,
+      (snap) => {
+        const m = (snap.exists() && snap.data().modeles) || {}
+        definirCorrections(m)
+        setModeles(m)
+        setVersion((v) => v + 1)
+      },
+      (err) => console.error('Erreur Firestore (corrections des sons) :', err)
+    )
+  }, [authReady])
+  return { version, modeles }
+}
+
+/** Mots déjà vérifiés dans l'Entraînement (temps réel). */
+export function useProgressionEntrainement() {
+  const { authReady } = usePin()
+  const [verifies, setVerifies] = useState(null)
+  useEffect(() => {
+    if (!authReady) return
+    return onSnapshot(
+      DOC_PROGRESSION,
+      (snap) => setVerifies((snap.exists() && snap.data().verifies) || {}),
+      (err) => {
+        console.error('Erreur Firestore (progression entraînement) :', err)
+        setVerifies({})
+      }
+    )
+  }, [authReady])
+  return verifies
+}
+
+export async function marquerMotVerifie(mot) {
+  await withTimeout(setDoc(DOC_PROGRESSION, { verifies: { [mot]: 'ok' }, majLe: serverTimestamp() }, { merge: true }))
+}
+
+export async function enregistrerCorrectionSon(mot, modele) {
+  await withTimeout(setDoc(DOC_CORRECTIONS, { modeles: { [mot]: modele }, majLe: serverTimestamp() }, { merge: true }))
+  await withTimeout(setDoc(DOC_PROGRESSION, { verifies: { [mot]: 'corrige' }, majLe: serverTimestamp() }, { merge: true }))
+}
+
+/** Annule la décision sur un mot (« vérifié » et sa correction éventuelle). */
+export async function annulerMotEntrainement(mot) {
+  await withTimeout(updateDoc(DOC_PROGRESSION, new FieldPath('verifies', mot), deleteField())).catch(() => {})
+  await withTimeout(updateDoc(DOC_CORRECTIONS, new FieldPath('modeles', mot), deleteField())).catch(() => {})
 }

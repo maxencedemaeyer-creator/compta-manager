@@ -4,8 +4,10 @@
 //  est réellement prononcé dans le mot. En cas de doute : pas de couleur.
 //
 //  Ordre d'évaluation pour chaque mot :
-//   1. OVERRIDES (ci-dessous) : priorité absolue, à compléter par Max après
-//      relecture en classe (mots mal colorés ou oubliés).
+//   1. Exceptions, priorité absolue :
+//      a. corrections faites par Max dans l'« Entraînement des sons »
+//         (Firebase, lectures_entrainement/corrections), appliquées partout aussitôt ;
+//      b. OVERRIDES ci-dessous (dans le code).
 //   2. Prononciation réelle du mot : moteur de l'autre site de Max
 //      (decoupageSons.js, dictionnaire Lexique 3.83 découpé à l'avance dans
 //      public/lecture/sons.txt). Homographes lus avec les mots voisins
@@ -47,6 +49,20 @@ export const OVERRIDES = {
 
 const normaliser = (s) => s.toLowerCase().replace(/œ/g, 'oe').replace(/æ/g, 'ae')
 
+const cache = new Map() // texte → marques (bascule On/Off instantanée)
+
+// Corrections de l'Entraînement (Firebase) : { mot: modèle }, priorité sur OVERRIDES
+let corrections = {}
+/** Remplace les corrections de l'Entraînement (appelé quand Firebase change). */
+export function definirCorrections(modeles) {
+  corrections = Object.fromEntries(Object.entries(modeles || {}).map(([mot, m]) => [normaliser(mot), m]))
+  cache.clear()
+}
+const exception = (mot) => {
+  const cle = normaliser(mot)
+  return corrections[cle] ?? OVERRIDES[cle]
+}
+
 /** Lit une exception « monsi[eu:eu]r » → [[début, longueur, son]…] pour le mot donné, ou null si elle ne colle pas. */
 function lireOverride(mot, modele) {
   const segments = []
@@ -77,7 +93,6 @@ export function chargerDictionnaireSons() {
   return chargement
 }
 
-const cache = new Map() // texte → marques (bascule On/Off instantanée)
 
 /**
  * Analyse un texte : liste de [début, longueur, son] (positions dans le texte),
@@ -88,8 +103,8 @@ export function analyserTexte(texte, { sons }) {
   const sortie = []
   // 1. exceptions : les mots concernés ne passent pas par le dictionnaire
   const zonesOverride = []
-  for (const m of texte.matchAll(/[\p{L}]+(?:['’][\p{L}]+)*/gu)) {
-    const modele = OVERRIDES[normaliser(m[0])]
+  for (const m of texte.matchAll(/\p{L}+/gu)) {
+    const modele = exception(m[0])
     if (modele === undefined) continue
     const segs = lireOverride(m[0], modele)
     if (!segs) continue
@@ -109,6 +124,32 @@ export function analyserTexte(texte, { sons }) {
   if (cache.size > 200) cache.clear()
   cache.set(texte, sortie)
   return sortie
+}
+
+/** Le modèle d'un mot tel qu'il est coloré (« monsi[eu:eu]r ») — pour l'Entraînement. */
+export function modeleDuMot(mot, options) {
+  let s = ''
+  let i = 0
+  for (const [d, n, id] of analyserTexte(mot, options)) {
+    s += mot.slice(i, d) + `[${mot.slice(d, d + n)}:${id}]`
+    i = d + n
+  }
+  return s + mot.slice(i)
+}
+
+/** Construit un modèle à partir d'une couleur par lettre (null = pas de couleur). */
+export function modeleDepuisLettres(lettres, sonsLettres) {
+  let s = ''
+  let k = 0
+  while (k < lettres.length) {
+    const id = sonsLettres[k]
+    let j = k + 1
+    while (j < lettres.length && id && sonsLettres[j] === id) j++
+    const morceau = lettres.slice(k, j).join('')
+    s += id ? `[${morceau}:${id}]` : morceau
+    k = j
+  }
+  return s
 }
 
 /** Un mot seul → segments { text, start, end, soundId } (soundId = null : pas de couleur). */
