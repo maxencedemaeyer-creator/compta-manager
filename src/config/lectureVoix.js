@@ -10,7 +10,9 @@ export const VOIX = [
   { id: 'fr-BE-CharlineNeural', nom: 'Charline', detail: 'Femme · Belgique' },
   { id: 'fr-BE-GerardNeural', nom: 'Gérard', detail: 'Homme · Belgique' },
 ]
-export const VOIX_DEFAUT = 'fr-FR-DeniseNeural'
+// Décision de Max (20 nov.) : pas de choix de voix pour l'élève, voix de femme Vivienne.
+// (La liste ci-dessus reste pour plus tard ; l'interface ne l'affiche plus.)
+export const VOIX_DEFAUT = 'fr-FR-VivienneMultilingualNeural'
 
 // Vitesse en % (réglage « prosody rate » d'Azure)
 export const VITESSES = [

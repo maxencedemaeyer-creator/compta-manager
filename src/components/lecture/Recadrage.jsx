@@ -5,7 +5,8 @@ import { Check, Maximize, RotateCw, X } from 'lucide-react'
 //  Appli « Lis-moi » : recadrage rapide de la photo
 //  On tire les 4 coins (ou le cadre entier) pour ne garder que la
 //  zone utile (consigne, paragraphe…) → moins de bruit pour la
-//  reconnaissance du texte et pour l'élève. Pivoter d'un quart de tour.
+//  reconnaissance du texte et pour l'élève. Gros bouton « Pivoter »
+//  (demande de Max) + conseil si la photo semble couchée.
 // =============================================================
 const COTE_MAX = 2400 // px : assez pour une bonne reconnaissance, léger pour la tablette
 const TAILLE_MIN = 0.06 // 6 % de l'image au minimum
@@ -54,6 +55,8 @@ export default function Recadrage({ file, onValider, onAnnuler }) {
   const [cadre, setCadre] = useState(TOUT)
   const [taille, setTaille] = useState(null) // taille affichée de l'image
   const zone = useRef(null)
+  // Photo plus large que haute (souvent : feuille prise de travers) → petit conseil
+  const couche = !!travail && quarts === 0 && travail.canvas.width > travail.canvas.height * 1.15
   const glisse = useRef(null)
 
   const annuler = useRef(onAnnuler)
@@ -175,15 +178,13 @@ export default function Recadrage({ file, onValider, onAnnuler }) {
           <X size={18} /> Annuler
         </button>
         <p className="hidden font-semibold text-white/80 sm:block">Garde seulement le texte à lire</p>
-        <button
-          onClick={() => setQuarts((q) => (q + 1) % 4)}
-          className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10"
-          aria-label="Pivoter"
-          title="Pivoter"
-        >
-          <RotateCw size={20} />
-        </button>
+        <span className="hidden w-[6.5rem] sm:block" />
       </div>
+      {couche && (
+        <p className="mx-auto mb-1 rounded-full bg-amber-400/90 px-4 py-1.5 text-center text-sm font-semibold text-amber-950">
+          Le texte est couché ? Touche « Pivoter » ↻
+        </p>
+      )}
 
       <div ref={zone} className="relative mx-2 my-1 flex min-h-0 flex-1 items-center justify-center overflow-hidden">
         {travail && taille && (
@@ -213,8 +214,14 @@ export default function Recadrage({ file, onValider, onAnnuler }) {
       </div>
 
       <div className="flex items-center gap-3 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2">
+        <button
+          onClick={() => setQuarts((q) => (q + 1) % 4)}
+          className="flex h-14 flex-1 items-center justify-center gap-2 rounded-2xl bg-white/15 font-semibold"
+        >
+          <RotateCw size={20} /> Pivoter
+        </button>
         <button onClick={() => setCadre(TOUT)} className="flex h-14 flex-1 items-center justify-center gap-2 rounded-2xl bg-white/10 font-semibold">
-          <Maximize size={18} /> Tout garder
+          <Maximize size={18} /> <span className="hidden sm:inline">Tout garder</span><span className="sm:hidden">Tout</span>
         </button>
         <button
           onClick={valider}

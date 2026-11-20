@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Check, FilePlus2, Pencil, Trash2, Type, X } from 'lucide-react'
+import { ArrowLeft, Check, FilePlus2, Pencil, Pointer, Trash2, Type, X } from 'lucide-react'
 import { ajouterPage, majLecture, modifierTexte, supprimerLecture, useLecture } from '../../hooks/useLecture.js'
 import { decouperMots, motALaPosition, phraseAutour } from '../../utils/lecture.js'
-import { VITESSES } from '../../config/lectureVoix.js'
+import { VITESSES, VOIX_DEFAUT } from '../../config/lectureVoix.js'
 import TexteLisible from '../../components/lecture/TexteLisible.jsx'
 import BarreLecture from '../../components/lecture/BarreLecture.jsx'
 import BulleMot from '../../components/lecture/BulleMot.jsx'
@@ -110,7 +110,7 @@ export default function LectureDetailView() {
   }
 
   const options = () => ({
-    voix: reglages.voix,
+    voix: VOIX_DEFAUT, // pas de choix de voix pour l'élève
     vitesse: VITESSES.find((v) => v.id === reglages.vitesse)?.valeur ?? -8,
   })
   const lire = (debut, fin) => {
@@ -249,6 +249,7 @@ export default function LectureDetailView() {
   }
 
   const aPhotos = (typeof lecture.pages === 'number' ? lecture.pages : 1) > 0
+  const montrerAstuce = !reglages.astuceVue && selection.a === null && lecteur.etat === 'arret'
 
   return (
     <div
@@ -331,26 +332,37 @@ export default function LectureDetailView() {
         }}
       />
 
-      {/* Photo + texte (un document Word / texte n'a pas de photo : texte seul, centré) */}
-      <main
-        className={`mx-auto grid gap-4 px-3 pt-4 sm:px-5 ${
-          aPhotos
-            ? 'max-w-6xl md:landscape:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]'
-            : 'max-w-3xl'
-        }`}
-      >
-        {aPhotos && (
-          <PhotoPages
-            lectureId={lecture.id}
-            pages={lecture.pages}
-            className="h-[24dvh] md:landscape:sticky md:landscape:top-[4.75rem] md:landscape:h-[calc(100dvh-6rem-9rem)] lg:sticky lg:top-[4.75rem] lg:h-[calc(100dvh-6rem-9rem)]"
-          />
-        )}
-
+      {/* Le texte, au centre : c'est LÀ qu'on choisit ce qu'on lit. La photo d'origine
+          n'est qu'un rappel (petite vignette « Voir la photo »). */}
+      <main className="mx-auto max-w-3xl px-3 pt-4 sm:px-5">
         <section
-          className="mb-48 rounded-[2rem] px-5 py-6 shadow-sm ring-1 ring-indigo-950/5 transition-colors sm:px-9 sm:py-9"
+          className="mb-48 rounded-[2rem] px-5 py-6 shadow-sm ring-1 ring-indigo-950/5 transition-colors sm:px-9 sm:py-8"
           style={{ background: fond.carte }}
         >
+          {edition === null && (aPhotos || montrerAstuce) && (
+            <div className="mb-5 flex flex-wrap items-center gap-3">
+              {aPhotos && <PhotoPages lectureId={lecture.id} pages={lecture.pages} miniature={lecture.miniature} />}
+              {montrerAstuce && (
+                <div className="flex w-full min-w-0 items-center gap-3 rounded-2xl bg-indigo-600 px-4 py-2.5 text-sm text-white shadow-md shadow-indigo-600/20 sm:w-auto sm:flex-1">
+                  <Pointer size={20} className="shrink-0" />
+                  <span className="min-w-0 flex-1">
+                    {SOURIS ? (
+                      <>
+                        <b>Clique sur un mot</b> et <b>glisse</b> jusqu’au dernier mot à lire — ou appuie sur ▶ pour tout lire.
+                      </>
+                    ) : (
+                      <>
+                        <b>Garde le doigt sur un mot</b>, puis <b>glisse</b> jusqu’au dernier mot à lire — ou appuie sur ▶ pour tout lire.
+                      </>
+                    )}
+                  </span>
+                  <button onClick={() => changer({ astuceVue: true })} className="shrink-0 rounded-full bg-white/20 px-3 py-1 font-semibold">
+                    Compris
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
           {edition !== null ? (
             <>
               <p className="mb-3 text-sm text-indigo-950/55">
