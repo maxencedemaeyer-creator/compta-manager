@@ -20,6 +20,7 @@ function couleurPour(pathname, profilId, unlocked) {
   if (pathname.includes('/jeux/motus')) return '#0d2236'
   if (pathname.includes('/jeux')) return '#07031a'
   if (/\/(genealogie|projection)/.test(pathname)) return '#020617'
+  if (pathname.includes('/jardin')) return '#ecfdf5'
   if (pathname.includes('/compta')) return '#ffffff'
   if (pathname.includes('/francais')) return '#f8fafc'
   return CREME[profilId] || CREME.maxence

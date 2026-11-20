@@ -29,6 +29,8 @@ import CommunosView from './views/jeux/CommunosView.jsx'
 import CommunosProvincesView from './views/jeux/CommunosProvincesView.jsx'
 import CommunosLibreView from './views/jeux/CommunosLibreView.jsx'
 import MotusView from './views/jeux/MotusView.jsx'
+import JardinListeView from './views/jardin/JardinListeView.jsx'
+import JardinView from './views/jardin/JardinView.jsx'
 import CoutureGalerieView from './views/couture/CoutureGalerieView.jsx'
 import CoutureArticleView from './views/couture/CoutureArticleView.jsx'
 import CoutureAtelierView from './views/couture/CoutureAtelierView.jsx'
@@ -190,6 +192,11 @@ export default function App() {
         {/* Application Généalogie */}
         <Route path="/maxence/genealogie" element={<Protege><GenealogieListeView /></Protege>} />
         <Route path="/maxence/genealogie/:arbreId" element={<Protege><GenealogieArbreView /></Protege>} />
+
+        {/* Application Mon jardin (jardins, plantes, calendrier des tailles) */}
+        <Route path="/maxence/jardin" element={<Protege><JardinListeView /></Protege>} />
+        <Route path="/maxence/jardin/:jardinId" element={<Protege><JardinView /></Protege>} />
+        <Route path="/maxence/jardin/:jardinId/:onglet" element={<Protege><JardinView /></Protege>} />
 
         {/* Application Programme Français P5-P6 */}
         <Route path="/maxence/francais" element={<Protege><LabView /></Protege>} />

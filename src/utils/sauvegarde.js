@@ -55,6 +55,17 @@ export async function creerSauvegarde() {
     total += 1
   }
 
+  // Jardins, avec leurs plantes et leurs tâches faites (sans les photos, trop lourdes)
+  resultat.jardins = []
+  for (const jardin of await lireCollection('jardins')) {
+    resultat.jardins.push({
+      ...jardin,
+      plantes: (await lireCollection(`jardins/${jardin.id}/plantes`)).map(({ couverture, ...reste }) => reste),
+      tachesFaites: await lireCollection(`jardins/${jardin.id}/tachesFaites`),
+    })
+    total += 1
+  }
+
   const jour = new Date().toISOString().slice(0, 10)
   const blob = new Blob([JSON.stringify(resultat, null, 2)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)

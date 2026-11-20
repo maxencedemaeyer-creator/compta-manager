@@ -1,4 +1,4 @@
-import { BookOpenCheck, FlaskConical, Gamepad2, GitBranch, MessageSquarePlus, Projector, Scissors, Wallet } from 'lucide-react'
+import { BookOpenCheck, FlaskConical, Gamepad2, GitBranch, MessageSquarePlus, Projector, Scissors, Sprout, Wallet } from 'lucide-react'
 
 // =============================================================
 //  Liste des applications du site (adresses sous /maxence).
@@ -51,6 +51,15 @@ export const APPS = [
     description: 'Game Center : tous les jeux',
     icon: Gamepad2,
     couleur: 'from-fuchsia-500 to-cyan-400',
+  },
+  {
+    id: 'jardin',
+    to: '/maxence/jardin',
+    nom: 'Mon jardin',
+    description: 'Mes plantes, tailles et récoltes',
+    icon: Sprout,
+    couleur: 'from-green-400 to-emerald-600',
+    profils: ['maxence'],
   },
   {
     id: 'labo',
