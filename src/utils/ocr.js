@@ -68,25 +68,41 @@ function tournerCanvas(source, sens) {
 // Reconnaît le texte. onProgression(0 → 1).
 // Si le résultat est mauvais (photo prise de travers), on essaie la photo
 // tournée d'un quart de tour dans chaque sens et on garde la meilleure.
-// Renvoie { texte, confiance, rotation } (rotation : 0, 1 ou -1 quart de tour).
+// Renvoie { texte, confiance, douteux: [mots], rotation } (rotation : 0, 1 ou -1 quart de tour).
 export async function reconnaitreTexte(file, onProgression = () => {}) {
   return reconnaitreImage(await preparerImage(file), onProgression)
+}
+
+// Mots dont Tesseract n'est pas sûr (confiance < 55) : on les soulignera
+// pour que l'élève ou l'enseignant les vérifie d'un coup d'œil.
+const SEUIL_DOUTE = 55
+const MOT = /[\p{L}\p{N}]+(?:['’\-‐][\p{L}\p{N}]+)*/gu
+function motsDouteux(data) {
+  const douteux = new Set()
+  for (const bloc of data.blocks || [])
+    for (const para of bloc.paragraphs || [])
+      for (const ligne of para.lines || [])
+        for (const mot of ligne.words || []) {
+          if (mot.confidence >= SEUIL_DOUTE) continue
+          for (const m of (mot.text || '').match(MOT) || []) if (/\p{L}/u.test(m) && m.length >= 2) douteux.add(m)
+        }
+  return [...douteux].slice(0, 60)
 }
 
 // Même chose à partir d'une image déjà dessinée (ex. page d'un PDF scanné)
 export async function reconnaitreImage(canvas, onProgression = () => {}) {
   const worker = await obtenirTravailleur()
 
-  const essayer = async (image, part, total) => {
-    suivreProgression = (p) => onProgression(Math.min(0.99, (part + p) / total))
-    const { data } = await worker.recognize(image, { rotateAuto: true })
-    return { texte: nettoyerTexte(data.text), confiance: data.confidence || 0 }
+  const essayer = async (image, part, total, etape) => {
+    suivreProgression = (p) => onProgression(Math.min(0.99, (part + p) / total), etape)
+    const { data } = await worker.recognize(image, { rotateAuto: true }, { text: true, blocks: true })
+    return { texte: nettoyerTexte(data.text), confiance: data.confidence || 0, douteux: motsDouteux(data) }
   }
 
   let meilleur = { ...(await essayer(canvas, 0, 1)), rotation: 0 }
   if (meilleur.confiance < 55 || meilleur.texte.length < 25) {
     for (const [i, sens] of [1, -1].entries()) {
-      const essai = await essayer(tournerCanvas(canvas, sens), i + 1, 3)
+      const essai = await essayer(tournerCanvas(canvas, sens), i, 2, 'Texte difficile : j’essaie en tournant l’image')
       if (essai.confiance > meilleur.confiance + 10 && essai.texte.length >= meilleur.texte.length * 0.6) {
         meilleur = { ...essai, rotation: sens }
       }

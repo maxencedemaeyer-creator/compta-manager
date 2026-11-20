@@ -1,5 +1,5 @@
 import sdk from 'microsoft-cognitiveservices-speech-sdk'
-import { LONGUEUR_MAX, VOIX_AUTORISEES, construireSsml, localiserMot, origineAutorisee } from './_lecture.js'
+import { LONGUEUR_MAX, VOIX_AUTORISEES, construireSsml, freinAntiRobot, localiserMot, origineAutorisee } from './_lecture.js'
 
 // =============================================================
 //  Fonction voix de l'appli « Lis-moi » (Vercel, côté serveur)
@@ -69,6 +69,9 @@ export default async function handler(req, res) {
   if (texte.length > LONGUEUR_MAX) return res.status(400).json({ erreur: 'Texte trop long' })
   if (!VOIX_AUTORISEES[voix]) return res.status(400).json({ erreur: 'Voix inconnue' })
   if (vitesse < -50 || vitesse > 50) return res.status(400).json({ erreur: 'Vitesse invalide' })
+  if (freinAntiRobot(req, texte.length)) {
+    return res.status(429).json({ erreur: 'Beaucoup de lectures en ce moment : réessaie dans quelques minutes.' })
+  }
 
   try {
     const resultat = await synthetiser(texte, voix, vitesse)

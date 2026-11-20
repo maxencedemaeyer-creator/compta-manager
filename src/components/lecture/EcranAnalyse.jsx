@@ -7,8 +7,16 @@ import { typeFichier } from '../../utils/document.js'
 //  Appli « Lis-moi » : écran pendant la reconnaissance du texte
 //  (la photo avec un trait lumineux qui la parcourt + progression)
 // =============================================================
-export default function EcranAnalyse({ file, progression, erreur, onReprendre, onFermer }) {
+export default function EcranAnalyse({ file, progression, etape, erreur, onReprendre, onFermer }) {
   const [url, setUrl] = useState(null)
+  const [secondes, setSecondes] = useState(0)
+
+  // Compteur de temps : après quelques secondes, on rassure (ça n'a pas planté)
+  useEffect(() => {
+    if (erreur) return
+    const t = setInterval(() => setSecondes((s) => s + 1), 1000)
+    return () => clearInterval(t)
+  }, [erreur])
 
   const estImage = file && typeFichier(file) === 'image'
 
@@ -60,9 +68,15 @@ export default function EcranAnalyse({ file, progression, erreur, onReprendre, o
               style={{ width: `${Math.max(4, pourcent)}%` }}
             />
           </div>
-          <p className="mt-2 text-sm text-indigo-950/50">
-            {pourcent < 1 ? 'La première fois, ça prend quelques secondes de plus.' : `${pourcent} %`}
+          <p className="mt-2 text-sm font-medium text-indigo-950/60">
+            {etape ? `${etape} · ${pourcent} %` : pourcent < 1 ? 'La première fois, ça prend quelques secondes de plus.' : `${pourcent} %`}
           </p>
+          {secondes >= 10 && (
+            <p className="mt-3 rounded-2xl bg-white/80 px-4 py-2.5 text-sm text-indigo-950/60 shadow-sm">
+              Ça avance, ne ferme pas la page ⏳
+              {secondes >= 25 && <span className="block text-xs">Une page scannée peut prendre jusqu’à une demi-minute.</span>}
+            </p>
+          )}
         </div>
       ) : (
         <div className="mt-8 w-full max-w-sm text-center">

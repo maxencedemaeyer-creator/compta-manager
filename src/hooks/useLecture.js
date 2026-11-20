@@ -22,7 +22,8 @@ import { titreDepuis } from '../utils/lecture.js'
 // =============================================================
 //  Données de l'appli « Lis-moi » (Firebase) — historique de la classe
 //  - lectures/{id}             : titre, texte, miniature, pages, source
-//                                (photo | pdf | word | texte), nomFichier, dates
+//                                (photo | pdf | word | texte), nomFichier, dates,
+//                                douteux (mots mal reconnus probables, à vérifier)
 //  - lectures_images/{id}_{n}  : la photo de la page n (n = 0, 1, …)
 // =============================================================
 const LECTURES = 'lectures'
@@ -36,7 +37,7 @@ async function traiterPhoto(file, onProgression) {
   pasDeTexte(ocr.texte)
   let photo = await preparerPhotoProjection(file)
   if (ocr.rotation) photo = await pivoterImage(photo.image, ocr.rotation)
-  return { texte: ocr.texte, photo }
+  return { texte: ocr.texte, photo, douteux: ocr.douteux || [] }
 }
 
 const MESSAGE_LENT = "L'enregistrement prend trop de temps. Vérifie la connexion et réessaie."
@@ -53,20 +54,25 @@ export async function creerLecture(file, onProgression) {
   const estImage = typeFichier(file) === 'image'
   let texte
   let photos = []
+  let douteux = []
   let source = 'photo'
 
   if (estImage) {
     const r = await traiterPhoto(file, onProgression)
     texte = r.texte
     photos = [r.photo]
+    douteux = r.douteux
   } else {
     // le texte compte pour 90 % de la progression, les images des pages pour le reste
-    const lu = await lireDocument(file, (p) => onProgression(p * 0.9))
+    const lu = await lireDocument(file, (p, etape) => onProgression(p * 0.9, etape))
     pasDeTexte(lu.texte)
     texte = lu.texte
     source = lu.source
+    douteux = lu.douteux || []
+    onProgression(0.92, 'Je range les pages…')
     for (const canvas of lu.images) photos.push(await preparerPhotoProjection(await canvasEnFichier(canvas)))
   }
+  onProgression(0.97, 'J’enregistre…')
 
   const id = doc(collection(db, LECTURES)).id
   // une page à la fois (chaque photo peut peser près de 1 Mo)
@@ -83,6 +89,7 @@ export async function creerLecture(file, onProgression) {
       texte,
       miniature: photos[0]?.miniature || null,
       pages: photos.length,
+      douteux,
       source,
       nomFichier: estImage ? null : file.name || null,
       creeLe: serverTimestamp(),
@@ -95,21 +102,27 @@ export async function creerLecture(file, onProgression) {
 }
 
 export async function ajouterPage(lecture, file, onProgression) {
-  const { texte, photo } = await traiterPhoto(file, onProgression)
+  const { texte, photo, douteux } = await traiterPhoto(file, onProgression)
   const n = typeof lecture.pages === 'number' ? lecture.pages : 1
   const batch = writeBatch(db)
   batch.set(doc(db, IMAGES, `${lecture.id}_${n}`), { data: photo.image, largeur: photo.largeur, hauteur: photo.hauteur })
   batch.update(doc(db, LECTURES, lecture.id), {
     texte: `${lecture.texte}\n\n${texte}`,
     pages: n + 1,
+    douteux: [...new Set([...(lecture.douteux || []), ...douteux])],
     ...(n === 0 ? { miniature: photo.miniature } : {}),
     majLe: serverTimestamp(),
   })
   await withTimeout(batch.commit(), 60000, "L'enregistrement prend trop de temps. Vérifie la connexion et réessaie.")
 }
 
-export async function modifierTexte(id, texte) {
-  await withTimeout(updateDoc(doc(db, LECTURES, id), { texte, titre: titreDepuis(texte), majLe: serverTimestamp() }))
+export async function modifierTexte(id, texte, autres = {}) {
+  await withTimeout(updateDoc(doc(db, LECTURES, id), { texte, titre: titreDepuis(texte), ...autres, majLe: serverTimestamp() }))
+}
+
+// Autres champs (ex. douteux : liste des mots à vérifier)
+export async function majLecture(id, champs) {
+  await withTimeout(updateDoc(doc(db, LECTURES, id), { ...champs, majLe: serverTimestamp() }))
 }
 
 export async function supprimerLecture(lecture) {

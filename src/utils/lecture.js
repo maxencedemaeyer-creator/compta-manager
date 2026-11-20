@@ -35,8 +35,9 @@ export function titreDepuis(texte) {
   return mots.length > 48 ? mots.slice(0, 46) + '…' : mots || 'Lecture'
 }
 
-// Mot = lettres/chiffres, avec apostrophes et traits d'union à l'intérieur (« l'école », « peut-être »)
-const MOT = /[\p{L}\p{N}]+(?:['’\-‐][\p{L}\p{N}]+)*/gu
+// Mot = lettres/chiffres, avec apostrophes et traits d'union à l'intérieur (« l'école », « peut-être »),
+// ou nombre à virgule (« 25,5 », lu d'un seul tenant par la voix)
+const MOT = /\p{N}+(?:[.,]\p{N}+)+|[\p{L}\p{N}]+(?:['’\-‐][\p{L}\p{N}]+)*/gu
 
 // Découpe en paragraphes, chacun en morceaux { mot, texte, debut, fin, index }
 export function decouperMots(texte) {
@@ -117,7 +118,8 @@ export function motALaPosition(mots, position) {
 export function decouperPourVoix(texte, debut, fin, { premier = 220, suivants = 650 } = {}) {
   const passage = texte.slice(debut, fin)
   const phrases = []
-  const regex = /[^.!?…;:\n]*(?:[.!?…;:]+["»”)]*|\n+|$)/g
+  // fin de phrase = ponctuation suivie d'un espace (pas « 2.5 » ni « 10:30 »)
+  const regex = /(?:[^.!?…;:\n]|[.!?…;:](?=[^\s"»”).!?…;:]))*(?:[.!?…;:]+["»”)]*|\n+|$)/g
   let m
   while ((m = regex.exec(passage))) {
     if (m[0] === '') {

@@ -66,7 +66,7 @@ export default function LectureView() {
     if (!file) return
     setAnalyse({ file, origine, progression: 0, erreur: null })
     try {
-      const id = await creerLecture(file, (p) => setAnalyse((a) => (a ? { ...a, progression: p } : a)))
+      const id = await creerLecture(file, (p, etape) => setAnalyse((a) => (a ? { ...a, progression: p, etape: etape ?? a.etape } : a)))
       navigate(`/lecture/${id}`)
     } catch (e) {
       setAnalyse((a) => (a ? { ...a, erreur: e } : a))
@@ -245,6 +245,7 @@ export default function LectureView() {
         <EcranAnalyse
           file={analyse.file}
           progression={analyse.progression}
+          etape={analyse.etape}
           erreur={analyse.erreur}
           onFermer={() => setAnalyse(null)}
           onReprendre={() => {

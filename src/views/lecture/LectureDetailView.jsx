@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Check, FilePlus2, Pencil, Trash2, Type, X } from 'lucide-react'
-import { ajouterPage, modifierTexte, supprimerLecture, useLecture } from '../../hooks/useLecture.js'
+import { ajouterPage, majLecture, modifierTexte, supprimerLecture, useLecture } from '../../hooks/useLecture.js'
 import { decouperMots, motALaPosition, phraseAutour } from '../../utils/lecture.js'
 import { VITESSES } from '../../config/lectureVoix.js'
 import TexteLisible from '../../components/lecture/TexteLisible.jsx'
@@ -62,6 +62,9 @@ export default function LectureDetailView() {
   const lecteur = useLecteur(texte)
   const enLecture = lecteur.position >= 0
   const motActif = !enLecture || mots.length === 0 ? -1 : motALaPosition(mots, lecteur.position)
+  const listeDouteux = lecture?.douteux
+  const douteux = useMemo(() => new Set(listeDouteux || []), [listeDouteux])
+  const nbDouteux = useMemo(() => mots.filter((m) => douteux.has(m.texte)).length, [mots, douteux])
   const phraseActive = useMemo(() => (enLecture ? phraseAutour(texte, lecteur.position) : null), [enLecture, texte, lecteur.position])
 
   // Le texte change (correction, nouvelle page) : on repart de zéro
@@ -158,7 +161,9 @@ export default function LectureDetailView() {
     const m = motBulle
     setBulle(null)
     try {
-      await modifierTexte(lecture.id, texte.slice(0, m.debut) + nouveau + texte.slice(m.fin))
+      await modifierTexte(lecture.id, texte.slice(0, m.debut) + nouveau + texte.slice(m.fin), {
+        douteux: (lecture.douteux || []).filter((d) => d !== m.texte),
+      })
     } catch (e) {
       alert(e.message)
     }
@@ -191,7 +196,7 @@ export default function LectureDetailView() {
   const traiterPage = async (file) => {
     setAnalyse({ file, progression: 0, erreur: null })
     try {
-      await ajouterPage(lecture, file, (p) => setAnalyse((a) => (a ? { ...a, progression: p } : a)))
+      await ajouterPage(lecture, file, (p, etape) => setAnalyse((a) => (a ? { ...a, progression: p, etape: etape ?? a.etape } : a)))
       setAnalyse(null)
     } catch (e) {
       setAnalyse((a) => (a ? { ...a, erreur: e } : a))
@@ -314,7 +319,22 @@ export default function LectureDetailView() {
               />
             </>
           ) : (
+            <>
+            {nbDouteux > 0 && (
+              <div className="mb-5 flex items-center gap-3 rounded-2xl bg-orange-50 px-4 py-3 text-sm text-orange-900 ring-1 ring-orange-200/70">
+                <span className="min-w-0 flex-1">
+                  <b>{nbDouteux === 1 ? '1 mot à vérifier' : `${nbDouteux} mots à vérifier`}</b> (soulignés en pointillé) : touche-le, puis ✏️ s’il est mal écrit.
+                </span>
+                <button
+                  onClick={() => majLecture(lecture.id, { douteux: [] }).catch(() => {})}
+                  className="shrink-0 rounded-full bg-white px-3 py-1.5 font-semibold text-orange-800 shadow-sm"
+                >
+                  C’est bon
+                </button>
+              </div>
+            )}
             <TexteLisible
+              douteux={douteux}
               paragraphes={paragraphes}
               selection={selection}
               motActif={motActif}
@@ -327,6 +347,7 @@ export default function LectureDetailView() {
               espacement={espacement}
               couleur={fond.texte}
             />
+            </>
           )}
         </section>
       </main>
@@ -379,6 +400,7 @@ export default function LectureDetailView() {
         <EcranAnalyse
           file={analyse.file}
           progression={analyse.progression}
+          etape={analyse.etape}
           erreur={analyse.erreur}
           onFermer={() => setAnalyse(null)}
           onReprendre={() => {

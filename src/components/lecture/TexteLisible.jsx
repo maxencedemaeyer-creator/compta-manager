@@ -4,11 +4,12 @@ import { memo, useEffect, useRef } from 'react'
 //  Appli « Lis-moi » : le texte, mot par mot
 //  - toucher un mot → onToucherMot(index, élément)
 //  - sélection en bleu (bande continue)
+//  - mots probablement mal reconnus : soulignés en pointillé orange
 //  - pendant la lecture : la phrase en cours est surlignée doucement,
 //    le mot prononcé en jaune ; en mode Focus, le reste s'estompe.
 //  (surlignages gérés directement dans la page : fluide même sur un long texte)
 // =============================================================
-const Paragraphe = memo(function Paragraphe({ morceaux, debutSel, finSel }) {
+const Paragraphe = memo(function Paragraphe({ morceaux, debutSel, finSel, douteux }) {
   const dansSel = (x) => x?.mot && debutSel !== null && x.index >= debutSel && x.index <= finSel
   return (
     <p className="mb-[0.9em] last:mb-0">
@@ -28,7 +29,9 @@ const Paragraphe = memo(function Paragraphe({ morceaux, debutSel, finSel }) {
             key={k}
             data-i={m.index}
             data-d={m.debut}
-            className={`mot cursor-pointer rounded-[0.3em] transition-colors duration-150 ${dedans ? (bord ? 'sel sel-bord' : 'sel') : ''}`}
+            className={`mot cursor-pointer rounded-[0.3em] transition-colors duration-150 ${dedans ? (bord ? 'sel sel-bord' : 'sel') : ''} ${
+              douteux.has(m.texte) ? 'douteux' : ''
+            }`}
           >
             {m.texte}
           </span>
@@ -38,8 +41,11 @@ const Paragraphe = memo(function Paragraphe({ morceaux, debutSel, finSel }) {
   )
 })
 
+const VIDE = new Set()
+
 const STYLES = `
 .lis .mot:hover{background:rgba(99,102,241,.12)}
+.lis .douteux{text-decoration:underline dotted #f97316;text-decoration-thickness:.12em;text-underline-offset:.22em}
 .lis .sel{background:rgba(125,211,252,.55)}
 .lis .sel-bord{background:rgba(56,189,248,.65)}
 .lis .phrase-active{background:rgba(253,230,138,.55)}
@@ -60,6 +66,7 @@ export default function TexteLisible({
   interligne,
   espacement,
   couleur,
+  douteux = VIDE,
 }) {
   const boite = useRef(null)
   const precedent = useRef(null)
@@ -117,7 +124,7 @@ export default function TexteLisible({
     >
       <style>{STYLES}</style>
       {paragraphes.map((morceaux, i) => (
-        <Paragraphe key={i} morceaux={morceaux} debutSel={debutSel} finSel={finSel} />
+        <Paragraphe key={i} morceaux={morceaux} debutSel={debutSel} finSel={finSel} douteux={douteux} />
       ))}
     </div>
   )

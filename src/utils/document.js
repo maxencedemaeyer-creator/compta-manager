@@ -2,7 +2,7 @@
 //  Appli « Lis-moi » : lire un document (PDF, Word, texte)
 //  - PDF : on prend le texte du fichier ; si une page n'en a pas
 //    (PDF scanné), on la « photographie » et on reconnaît le texte.
-//    Les premières pages sont aussi dessinées pour les afficher.
+//    Les pages sont aussi dessinées pour les afficher (5 pages max).
 //  - Word (.docx) : texte des paragraphes.
 //  - Texte (.txt) : chaque ligne = un paragraphe.
 //  Les bibliothèques sont chargées seulement quand on en a besoin.
@@ -13,9 +13,8 @@ import { reconnaitreImage } from './ocr.js'
 export const ACCEPT_DOCUMENT =
   '.pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain'
 
-const PAGES_MAX_TEXTE = 40 // pages lues dans un PDF
-const PAGES_MAX_IMAGES = 10 // pages gardées en image (affichage)
-const PAGES_MAX_OCR = 10 // pages scannées reconnues
+// Les textes de classe font au plus 3 pages (décision de Max) : petite marge à 5
+const PAGES_MAX = 5 // pages lues, gardées en image et reconnues si scannées
 const TEXTE_MAX = 300000 // caractères (limite d'un document Firebase : 1 Mo)
 
 export function typeFichier(file) {
@@ -81,48 +80,52 @@ async function lirePdf(file, onProgression) {
   pdfjs.GlobalWorkerOptions.workerSrc = urlTravailleur
 
   const pdf = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise
-  const n = Math.min(pdf.numPages, PAGES_MAX_TEXTE)
+  const n = Math.min(pdf.numPages, PAGES_MAX)
   const textes = []
   const images = []
-  let ocrFaits = 0
+  const douteux = new Set()
 
   for (let i = 1; i <= n; i++) {
     const page = await pdf.getPage(i)
     let texte = assemblerPage((await page.getTextContent()).items)
     let dessin = null
 
+    onProgression((i - 1) / n, `Page ${i} sur ${n}`)
     // Page sans texte (scannée) : on reconnaît le texte sur l'image
-    if (lettres(texte) < 15 && ocrFaits < PAGES_MAX_OCR) {
+    if (lettres(texte) < 15) {
       dessin = await dessinerPage(page, 2200)
-      const ocr = await reconnaitreImage(dessin, (p) => onProgression((i - 1 + p * 0.95) / n))
+      const etape = `Page ${i} sur ${n} · document scanné, je déchiffre l'image`
+      const ocr = await reconnaitreImage(dessin, (p) => onProgression((i - 1 + p * 0.95) / n, etape))
       texte = ocr.texte
-      ocrFaits++
+      ocr.douteux.forEach((m) => douteux.add(m))
     }
-    if (i <= PAGES_MAX_IMAGES) images.push(dessin || (await dessinerPage(page, 1600)))
+    images.push(dessin || (await dessinerPage(page, 1600)))
     textes.push(nettoyerTexte(texte))
     page.cleanup()
-    onProgression(i / n)
+    onProgression(i / n, `Page ${i} sur ${n}`)
   }
   pdf.destroy()
   const coupe = pdf.numPages > n
   return {
-    texte: textes.filter(Boolean).join('\n\n') + (coupe ? `\n\n(Document coupé après ${n} pages.)` : ''),
+    texte: textes.filter(Boolean).join('\n\n') + (coupe ? `\n\n(Seules les ${n} premières pages ont été gardées.)` : ''),
     images,
+    douteux: [...douteux],
   }
 }
 
 async function lireWord(file) {
   const { default: mammoth } = await import('mammoth/mammoth.browser.js')
   const { value } = await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() })
-  return { texte: nettoyerTexte(value.replace(/\n+/g, '\n\n')), images: [] }
+  return { texte: nettoyerTexte(value.replace(/\n+/g, '\n\n')), images: [], douteux: [] }
 }
 
 async function lireTexteBrut(file) {
   const brut = await file.text()
-  return { texte: nettoyerTexte(brut.replace(/\r/g, '').replace(/\n+/g, '\n\n')), images: [] }
+  return { texte: nettoyerTexte(brut.replace(/\r/g, '').replace(/\n+/g, '\n\n')), images: [], douteux: [] }
 }
 
-// Renvoie { texte, images: [canvas…], source }
+// Renvoie { texte, images: [canvas…], douteux: [mots], source }
+// onProgression(0 → 1, étape) — étape = texte affiché (« Page 2 sur 3 »)
 export async function lireDocument(file, onProgression = () => {}) {
   const type = typeFichier(file)
   if (type === 'doc-ancien') throw new Error('Ce fichier Word est trop ancien (.doc). Enregistre-le en .docx ou en PDF.')
@@ -136,7 +139,7 @@ export async function lireDocument(file, onProgression = () => {}) {
 
   let texte = resultat.texte.trim()
   if (texte.length > TEXTE_MAX) texte = texte.slice(0, TEXTE_MAX) + '…\n\n(Document trop long, coupé.)'
-  return { texte, images: resultat.images, source: type }
+  return { texte, images: resultat.images, douteux: resultat.douteux, source: type }
 }
 
 // Dessin (canvas) → fichier image, pour le ranger comme une photo

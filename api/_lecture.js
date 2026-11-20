@@ -76,3 +76,25 @@ export function origineAutorisee(req) {
   if (hote === hoteDemande) return true
   return /^localhost(:\d+)?$/.test(hote) || /^compta-manager[a-z0-9-]*\.vercel\.app$/.test(hote)
 }
+
+// Frein anti-robot (simple) : nombre de demandes par adresse IP sur 10 minutes.
+// Toutes les tablettes d'une école sortent souvent par la même adresse : la limite
+// est large pour une classe, mais coupe un robot qui boucle. (Mémoire d'une
+// instance Vercel : ce n'est pas un mur, juste un frein ; le vrai filet est le
+// niveau gratuit F0 d'Azure, qui ne facture jamais.)
+const FENETRE_MS = 10 * 60 * 1000
+const MAX_DEMANDES = 200
+const MAX_CARACTERES = 100000
+const compteurs = new Map()
+
+export function freinAntiRobot(req, caracteres) {
+  const ip = String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'inconnu').split(',')[0].trim()
+  const maintenant = Date.now()
+  let c = compteurs.get(ip)
+  if (!c || maintenant - c.debut > FENETRE_MS) c = { debut: maintenant, demandes: 0, caracteres: 0 }
+  c.demandes += 1
+  c.caracteres += caracteres
+  compteurs.set(ip, c)
+  if (compteurs.size > 5000) compteurs.clear()
+  return c.demandes > MAX_DEMANDES || c.caracteres > MAX_CARACTERES
+}
