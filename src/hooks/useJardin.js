@@ -15,7 +15,7 @@ import { db } from '../firebase/config.js'
 import { usePin } from '../context/PinContext.jsx'
 import { withTimeout } from '../utils/withTimeout.js'
 import { miniatureDepuisSource, preparerPhotoCouture } from '../utils/imageCouture.js'
-import { trouverPlante } from '../data/jardin/plantes.js'
+import { baseDePlante, normaliser } from '../data/jardin/plantes.js'
 
 // =============================================================
 //  Application « Mon jardin » (Firebase, à la racine comme le reste de Maxence)
@@ -39,7 +39,7 @@ export const enMs = (t) => (t?.toMillis ? t.toMillis() : Date.now())
 
 // Nom affiché d'une plante du jardin (base ou plante libre)
 export function nomPlante(p) {
-  return p.nomLibre?.trim() || trouverPlante(p.planteId)?.nom || 'Plante'
+  return baseDePlante(p)?.nom || p.nomLibre?.trim() || 'Plante'
 }
 
 // ---------- Jardins ----------
@@ -251,7 +251,7 @@ export function tachesDuMois({ plantes, faites, annee, mois, aujourdhui = new Da
   const estMoisCourant = aujourdhui.getFullYear() === annee && aujourdhui.getMonth() + 1 === mois
 
   for (const plante of plantes) {
-    const base = trouverPlante(plante.planteId)
+    const base = baseDePlante(plante)
     if (!base) continue
     const cree = plante.creeLe?.toDate ? plante.creeLe.toDate() : aujourdhui
     const creeIndex = cree.getFullYear() * 12 + cree.getMonth()
@@ -282,4 +282,44 @@ export function tachesDuMois({ plantes, faites, annee, mois, aujourdhui = new Da
     }
   }
   return { normales, retard }
+}
+
+// ---------- Plantes sans fiche (« à documenter ») ----------
+
+// Plantes ajoutées librement, tous jardins confondus, qui n'ont pas (encore) de fiche dans la base.
+// Regroupées par nom : [{ nom, quantite, jardins[], lieux[] }]. Se vide toute seule quand la fiche est ajoutée.
+export function usePlantesSansFiche(jardins) {
+  const { authReady } = usePin()
+  const [parJardin, setParJardin] = useState({}) // jardinId → plantes
+  const cle = jardins.map((j) => j.id).join(',')
+
+  useEffect(() => {
+    if (!authReady) return
+    setParJardin({})
+    const arrets = jardins.map((j) =>
+      onSnapshot(
+        sous(j.id, 'plantes'),
+        (snap) => setParJardin((avant) => ({ ...avant, [j.id]: snap.docs.map((d) => d.data()) })),
+        (err) => console.error('Erreur Firestore (plantes sans fiche) :', err)
+      )
+    )
+    return () => arrets.forEach((a) => a())
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authReady, cle])
+
+  const groupes = new Map()
+  for (const j of jardins) {
+    for (const p of parJardin[j.id] || []) {
+      if (baseDePlante(p) || !p.nomLibre?.trim()) continue
+      const k = normaliser(p.nomLibre)
+      if (!k) continue
+      const g = groupes.get(k) || { nom: p.nomLibre.trim(), quantite: 0, jardins: [], details: [] }
+      g.quantite += p.quantite || 1
+      if (!g.jardins.includes(j.nom)) g.jardins.push(j.nom)
+      const detail = `${p.lieu === 'interieur' ? 'intérieur' : 'extérieur'}, ${p.culture === 'pot' ? 'en pot' : 'pleine terre'}`
+      if (!g.details.includes(detail)) g.details.push(detail)
+      groupes.set(k, g)
+    }
+  }
+  return [...groupes.values()].sort((a, b) => a.nom.localeCompare(b.nom, 'fr'))
 }

@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, MapPin, Pencil, Plus, Sprout } from 'lucide-react'
-import { useJardins } from '../../hooks/useJardin.js'
+import { useJardins, usePlantesSansFiche } from '../../hooks/useJardin.js'
 import JardinForm from '../../components/jardin/JardinForm.jsx'
+import PlantesSansFiche from '../../components/jardin/PlantesSansFiche.jsx'
 import { boutonPrincipal } from '../../components/jardin/Feuille.jsx'
 
 // =============================================================
@@ -11,6 +12,8 @@ import { boutonPrincipal } from '../../components/jardin/Feuille.jsx'
 export default function JardinListeView() {
   const { jardins, chargement, erreur } = useJardins()
   const [formulaire, setFormulaire] = useState(null) // null | 'nouveau' | jardin
+  const sansFiche = usePlantesSansFiche(jardins)
+  const [voirSansFiche, setVoirSansFiche] = useState(false)
   const navigate = useNavigate()
 
   return (
@@ -78,7 +81,19 @@ export default function JardinListeView() {
           <Plus size={20} />
           Nouveau jardin
         </button>
+
+        {/* Discret : n'apparaît que s'il y a des plantes ajoutées librement, sans fiche dans la base */}
+        {sansFiche.length > 0 && (
+          <button
+            onClick={() => setVoirSansFiche(true)}
+            className="mx-auto mt-8 block text-xs text-emerald-900/40 underline-offset-2 hover:text-emerald-800 hover:underline"
+          >
+            Plantes sans fiche ({sansFiche.length})
+          </button>
+        )}
       </div>
+
+      {voirSansFiche && sansFiche.length > 0 && <PlantesSansFiche plantes={sansFiche} onClose={() => setVoirSansFiche(false)} />}
 
       {formulaire && (
         <JardinForm jardin={formulaire === 'nouveau' ? null : formulaire} onClose={() => setFormulaire(null)} />

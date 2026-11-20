@@ -7,14 +7,14 @@ import PlanteForm from '../../components/jardin/PlanteForm.jsx'
 import PlanteFiche, { CULTURES, LIEUX } from '../../components/jardin/PlanteFiche.jsx'
 import CalendrierJardin from '../../components/jardin/CalendrierJardin.jsx'
 import { boutonPrincipal } from '../../components/jardin/Feuille.jsx'
-import { trouverPlante } from '../../data/jardin/plantes.js'
+import { baseDePlante } from '../../data/jardin/plantes.js'
 
 // =============================================================
 //  Mon jardin — écran 2 : un jardin, deux onglets (Mes plantes / Calendrier)
 //  Adresses : /maxence/jardin/:jardinId  et  /maxence/jardin/:jardinId/calendrier
 // =============================================================
 function CartePlante({ p, onOuvrir }) {
-  const base = trouverPlante(p.planteId)
+  const base = baseDePlante(p)
   return (
     <li>
       <button

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ChevronDown, Pencil } from 'lucide-react'
 import Feuille from './Feuille.jsx'
-import { trouverPlante, VOLETS } from '../../data/jardin/plantes.js'
+import { baseDePlante, VOLETS } from '../../data/jardin/plantes.js'
 import { lirePhotosPlante, nomPlante } from '../../hooks/useJardin.js'
 
 export const LIEUX = { interieur: '🏠 Intérieur', exterieur: '🌤️ Extérieur' }
@@ -9,7 +9,7 @@ export const CULTURES = { pot: '🪴 En pot', terre: '🌍 Pleine terre' }
 
 // Fiche d'une plante du jardin : mes infos + présentation + conseils dans des volets
 export default function PlanteFiche({ jardinId, plante, onClose, onModifier }) {
-  const base = trouverPlante(plante.planteId)
+  const base = baseDePlante(plante)
   const [photos, setPhotos] = useState([])
   const [ouvert, setOuvert] = useState(null)
   const [zoom, setZoom] = useState(null)

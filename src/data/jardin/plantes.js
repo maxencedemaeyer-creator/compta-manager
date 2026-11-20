@@ -1571,6 +1571,56 @@ export const PLANTES = [
 const PAR_ID = Object.fromEntries(PLANTES.map((p) => [p.id, p]))
 export const trouverPlante = (id) => (id ? PAR_ID[id] || null : null)
 
+// ---------- Reconnaissance par le nom ----------
+// Une plante ajoutée « librement » (hors base) reçoit automatiquement sa fiche
+// dès qu'une plante de même nom existe dans la base. Les noms sont comparés
+// sans accents, sans majuscules ni tirets/ponctuation.
+export const normaliser = (t) =>
+  (t || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+
+// Autres noms courants d'une plante de la base (id de la plante → noms)
+// Pour qu'une plante libre soit reconnue sous un autre nom, l'ajouter ici.
+const AUTRES_NOMS = {
+  charme: ['charme commun', 'charmille'],
+  hetre: ['hetre commun', 'hetre vert', 'hetre pourpre'],
+  'laurier-cerise': ['laurier palme', 'laurier cerise'],
+  if: ['if commun'],
+  buis: ['buis commun'],
+  lavande: ['lavande vraie', 'lavande officinale'],
+  noisetier: ['noisetier commun'],
+  sureau: ['sureau noir'],
+  hortensia: ['hortensia macrophylla'],
+  'hortensia-panicule': ['hortensia paniculata', 'hortensia paniculé'],
+  lilas: ['lilas commun'],
+  'rosier-buisson': ['rosier'],
+  pommier: ['pomme'],
+  'erable-japon': ['acer palmatum', 'erable palmatum'],
+}
+
+const PAR_NOM = new Map()
+function indexer(cle, plante) {
+  const k = normaliser(cle)
+  if (k && !PAR_NOM.has(k)) PAR_NOM.set(k, plante)
+}
+for (const p of PLANTES) {
+  indexer(p.nom, p)
+  indexer(p.nom.replace(/\(.*?\)/g, ''), p) // « Laurier-cerise (laurier palme) » → « laurier cerise »
+  ;(p.nom.match(/\((.*?)\)/g) || []).forEach((m) => indexer(m.slice(1, -1), p)) // … → « laurier palme »
+  indexer(p.latin, p)
+  ;(AUTRES_NOMS[p.id] || []).forEach((n) => indexer(n, p))
+}
+
+// Fiche de la base correspondant à un nom tapé librement (ou null)
+export const trouverParNom = (nom) => PAR_NOM.get(normaliser(nom)) || null
+
+// Fiche d'une plante du jardin : choisie dans la base, sinon reconnue par son nom libre
+export const baseDePlante = (plante) => trouverPlante(plante?.planteId) || trouverParNom(plante?.nomLibre)
+
 // Recherche sans accents ni majuscules, sur le nom français et le nom latin
 const simplifier = (t) => (t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 
