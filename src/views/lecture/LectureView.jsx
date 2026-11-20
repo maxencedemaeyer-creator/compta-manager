@@ -183,6 +183,8 @@ export default function LectureView() {
         {MOTEUR_VOIX === 'piper' && (
           <p className="mx-auto mt-12 max-w-sm text-center text-xs text-indigo-950/40">
             Voix : Piper « siwis » (logiciel libre, calculée sur l’appareil) · données SIWIS, licence CC BY 4.0
+            <br />
+            Sons en couleur : prononciations de Lexique 3.83 (lexique.org), licence CC BY-SA 4.0
           </p>
         )}
         {MOTEUR_VOIX === 'azure' && quota.pourcent !== null && (

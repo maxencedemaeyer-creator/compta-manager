@@ -1,0 +1,8 @@
+Liste de mots tirée de Lexique 3.83 (Boris New, Christophe Pallier et al., http://www.lexique.org),
+sous licence Creative Commons Attribution - Partage dans les mêmes conditions 4.0 (CC BY-SA 4.0) :
+https://creativecommons.org/licenses/by-sa/4.0/deed.fr
+Modification : seules les formes écrites d'un seul mot sont gardées, triées par fréquence (films + livres).
+grammaire.txt : verbes (formes conjuguées, temps et personne) et noms (genre et nombre) de Lexique 3.83, réécrits
+en abrégé (voir scripts/generer-lexique-valise.mjs).
+sons.txt : découpage en sons des mots de Lexique 3.83 d'après leur prononciation (voir scripts/generer-sons-valise.mts).
+Ces fichiers (mots.txt, grammaire.txt, sons.txt) sont diffusés sous la même licence.

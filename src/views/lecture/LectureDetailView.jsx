@@ -11,6 +11,8 @@ import PanneauAffichage from '../../components/lecture/PanneauAffichage.jsx'
 import PhotoPages from '../../components/lecture/PhotoPages.jsx'
 import EcranAnalyse from '../../components/lecture/EcranAnalyse.jsx'
 import Recadrage from '../../components/lecture/Recadrage.jsx'
+import InterrupteurSons from '../../components/lecture/InterrupteurSons.jsx'
+import { chargerDictionnaireSons, sonsDuTexte, sonsParMot } from '../../utils/sonsCouleur.js'
 import useLecteur from '../../components/lecture/useLecteur.js'
 import { chargerPolices, useReglages } from '../../components/lecture/reglages.js'
 import { MOTEUR_VOIX } from '../../config/lectureVoix.js'
@@ -26,6 +28,7 @@ import { ecouterPreparation, prechargerPiper } from '../../utils/voixPiper.js'
 //  - Pendant la lecture : phrase surlignée doucement, mot en jaune,
 //    ⟲ revient à la phrase précédente.
 //  - Aa : police, taille, interligne, espacement, fond doux, focus.
+//  - « Sons en couleur » : les 8 sons des cartes de la classe (utils/sonsCouleur.js).
 //  - Ordinateur, clavier : Espace (lire/pause), Échap (tout le texte), ← (revenir).
 // =============================================================
 const SANS_SELECTION = { a: null, b: null }
@@ -76,6 +79,27 @@ export default function LectureDetailView() {
   const lecteur = useLecteur(texte)
   const enLecture = lecteur.position >= 0
   const motActif = !enLecture || mots.length === 0 ? -1 : motALaPosition(mots, lecteur.position)
+  // « Sons en couleur » : éteint à chaque ouverture ; le dictionnaire est chargé au 1er allumage
+  const [sonsActifs, setSonsActifs] = useState(false)
+  const [dicoSons, setDicoSons] = useState(null)
+  const [chargementSons, setChargementSons] = useState(false)
+  const basculerSons = (actif) => {
+    setSonsActifs(actif)
+    if (!actif || dicoSons) return
+    setChargementSons(true)
+    chargerDictionnaireSons()
+      .then(setDicoSons)
+      .catch(() => {
+        setSonsActifs(false)
+        alert('Les sons en couleur ne sont pas disponibles pour le moment (connexion ?).')
+      })
+      .finally(() => setChargementSons(false))
+  }
+  const sonsMots = useMemo(
+    () => (sonsActifs && dicoSons ? sonsParMot(sonsDuTexte(dicoSons, texte), mots) : null),
+    [sonsActifs, dicoSons, texte, mots]
+  )
+
   const listeDouteux = lecture?.douteux
   const douteux = useMemo(() => new Set(listeDouteux || []), [listeDouteux])
   const nbDouteux = useMemo(() => mots.filter((m) => douteux.has(m.texte)).length, [mots, douteux])
@@ -285,15 +309,16 @@ export default function LectureDetailView() {
           <span className="flex-1 sm:hidden" />
           {edition === null ? (
             <div className="flex shrink-0 items-center gap-1.5">
+              <InterrupteurSons actif={sonsActifs} chargement={chargementSons} onChange={basculerSons} />
               <button
                 onClick={() => {
                   setBulle(null)
                   setPanneau(true)
                 }}
-                className="flex h-11 items-center gap-1.5 rounded-full bg-white/90 px-4 font-semibold text-indigo-800 shadow-sm ring-1 ring-indigo-950/5"
+                className="flex h-11 min-w-11 items-center justify-center gap-1.5 rounded-full bg-white/90 px-3 font-semibold text-indigo-800 shadow-sm ring-1 ring-indigo-950/5 sm:px-4"
                 aria-label="Affichage du texte"
               >
-                <Type size={18} /> Aa
+                <Type size={18} /> <span className="hidden sm:inline">Aa</span>
               </button>
               <BoutonOutil
                 label="Corriger tout le texte"
@@ -400,6 +425,7 @@ export default function LectureDetailView() {
             )}
             <TexteLisible
               douteux={douteux}
+              sonsMots={sonsMots}
               paragraphes={paragraphes}
               selection={selection}
               motActif={motActif}

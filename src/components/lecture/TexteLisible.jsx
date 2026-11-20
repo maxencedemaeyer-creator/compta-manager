@@ -1,4 +1,5 @@
 import { memo, useEffect, useRef } from 'react'
+import { COULEUR_PAR_ID } from '../../utils/sonsCouleur.js'
 
 // =============================================================
 //  Appli « Lis-moi » : le texte, mot par mot
@@ -9,11 +10,30 @@ import { memo, useEffect, useRef } from 'react'
 //    → onChoisirPlage(a, b) pendant le glissement, onFinPlage(a, b, élément) à la fin
 //  - sélection en bleu (bande continue)
 //  - mots probablement mal reconnus : soulignés en pointillé orange
+//  - « Sons en couleur » (interrupteur) : les 8 sons des cartes de la classe
 //  - pendant la lecture : la phrase en cours est surlignée doucement,
 //    le mot prononcé en jaune ; en mode Focus, le reste s'estompe.
 //  (surlignages gérés directement dans la page : fluide même sur un long texte)
 // =============================================================
-const Paragraphe = memo(function Paragraphe({ morceaux, debutSel, finSel, douteux }) {
+// Contenu d'un mot : ses lettres, avec les sons en couleur s'il y en a
+function lettresDuMot(texte, segments) {
+  if (!segments) return texte
+  const sortie = []
+  let i = 0
+  segments.forEach(([d, n, id], k) => {
+    if (d > i) sortie.push(texte.slice(i, d))
+    sortie.push(
+      <span key={k} className="son" style={{ color: COULEUR_PAR_ID[id] }}>
+        {texte.slice(d, d + n)}
+      </span>
+    )
+    i = d + n
+  })
+  if (i < texte.length) sortie.push(texte.slice(i))
+  return sortie
+}
+
+const Paragraphe = memo(function Paragraphe({ morceaux, debutSel, finSel, douteux, sonsMots }) {
   const dansSel = (x) => x?.mot && debutSel !== null && x.index >= debutSel && x.index <= finSel
   return (
     <p className="mb-[0.9em] last:mb-0">
@@ -37,7 +57,7 @@ const Paragraphe = memo(function Paragraphe({ morceaux, debutSel, finSel, douteu
               douteux.has(m.texte) ? 'douteux' : ''
             }`}
           >
-            {m.texte}
+            {lettresDuMot(m.texte, sonsMots?.get(m.index))}
           </span>
         )
       })}
@@ -54,8 +74,10 @@ const STYLES = `
 .lis .sel-bord{background:rgba(56,189,248,.65)}
 .lis .phrase-active{background:rgba(253,230,138,.55)}
 .lis .mot-actif{background:#fbbf24 !important;box-shadow:0 0 0 .12em #fbbf24;color:#1f1d36}
-.lis.focus-actif span{opacity:.28;transition:opacity .25s}
-.lis.focus-actif span.phrase-active{opacity:1}
+.lis.focus-actif [data-d]{opacity:.28;transition:opacity .25s}
+.lis.focus-actif [data-d].phrase-active{opacity:1}
+.lis .son{text-shadow:.025em 0 0 currentColor,-.025em 0 0 currentColor}
+.lis .mot-actif .son{filter:brightness(.72)}
 `
 
 // Pendant un glissement, on fait défiler la page si on approche du haut ou du bas
@@ -79,6 +101,7 @@ export default function TexteLisible({
   espacement,
   couleur,
   douteux = VIDE,
+  sonsMots = null,
 }) {
   const boite = useRef(null)
   const precedent = useRef(null)
@@ -238,7 +261,7 @@ export default function TexteLisible({
     >
       <style>{STYLES}</style>
       {paragraphes.map((morceaux, i) => (
-        <Paragraphe key={i} morceaux={morceaux} debutSel={debutSel} finSel={finSel} douteux={douteux} />
+        <Paragraphe key={i} morceaux={morceaux} debutSel={debutSel} finSel={finSel} douteux={douteux} sonsMots={sonsMots} />
       ))}
     </div>
   )
