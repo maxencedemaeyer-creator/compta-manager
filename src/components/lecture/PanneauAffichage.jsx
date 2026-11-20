@@ -1,10 +1,11 @@
 import { Minus, Plus, X } from 'lucide-react'
 import { TAILLES_TEXTE } from '../../config/lectureVoix.js'
 import { ESPACEMENTS, FONDS, INTERLIGNES, POLICES } from './reglages.js'
+import { SONS } from '../../utils/phonemes.js'
 
 // =============================================================
 //  Appli « Lis-moi » : panneau « Aa » (affichage du texte)
-//  Police, taille, interligne, espacement, fond doux, focus.
+//  Police, taille, interligne, espacement, fond doux, sons en couleur, focus.
 //  Le texte derrière change en direct.
 // =============================================================
 function Titre({ children }) {
@@ -27,7 +28,7 @@ function Segments({ options, valeur, onChange }) {
   )
 }
 
-export default function PanneauAffichage({ reglages, changer, onFermer }) {
+export default function PanneauAffichage({ reglages, changer, onFermer, sonsChargement = false }) {
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center p-3 sm:items-center" onClick={onFermer}>
       <div
@@ -106,6 +107,31 @@ export default function PanneauAffichage({ reglages, changer, onFermer }) {
             </button>
           ))}
         </div>
+
+        <Titre>Aide à la lecture</Titre>
+        <button
+          onClick={() => changer({ couleursSons: !reglages.couleursSons })}
+          role="switch"
+          aria-checked={!!reglages.couleursSons}
+          className="w-full rounded-2xl bg-indigo-50/80 px-4 py-3 text-left"
+        >
+          <span className="flex items-center gap-3">
+            <span className="flex-1">
+              <span className="block font-semibold text-indigo-950">Sons en couleur{sonsChargement ? '…' : ''}</span>
+              <span className="block text-sm text-indigo-950/55">Les sons des cartes de la classe, seulement quand on les entend</span>
+            </span>
+            <span className={`relative h-7 w-12 shrink-0 rounded-full transition ${reglages.couleursSons ? 'bg-indigo-600' : 'bg-indigo-200'}`}>
+              <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all ${reglages.couleursSons ? 'left-6' : 'left-1'}`} />
+            </span>
+          </span>
+          <span className="mt-2.5 flex flex-wrap gap-1.5">
+            {SONS.map((s) => (
+              <span key={s.id} className="rounded-lg bg-white px-2 py-0.5 text-sm font-bold" style={{ color: s.color }}>
+                {s.label}
+              </span>
+            ))}
+          </span>
+        </button>
 
         <Titre>Concentration</Titre>
         <button

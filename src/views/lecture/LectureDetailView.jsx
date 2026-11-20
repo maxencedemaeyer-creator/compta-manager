@@ -12,7 +12,7 @@ import PhotoPages from '../../components/lecture/PhotoPages.jsx'
 import EcranAnalyse from '../../components/lecture/EcranAnalyse.jsx'
 import Recadrage from '../../components/lecture/Recadrage.jsx'
 import InterrupteurSons from '../../components/lecture/InterrupteurSons.jsx'
-import { chargerDictionnaireSons, sonsDuTexte, sonsParMot } from '../../utils/sonsCouleur.js'
+import { analyserTexte, chargerDictionnaireSons, sonsParMot } from '../../utils/phonemes.js'
 import useLecteur from '../../components/lecture/useLecteur.js'
 import { chargerPolices, useReglages } from '../../components/lecture/reglages.js'
 import { MOTEUR_VOIX } from '../../config/lectureVoix.js'
@@ -28,7 +28,7 @@ import { ecouterPreparation, prechargerPiper } from '../../utils/voixPiper.js'
 //  - Pendant la lecture : phrase surlignée doucement, mot en jaune,
 //    ⟲ revient à la phrase précédente.
 //  - Aa : police, taille, interligne, espacement, fond doux, focus.
-//  - « Sons en couleur » : les 8 sons des cartes de la classe (utils/sonsCouleur.js).
+//  - « Sons en couleur » : les 8 sons des cartes de la classe (utils/phonemes.js), réglage mémorisé.
 //  - Ordinateur, clavier : Espace (lire/pause), Échap (tout le texte), ← (revenir).
 // =============================================================
 const SANS_SELECTION = { a: null, b: null }
@@ -79,24 +79,30 @@ export default function LectureDetailView() {
   const lecteur = useLecteur(texte)
   const enLecture = lecteur.position >= 0
   const motActif = !enLecture || mots.length === 0 ? -1 : motALaPosition(mots, lecteur.position)
-  // « Sons en couleur » : éteint à chaque ouverture ; le dictionnaire est chargé au 1er allumage
-  const [sonsActifs, setSonsActifs] = useState(false)
+  // « Sons en couleur » (spécification de Max) : réglage mémorisé sur l'appareil (éteint par défaut) ;
+  // le dictionnaire des sons est chargé dès que le réglage est allumé
+  const sonsActifs = !!reglages.couleursSons
   const [dicoSons, setDicoSons] = useState(null)
   const [chargementSons, setChargementSons] = useState(false)
-  const basculerSons = (actif) => {
-    setSonsActifs(actif)
-    if (!actif || dicoSons) return
+  useEffect(() => {
+    if (!sonsActifs || dicoSons) return
+    let vivant = true
     setChargementSons(true)
     chargerDictionnaireSons()
-      .then(setDicoSons)
+      .then((d) => vivant && setDicoSons(d))
       .catch(() => {
-        setSonsActifs(false)
+        if (!vivant) return
+        changer({ couleursSons: false })
         alert('Les sons en couleur ne sont pas disponibles pour le moment (connexion ?).')
       })
-      .finally(() => setChargementSons(false))
-  }
+      .finally(() => vivant && setChargementSons(false))
+    return () => {
+      vivant = false
+    }
+  }, [sonsActifs, dicoSons, changer])
+  const basculerSons = (actif) => changer({ couleursSons: actif })
   const sonsMots = useMemo(
-    () => (sonsActifs && dicoSons ? sonsParMot(sonsDuTexte(dicoSons, texte), mots) : null),
+    () => (sonsActifs && dicoSons ? sonsParMot(analyserTexte(texte, { sons: dicoSons }), mots) : null),
     [sonsActifs, dicoSons, texte, mots]
   )
 
@@ -476,7 +482,14 @@ export default function LectureDetailView() {
         />
       )}
 
-      {panneau && <PanneauAffichage reglages={reglages} changer={changer} onFermer={() => setPanneau(false)} />}
+      {panneau && (
+        <PanneauAffichage
+          reglages={reglages}
+          changer={changer}
+          onFermer={() => setPanneau(false)}
+          sonsChargement={chargementSons}
+        />
+      )}
 
       {recadrage && (
         <Recadrage

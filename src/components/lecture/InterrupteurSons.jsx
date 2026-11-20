@@ -1,10 +1,10 @@
 import { Loader2 } from 'lucide-react'
-import { chargerDictionnaireSons } from '../../utils/sonsCouleur.js'
+import { chargerDictionnaireSons } from '../../utils/phonemes.js'
 
 // =============================================================
 //  Appli « Lis-moi » : interrupteur « Sons en couleur »
 //  (comme « Aide à la lecture » de la valise de Lola sur l'autre site)
-//  Éteint à chaque ouverture d'une lecture (même choix que sur l'autre site).
+//  Réglage mémorisé sur l'appareil (spécification de Max, 20/11) ; aussi dans le panneau Aa.
 // =============================================================
 const PASTILLES = ['#b44a00', '#4f6d0c', '#b8295f'] // an, in, é
 

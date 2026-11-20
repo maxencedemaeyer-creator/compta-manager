@@ -3,7 +3,7 @@ import { TAILLES_TEXTE, VITESSE_DEFAUT, VOIX_DEFAUT } from '../../config/lecture
 
 // =============================================================
 //  Appli « Lis-moi » : réglages de la tablette
-//  (voix, vitesse, police, taille, interligne, espacement, fond, focus)
+//  (vitesse, police, taille, interligne, espacement, fond, focus, sons en couleur)
 //  Petits réglages d'affichage seulement, gardés sur l'appareil —
 //  aucune donnée de lecture.
 // =============================================================
@@ -17,6 +17,7 @@ const DEFAUT = {
   espacement: 'normal',
   fond: 'creme',
   focus: false,
+  couleursSons: false, // « Sons en couleur » (éteint par défaut)
 }
 
 function lire() {

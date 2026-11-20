@@ -1,5 +1,5 @@
 import { memo, useEffect, useRef } from 'react'
-import { COULEUR_PAR_ID } from '../../utils/sonsCouleur.js'
+import { COULEUR_PAR_ID } from '../../utils/phonemes.js'
 
 // =============================================================
 //  Appli « Lis-moi » : le texte, mot par mot
