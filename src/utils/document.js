@@ -10,7 +10,7 @@
 // =============================================================
 import { nettoyerTexte } from './lecture.js'
 import { reconnaitreImage } from './ocr.js'
-import { texteDepuisHtmlWord, texteDepuisPdf, texteDepuisTxt } from './miseEnPage.js'
+import { MARQUE_CENTRE, MARQUE_DROITE, texteDepuisHtmlWord, texteDepuisPdf, texteDepuisTxt } from './miseEnPage.js'
 
 export const ACCEPT_DOCUMENT =
   '.pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain'
@@ -31,6 +31,21 @@ export function typeFichier(file) {
 }
 
 const lettres = (t) => (t.match(/\p{L}/gu) || []).length
+
+// Gras / italique d'une police de PDF (nom « Arial-BoldMT », « …-Italic », ou indications de la police)
+function policePdf(page, nom) {
+  try {
+    if (!nom || !page.commonObjs.has(nom)) return {}
+    const f = page.commonObjs.get(nom) || {}
+    const n = `${f.name || ''} ${f.fallbackName || ''}`
+    return {
+      gras: !!(f.bold || f.black || /bold|black|heavy|semibold|demi|gras/i.test(n)),
+      italique: !!(f.italic || /italic|oblique|kursiv/i.test(n)),
+    }
+  } catch {
+    return {}
+  }
+}
 
 async function dessinerPage(page, coteMax) {
   const base = page.getViewport({ scale: 1 })
@@ -59,19 +74,20 @@ async function lirePdf(file, onProgression) {
 
   for (let i = 1; i <= n; i++) {
     const page = await pdf.getPage(i)
-    let texte = texteDepuisPdf((await page.getTextContent()).items)
-    let dessin = null
-
     onProgression((i - 1) / n, `Page ${i} sur ${n}`)
+    const { items } = await page.getTextContent()
+    // la page est dessinée d'abord : les polices sont alors chargées (gras, italique)
+    let dessin = await dessinerPage(page, lettres(items.map((it) => it.str || '').join(' ')) < 15 ? 2200 : 1600)
+    let texte = texteDepuisPdf(items, (nom) => policePdf(page, nom))
+
     // Page sans texte (scannée) : on reconnaît le texte sur l'image
     if (lettres(texte) < 15) {
-      dessin = await dessinerPage(page, 2200)
       const etape = `Page ${i} sur ${n} · document scanné, je déchiffre l'image`
       const ocr = await reconnaitreImage(dessin, (p) => onProgression((i - 1 + p * 0.95) / n, etape))
       texte = ocr.texte
       ocr.douteux.forEach((m) => douteux.add(m))
     }
-    images.push(dessin || (await dessinerPage(page, 1600)))
+    images.push(dessin)
     textes.push(texte.trim())
     page.cleanup()
     onProgression(i / n, `Page ${i} sur ${n}`)
@@ -85,6 +101,22 @@ async function lirePdf(file, onProgression) {
   }
 }
 
+// Ajoute un texte (la marque d'alignement) au tout début du premier morceau du paragraphe
+function marquerParagraphe(p, marque) {
+  let fait = false
+  const parcourir = (el) => {
+    if (fait || !el?.children) return el
+    if (el.type === 'run') {
+      fait = true
+      return { ...el, children: [{ type: 'text', value: marque }, ...el.children] }
+    }
+    const enfants = []
+    for (const c of el.children) enfants.push(fait ? c : parcourir(c))
+    return { ...el, children: enfants }
+  }
+  return parcourir(p)
+}
+
 async function lireWord(file) {
   const { default: mammoth } = await import('mammoth/mammoth.browser.js')
   const arrayBuffer = await file.arrayBuffer()
@@ -93,8 +125,20 @@ async function lireWord(file) {
       { arrayBuffer },
       {
         // titres de Word (y compris « Titre » / « Sous-titre »), images ignorées
-        styleMap: ["p[style-name='Title'] => h1:fresh", "p[style-name='Titre'] => h1:fresh", "p[style-name='Subtitle'] => h2:fresh", "p[style-name='Sous-titre'] => h2:fresh"],
+        styleMap: [
+          "p[style-name='Title'] => h1:fresh",
+          "p[style-name='Titre'] => h1:fresh",
+          "p[style-name='Subtitle'] => h2:fresh",
+          "p[style-name='Sous-titre'] => h2:fresh",
+          'u => u', // souligné gardé
+        ],
         convertImage: mammoth.images.imgElement(() => ({ src: '' })),
+        // alignement du paragraphe (centré, à droite) : petite marque invisible au début
+        transformDocument: mammoth.transforms.paragraph((p) => {
+          const a = p.alignment
+          const marque = a === 'center' ? MARQUE_CENTRE : a === 'right' || a === 'end' ? MARQUE_DROITE : null
+          return marque ? marquerParagraphe(p, marque) : p
+        }),
       }
     )
     const texte = texteDepuisHtmlWord(value)

@@ -4,7 +4,7 @@
 //  - le découper en mots (pour toucher / surligner)
 //  - le découper en morceaux à envoyer à la voix
 // =============================================================
-import { typeLigne } from './miseEnPage.js'
+import { sansMarques, stylesLigne, typeLigne } from './miseEnPage.js'
 
 // Nettoie le texte brut de la reconnaissance (Tesseract) :
 // recolle les mots coupés en fin de ligne, refait des paragraphes,
@@ -33,10 +33,13 @@ export function nettoyerTexte(brut) {
 // Titre d'une lecture : ses premiers mots
 export function titreDepuis(texte) {
   // le texte commence par un titre (« # Le loup et l'agneau ») : on le prend
-  const titre = /^\s*#+\s+([^\n]+)/.exec(texte || '')
-  if (titre) return titre[1].length > 48 ? titre[1].slice(0, 46) + '…' : titre[1]
-  const mots = (texte || '')
-    .replace(/^\s*(?:#+|[•●▪◦■□➢►▶✓✔*·]|\d{1,2}[.)]|[-–—])\s+/gm, '')
+  const titre = /^\s*(?:(?:\^\^|>>)\s+)?#+\s+([^\n]+)/.exec(texte || '')
+  if (titre) {
+    const t = sansMarques(titre[1]).trim()
+    return t.length > 48 ? t.slice(0, 46) + '…' : t
+  }
+  const mots = sansMarques(texte)
+    .replace(/^\s*(?:[•●▪◦■□➢►▶✓✔*·]|\d{1,2}[.)]|[-–—])\s+/gm, '')
     .replace(/\s+/g, ' ')
     .trim()
     .split(' ')
@@ -64,17 +67,32 @@ export function decouperMots(texte) {
     const morceaux = []
     let dernier = 0
     let m
+    const ligne = typeLigne(contenu)
+    // gras / italique / souligné : marques cachées, style de chaque lettre
+    const { cache, style } = stylesLigne(contenu)
+    for (let k = 0; k < ligne.debutMarque; k++) cache[k] = 1 // « ^^ » / « >> » de l'alignement
+    const nonMot = (d, f) => {
+      const visible = [...contenu.slice(d, f)].filter((_, k) => !cache[d + k]).join('')
+      let st = 0
+      for (let k = d; k < f; k++) if (!cache[k]) { st = style[k]; break }
+      morceaux.push({ mot: false, texte: contenu.slice(d, f), affiche: visible, style: st, debut: base + d })
+    }
     MOT.lastIndex = 0
     while ((m = MOT.exec(contenu))) {
-      if (m.index > dernier) morceaux.push({ mot: false, texte: contenu.slice(dernier, m.index), debut: base + dernier })
-      morceaux.push({ mot: true, texte: m[0], debut: base + m.index, fin: base + m.index + m[0].length, index: index++ })
+      if (m.index > dernier) nonMot(dernier, m.index)
+      morceaux.push({ mot: true, texte: m[0], style: style[m.index], debut: base + m.index, fin: base + m.index + m[0].length, index: index++ })
       dernier = m.index + m[0].length
     }
-    if (dernier < contenu.length) morceaux.push({ mot: false, texte: contenu.slice(dernier), debut: base + dernier })
+    if (dernier < contenu.length) nonMot(dernier, contenu.length)
     paragraphes.push(morceaux)
-    const { type, marque } = typeLigne(contenu)
     const apres = texte.slice(base + contenu.length, base + contenu.length + 400)
-    infos.push({ type, marqueFin: base + marque, finBloc: !/^\n[ \t]*[^\s]/.test(apres) })
+    infos.push({
+      type: ligne.type,
+      niveau: ligne.niveau,
+      align: ligne.align,
+      marqueFin: base + ligne.marque,
+      finBloc: !/^\n[ \t]*[^\s]/.test(apres),
+    })
   }
   const mots = paragraphes.flat().filter((m) => m.mot)
   return { paragraphes, infos, mots }
@@ -153,9 +171,9 @@ export function decouperPourVoix(texte, debut, fin, { premier = 220, suivants = 
     // retire les espaces au début / à la fin en gardant les bonnes positions
     // marqueurs de mise en page non lus (« # » des titres, puces, tirets), même longueur
     const brut = courant.texte
-      .replace(/(^|\n)([ \t]*)(#+|[•●▪◦■□➢►▶✓✔*·]|[-–—])(?=\s|\S)/g, (t, a, b, c) =>
-        c === '-' || c === '–' || c === '—' || c.startsWith('#') || /[•●▪◦■□➢►▶✓✔*·]/.test(c) ? a + b + ' '.repeat(c.length) : t
-      )
+      .replace(/(^|\n)([ \t]*)(\^\^|>>)(?=\s)/g, (t, a, b, c) => a + b + '  ') // alignement
+      .replace(/(^|\n)([ \t]*)(#+|[•●▪◦■□➢►▶✓✔·]|[-–—])/g, (t, a, b, c) => a + b + ' '.repeat(c.length))
+      .replace(/[*_]/g, ' ') // gras, italique, souligné, lignes à compléter
       .replace(/\n/g, ' ')
     const avant = brut.length - brut.trimStart().length
     const propre = brut.trim()

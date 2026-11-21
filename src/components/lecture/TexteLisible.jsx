@@ -11,8 +11,9 @@ import { COULEUR_PAR_ID } from '../../utils/phonemes.js'
 //  - sélection en bleu (bande continue)
 //  - mots probablement mal reconnus : soulignés en pointillé orange
 //  - « Sons en couleur » (interrupteur) : les 8 sons des cartes de la classe
-//  - mise en page gardée : titres, listes (puce ou numéro en colonne), répliques ;
-//    réglage « Texte simple » : tout à la suite, comme avant
+//  - mise en page gardée : titres et sous-titres, listes (puce ou numéro en colonne),
+//    répliques, lignes centrées ou à droite (le justifié reste à gauche), gras,
+//    italique, souligné ; réglage « Texte simple » : tout à la suite, comme avant
 //  - pendant la lecture : la phrase en cours est surlignée doucement,
 //    le mot prononcé en jaune ; en mode Focus, le reste s'estompe.
 //  (surlignages gérés directement dans la page : fluide même sur un long texte)
@@ -35,14 +36,20 @@ function lettresDuMot(texte, segments) {
   return sortie
 }
 
+// Classes du style d'un morceau (gras 1, italique 2, souligné 4)
+const classesStyle = (st) => (st ? `${st & 1 ? 'st-g ' : ''}${st & 2 ? 'st-i ' : ''}${st & 4 ? 'st-s' : ''}` : '')
+
 // Un morceau du texte (mot ou espace/ponctuation)
-function Morceau({ m, k, morceaux, dansSel, debutSel, finSel, douteux, sonsMots, cache, affiche }) {
+function Morceau({ m, k, morceaux, dansSel, debutSel, finSel, douteux, sonsMots, cache, affiche, simple }) {
+  const style = simple ? '' : classesStyle(m.style)
   if (!m.mot) {
     const lie = dansSel(morceaux[k - 1]) && dansSel(morceaux[k + 1])
-    if (cache) return null
+    const texte = affiche ?? m.affiche ?? m.texte
+    if (cache || !texte) return null
+    const cls = `${lie ? 'sel ' : ''}${style}`.trim()
     return (
-      <span data-d={m.debut} className={lie ? 'sel' : undefined}>
-        {affiche ?? m.texte}
+      <span data-d={m.debut} className={cls || undefined}>
+        {texte}
       </span>
     )
   }
@@ -52,7 +59,7 @@ function Morceau({ m, k, morceaux, dansSel, debutSel, finSel, douteux, sonsMots,
     <span
       data-i={m.index}
       data-d={m.debut}
-      className={`mot cursor-pointer rounded-[0.3em] transition-colors duration-150 ${dedans ? (bord ? 'sel sel-bord' : 'sel') : ''} ${
+      className={`mot cursor-pointer rounded-[0.3em] transition-colors duration-150 ${dedans ? (bord ? 'sel sel-bord' : 'sel') : ''} ${style} ${
         douteux.has(m.texte) ? 'douteux' : ''
       }`}
     >
@@ -61,8 +68,11 @@ function Morceau({ m, k, morceaux, dansSel, debutSel, finSel, douteux, sonsMots,
   )
 }
 
-// Une ligne du texte, avec sa mise en page (titre, liste, réplique, texte).
-// simple = « Texte simple » : pas de mise en page (titres et puces dans le texte).
+const ALIGNS = { centre: 'center', droite: 'right' }
+
+// Une ligne du texte, avec sa mise en page (titre, sous-titre, liste, réplique, texte ;
+// centrée ou à droite ; gras, italique, souligné).
+// simple = « Texte simple » : pas de mise en page (tout à la suite, sans styles).
 const Ligne = memo(function Ligne({ morceaux, info, debutSel, finSel, douteux, sonsMots, simple }) {
   const dansSel = (x) => x?.mot && debutSel !== null && x.index >= debutSel && x.index <= finSel
   const type = info?.type || 'texte'
@@ -71,18 +81,32 @@ const Ligne = memo(function Ligne({ morceaux, info, debutSel, finSel, douteux, s
     const dansMarque = m.debut < marqueFin
     // « # » des titres : jamais affiché ; puce « * » affichée « • »
     const cache = !m.mot && dansMarque && type === 'titre'
-    const affiche = !m.mot && dansMarque && type === 'liste' && !simple ? m.texte.replace(/^(\s*)\*/, '$1•') : undefined
-    return <Morceau key={k} m={m} k={k} morceaux={morceaux} dansSel={dansSel} debutSel={debutSel} finSel={finSel} douteux={douteux} sonsMots={sonsMots} cache={cache} affiche={affiche} />
+    const affiche = !m.mot && dansMarque && type === 'liste' && !simple ? (m.affiche ?? m.texte).replace(/^(\s*)\*/, '$1•') : undefined
+    return (
+      <Morceau key={k} m={m} k={k} morceaux={morceaux} dansSel={dansSel} debutSel={debutSel} finSel={finSel} douteux={douteux} sonsMots={sonsMots} cache={cache} affiche={affiche} simple={simple} />
+    )
   }
   if (simple) return <>{morceaux.map(rendre)}</>
 
+  const textAlign = type === 'liste' ? undefined : ALIGNS[info?.align]
   const marge = info?.finBloc ? 'mb-[0.9em]' : type === 'titre' ? 'mb-[0.45em]' : 'mb-[0.3em]'
-  if (type === 'titre')
+  if (type === 'titre') {
+    // Titre : même police (les lettres restent familières), mais nettement plus grand,
+    // très gras, avec de l'air au-dessus et un petit trait dessous ; sous-titre : plus petit, sans trait
+    const titre = info?.niveau !== 2
     return (
-      <p className={`${marge} last:mb-0`} style={{ fontSize: '1.3em', fontWeight: 700, lineHeight: 1.3 }}>
-        {morceaux.map(rendre)}
-      </p>
+      <div className={`${marge} last:mb-0 [&:not(:first-child)]:mt-[0.7em]`} style={{ textAlign }}>
+        <p style={{ fontSize: titre ? '1.42em' : '1.18em', fontWeight: titre ? 800 : 700, lineHeight: 1.3 }}>{morceaux.map(rendre)}</p>
+        {titre && (
+          <div
+            aria-hidden
+            className={`mt-[0.3em] h-[0.16em] w-[2.6em] rounded-full ${textAlign === 'center' ? 'mx-auto' : textAlign === 'right' ? 'ml-auto' : ''}`}
+            style={{ background: 'currentColor', opacity: 0.3 }}
+          />
+        )}
+      </div>
     )
+  }
   if (type === 'liste') {
     // puce ou numéro dans une colonne à gauche, lignes suivantes alignées sur le texte
     const k = morceaux.findIndex((m) => m.debut >= marqueFin)
@@ -97,7 +121,11 @@ const Ligne = memo(function Ligne({ morceaux, info, debutSel, finSel, douteux, s
       </p>
     )
   }
-  return <p className={`${marge} last:mb-0`}>{morceaux.map(rendre)}</p>
+  return (
+    <p className={`${marge} last:mb-0`} style={{ textAlign }}>
+      {morceaux.map(rendre)}
+    </p>
+  )
 })
 
 const VIDE = new Set()
@@ -119,6 +147,9 @@ function blocsDe(paragraphes, infos) {
 
 const STYLES = `
 .lis .mot:hover{background:rgba(99,102,241,.12)}
+.lis .st-g{font-weight:700}
+.lis .st-i{font-style:italic}
+.lis .st-s{text-decoration:underline;text-decoration-thickness:.08em;text-underline-offset:.2em}
 .lis .douteux{text-decoration:underline dotted #f97316;text-decoration-thickness:.12em;text-underline-offset:.22em}
 .lis .sel{background:rgba(125,211,252,.55)}
 .lis .sel-bord{background:rgba(56,189,248,.65)}

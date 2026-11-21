@@ -408,7 +408,11 @@ export default function LectureDetailView() {
           {edition !== null ? (
             <>
               <p className="mb-3 text-sm text-indigo-950/55">
-                Corrige les mots mal reconnus. Laisse une ligne vide entre deux paragraphes. Une ligne qui commence par <b>#</b> est un titre ; par <b>•</b> ou <b>1.</b>, un élément de liste ; par <b>—</b>, une réplique. (Pour un seul mot : touche-le, puis ✏️.)
+                Corrige les mots mal reconnus. Laisse une ligne vide entre deux paragraphes. (Pour un seul mot : touche-le, puis ✏️.)
+                <span className="mt-1.5 block">
+                  Mise en page : <b># Titre</b> · <b>## Sous-titre</b> · <b>• élément</b> ou <b>1.</b> (liste) · <b>—</b> (réplique) · <b>^^</b> au début = centré ·{' '}
+                  <b>&gt;&gt;</b> = à droite · <b>**gras**</b> · <b>*italique*</b> · <b>__souligné__</b>
+                </span>
               </p>
               <textarea
                 value={edition}
