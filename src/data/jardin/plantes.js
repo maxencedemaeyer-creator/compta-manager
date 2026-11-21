@@ -1595,6 +1595,79 @@ export const PLANTES = [
     [['taille', [4], 'Pincer pour densifier'], ['taille', [10], 'Rabattre avant hivernage']]),
 ]
 
+// ---------- Plantes frileuses en pot : rentrée et sortie ----------
+// Ajoutées au calendrier uniquement pour les plantes « extérieur + en pot » de Max.
+// Le mois affiché est le plus TÔT possible : le conseil dit comment décider selon
+// la météo (températures de nuit, gel annoncé, soleil). Ids fixes (`<plante>-rentree`,
+// `<plante>-sortie`) : ne pas les renommer (ils servent à retenir les « C'est fait »).
+const SORTIE_PROGRESSIVE = ' Habitue-la au soleil en douceur : une semaine à mi-ombre, puis plein soleil (sinon coups de soleil sur les feuilles).'
+const HIVERNAGE = {
+  agrume: {
+    rentree: [[10, 11], 'Rentre-le dès que les nuits descendent vers 5-7 °C, sans attendre le gel. Pièce très lumineuse et fraîche (5 à 12 °C), près d’une fenêtre sud ou ouest. Contrôle les cochenilles avant de le rentrer.'],
+    sortie: [[5], 'Sors-le quand plus aucun gel n’est annoncé et que les nuits restent au-dessus de 8 °C : en général après les Saints de glace (mi-mai).' + SORTIE_PROGRESSIVE],
+  },
+  mandarinier: {
+    rentree: [[10, 11], 'Rentre-le dès que les nuits approchent 3-5 °C, avant tout gel (il supporte un peu mieux le froid que le citronnier). Pièce très lumineuse et fraîche (5 à 12 °C). Contrôle les cochenilles avant de le rentrer.'],
+    sortie: [[4, 5], 'Sors-le quand plus aucun gel n’est annoncé et que les nuits restent au-dessus de 5-8 °C : fin avril à mai selon la saison.' + SORTIE_PROGRESSIVE],
+  },
+  olivier: {
+    rentree: [[11, 12], 'Il supporte le froid sec, mais en pot les racines gèlent vite. Quand −5 °C est annoncé, rentre-le dans un garage ou une véranda lumineuse hors gel, ou emballe le pot (voile, paille) au pied d’un mur abrité.'],
+    sortie: [[3, 4], 'Ressors-le quand les grosses gelées sont finies, en mars – avril, en plein soleil. Il aime le soleil dès la sortie.'],
+  },
+  agapanthe: {
+    rentree: [[11], 'Les agapanthes persistantes (feuilles toute l’année) se rentrent hors gel (cave lumineuse, véranda froide) avant −5 °C. Les caduques peuvent rester dehors : pot au pied d’un mur, bien paillé.'],
+    sortie: [[4, 5], 'Ressors-les quand les gelées sont passées, en avril – mai, en plein soleil.'],
+  },
+  pelargonium: {
+    rentree: [[9, 10], 'Rentre-les avant les premières gelées (dès que les nuits tombent vers 5-8 °C). Pièce lumineuse et fraîche (5 à 10 °C), presque sans arroser.'],
+    sortie: [[5], 'Sors-les après les Saints de glace (mi-mai), quand les nuits restent au-dessus de 8-10 °C.' + SORTIE_PROGRESSIVE],
+  },
+  fuchsia: {
+    rentree: [[10, 11], 'Les fuchsias non rustiques se rentrent avant les premières gelées (nuits vers 5 °C) dans une pièce hors gel, fraîche et peu chauffée. Les rustiques peuvent rester dehors, pot protégé et paillé.'],
+    sortie: [[4, 5], 'Sors-les quand les dernières gelées sont passées (nuits au-dessus de 8 °C), à mi-ombre.'],
+  },
+  'laurier-sauce': {
+    rentree: [[11, 12], 'Assez rustique, mais en pot, rentre-le dans un endroit lumineux hors gel (garage, véranda) ou emballe le pot quand −5 °C est annoncé.'],
+    sortie: [[3, 4], 'Ressors-le quand les grosses gelées sont passées, en mars – avril.'],
+  },
+  'verveine-citronnelle': {
+    rentree: [[10], 'Rentre-la avant les premières gelées (nuits vers 5 °C) dans une pièce lumineuse et fraîche. Elle perdra ses feuilles : c’est normal.'],
+    sortie: [[5], 'Sors-la après les Saints de glace (mi-mai), en plein soleil, une fois que les nuits restent au-dessus de 8-10 °C.'],
+  },
+  'jasmin-etoile': {
+    rentree: [[11, 12], 'En pot, rentre-le dans un endroit lumineux hors gel quand −5 °C est annoncé, ou emballe le pot contre un mur abrité.'],
+    sortie: [[4], 'Ressors-le quand les gelées sont passées, en avril, contre un mur ensoleillé et abrité.'],
+  },
+  begonia: {
+    rentree: [[9, 10], 'Rentre-les dès que les nuits descendent vers 10 °C : ils ne supportent aucun gel.'],
+    sortie: [[5], 'Sors-les après les Saints de glace (mi-mai), à mi-ombre, quand les nuits restent au-dessus de 10 °C.'],
+  },
+  strelitzia: {
+    rentree: [[9, 10], 'Rentre-la dès que les nuits descendent vers 10 °C (jamais sous 5 °C). Place très lumineuse.'],
+    sortie: [[5, 6], 'Sors-la quand les nuits restent au-dessus de 12 °C, à mi-ombre au début.' + SORTIE_PROGRESSIVE],
+  },
+  aloe: {
+    rentree: [[9, 10], 'Rentre-le dès que les nuits descendent vers 10 °C : il craint le froid et surtout l’humidité froide.'],
+    sortie: [[5, 6], 'Sors-le quand les nuits restent au-dessus de 12 °C.' + SORTIE_PROGRESSIVE],
+  },
+  cactus: {
+    rentree: [[9, 10], 'Rentre-les dès que les nuits descendent vers 10 °C. Hiver sec, au frais (5 à 12 °C) et très lumineux.'],
+    sortie: [[5, 6], 'Sors-les quand les nuits restent au-dessus de 12 °C.' + SORTIE_PROGRESSIVE],
+  },
+  yucca: {
+    rentree: [[9, 10], 'Rentre-le dès que les nuits descendent vers 8-10 °C, pièce lumineuse.'],
+    sortie: [[5, 6], 'Sors-le quand les nuits restent au-dessus de 10 °C.' + SORTIE_PROGRESSIVE],
+  },
+}
+for (const [id, h] of Object.entries(HIVERNAGE)) {
+  const plante = PLANTES.find((p) => p.id === id)
+  if (!plante) continue
+  for (const [type, texte] of [['rentree', 'Rentrer à l’abri'], ['sortie', 'Sortir dehors']]) {
+    const [mois, conseil] = h[type]
+    plante.actions.push({ id: `${id}-${type}`, type, mois, texte, conseil })
+  }
+}
+
 const PAR_ID = Object.fromEntries(PLANTES.map((p) => [p.id, p]))
 export const trouverPlante = (id) => (id ? PAR_ID[id] || null : null)
 

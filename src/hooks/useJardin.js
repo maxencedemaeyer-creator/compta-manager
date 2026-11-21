@@ -16,6 +16,7 @@ import { usePin } from '../context/PinContext.jsx'
 import { withTimeout } from '../utils/withTimeout.js'
 import { miniatureDepuisSource, preparerPhotoCouture } from '../utils/imageCouture.js'
 import { baseDePlante, normaliser } from '../data/jardin/plantes.js'
+import { anneeFenetre, cleTache, tachesDuMois } from '../utils/jardinCalendrier.js'
 
 // =============================================================
 //  Application « Mon jardin » (Firebase, à la racine comme le reste de Maxence)
@@ -208,8 +209,6 @@ export async function supprimerPlante(jardinId, plante) {
 
 // ---------- Tâches du calendrier faites ----------
 
-export const cleTache = (plantDocId, actionId, annee) => `${plantDocId}__${actionId}__${annee}`
-
 export function useTachesFaites(jardinId) {
   const { authReady } = usePin()
   const [faites, setFaites] = useState({})
@@ -237,52 +236,8 @@ export async function marquerFait(jardinId, plantDocId, actionId, annee, fait) {
   }
 }
 
-// ---------- Calcul des tâches d'un mois ----------
-
-// Année « de départ » d'une fenêtre qui chevauche décembre → janvier
-export function anneeFenetre(action, mois, annee) {
-  return mois === 1 && action.mois.includes(12) ? annee - 1 : annee
-}
-
-// Tâches à afficher pour le mois (annee, mois) : normales + « en retard » (tailles oubliées, mois en cours seulement)
-export function tachesDuMois({ plantes, faites, annee, mois, aujourdhui = new Date() }) {
-  const normales = []
-  const retard = []
-  const estMoisCourant = aujourdhui.getFullYear() === annee && aujourdhui.getMonth() + 1 === mois
-
-  for (const plante of plantes) {
-    const base = baseDePlante(plante)
-    if (!base) continue
-    const cree = plante.creeLe?.toDate ? plante.creeLe.toDate() : aujourdhui
-    const creeIndex = cree.getFullYear() * 12 + cree.getMonth()
-
-    for (const action of base.actions) {
-      const fenetre = anneeFenetre(action, mois, annee)
-      const cle = cleTache(plante.id, action.id, fenetre)
-      const donnee = faites[cle]
-      const tache = {
-        cle,
-        plante,
-        base,
-        action,
-        fenetre,
-        fait: !!donnee,
-        faitLe: donnee?.faitLe?.toDate ? donnee.faitLe.toDate() : null,
-      }
-      if (action.mois.includes(mois)) {
-        normales.push(tache)
-      } else if (estMoisCourant && action.type === 'taille' && !donnee) {
-        // Tâche de ce même cycle dont la période est passée et qui n'a pas été faite
-        // (les fenêtres à cheval sur deux années, ex. décembre-janvier, ne passent jamais « en retard »)
-        const chevauche = action.mois.includes(12) && action.mois.includes(1)
-        const fin = Math.max(...action.mois)
-        const finAbsolue = annee * 12 + (fin - 1)
-        if (!chevauche && fin < mois && finAbsolue >= creeIndex) retard.push({ ...tache, enRetard: true })
-      }
-    }
-  }
-  return { normales, retard }
-}
+// Calcul des tâches d'un mois : voir src/utils/jardinCalendrier.js (re-exporté ici)
+export { anneeFenetre, cleTache, tachesDuMois }
 
 // ---------- Plantes sans fiche (« à documenter ») ----------
 
