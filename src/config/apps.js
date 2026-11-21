@@ -1,4 +1,4 @@
-import { BookAudio, BookOpenCheck, FlaskConical, Gamepad2, GitBranch, MessageSquarePlus, Projector, Scissors, Sprout, Wallet } from 'lucide-react'
+import { Activity, BookAudio, BookOpenCheck, FlaskConical, Gamepad2, GitBranch, MessageSquarePlus, Projector, Scissors, Sprout, Wallet } from 'lucide-react'
 
 // =============================================================
 //  Liste des applications du site (adresses sous /maxence).
@@ -59,6 +59,15 @@ export const APPS = [
     description: 'Mes plantes, tailles et récoltes',
     icon: Sprout,
     couleur: 'from-green-400 to-emerald-600',
+    profils: ['maxence'],
+  },
+  {
+    id: 'coach',
+    to: '/maxence/coach',
+    nom: 'Coach',
+    description: 'Sport, plans et nutrition, avec sources',
+    icon: Activity,
+    couleur: 'from-sky-400 to-indigo-600',
     profils: ['maxence'],
   },
   {

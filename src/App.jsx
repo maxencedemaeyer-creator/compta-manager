@@ -31,6 +31,7 @@ import CommunosLibreView from './views/jeux/CommunosLibreView.jsx'
 import MotusView from './views/jeux/MotusView.jsx'
 import JardinListeView from './views/jardin/JardinListeView.jsx'
 import JardinView from './views/jardin/JardinView.jsx'
+import CoachView from './views/coach/CoachView.jsx'
 import CoutureGalerieView from './views/couture/CoutureGalerieView.jsx'
 import CoutureArticleView from './views/couture/CoutureArticleView.jsx'
 import CoutureAtelierView from './views/couture/CoutureAtelierView.jsx'
@@ -209,6 +210,10 @@ export default function App() {
         <Route path="/maxence/jardin" element={<Protege><JardinListeView /></Protege>} />
         <Route path="/maxence/jardin/:jardinId" element={<Protege><JardinView /></Protege>} />
         <Route path="/maxence/jardin/:jardinId/:onglet" element={<Protege><JardinView /></Protege>} />
+
+        {/* Coach : sport, plans et nutrition sourcés */}
+        <Route path="/maxence/coach" element={<Protege><CoachView /></Protege>} />
+        <Route path="/maxence/coach/:onglet" element={<Protege><CoachView /></Protege>} />
 
         {/* Application Programme Français P5-P6 */}
         <Route path="/maxence/francais" element={<Protege><LabView /></Protege>} />

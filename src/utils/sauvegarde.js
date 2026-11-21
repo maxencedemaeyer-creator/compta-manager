@@ -10,6 +10,9 @@ const COLLECTIONS = [
   'remboursementsEntries',
   'laboFrancaisP5P6Statuts',
   'lectures', // Lis-moi : textes et miniatures (les photos en grand restent dans lectures_images)
+  'coachProfil', // Coach : profil, plans et séances
+  'coachPlans',
+  'coachSeances',
   'config',
 ]
 
