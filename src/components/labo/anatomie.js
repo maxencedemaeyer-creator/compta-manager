@@ -1,11 +1,12 @@
 import * as THREE from 'three'
 import { gunzipSync } from 'fflate'
+import { chargerMedia } from '../../config/medias.js'
 
 // =============================================================
 //  Chargement du modèle anatomique réel BodyParts3D 4.0
 //  (© Database Center for Life Science, CC BY 4.0) : vrais os et
 //  vrais muscles d'un adulte, reconstruits à partir d'IRM.
-//  Fichiers : public/labo/anatomie/ (créés par
+//  Fichiers : manifeste dans public/labo/anatomie/, binaire sur la branche « medias » (voir src/config/medias.js ; créés par
 //  scripts/labo/extraire_anatomie.py). Chargé une seule fois.
 // =============================================================
 export const CREDIT_ANATOMIE = 'Modèle 3D : BodyParts3D, © The Database Center for Life Science, licence CC BY 4.0'
@@ -17,7 +18,7 @@ export function chargerAnatomie() {
   promesse = (async () => {
     const [manifeste, binaire] = await Promise.all([
       fetch('/labo/anatomie/anatomie.json').then((r) => r.json()),
-      fetch('/labo/anatomie/anatomie-gz.bin').then((r) => r.arrayBuffer()),
+      chargerMedia('anatomie-gz.bin'),
     ])
     // Le fichier est compressé (gzip) ; si le serveur l'a déjà décompressé, on le prend tel quel
     const octets = new Uint8Array(binaire)

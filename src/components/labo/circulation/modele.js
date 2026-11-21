@@ -1,11 +1,12 @@
 import * as THREE from 'three'
 import { gunzipSync } from 'fflate'
+import { chargerMedia } from '../../../config/medias.js'
 
 // =============================================================
 //  Le système circulatoire en 3D : vrai cœur, vraies artères et
 //  vraies veines d'un adulte (BodyParts3D 4.0, © Database Center
 //  for Life Science, CC BY 4.0), + organes repères et squelette léger.
-//  Fichiers : public/labo/circulation/ (créés par
+//  Fichiers : manifeste dans public/labo/circulation/, binaire sur la branche « medias » (voir src/config/medias.js ; créés par
 //  scripts/labo/extraire_circulation.py). Chargé une seule fois.
 //  Repère : mètres, Y vers le haut, Z vers l'avant,
 //  X négatif = côté DROIT de la personne.
@@ -19,7 +20,7 @@ export function chargerCirculation() {
   promesse = (async () => {
     const [manifeste, binaire] = await Promise.all([
       fetch('/labo/circulation/circulation.json').then((r) => r.json()),
-      fetch('/labo/circulation/circulation-gz.bin').then((r) => r.arrayBuffer()),
+      chargerMedia('circulation-gz.bin'),
     ])
     const octets = new Uint8Array(binaire)
     const brut = octets[0] === 0x1f && octets[1] === 0x8b ? gunzipSync(octets) : octets

@@ -1,0 +1,13 @@
+name: Garde-fou stockage Vercel
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  public-leger:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Vérifier la taille de public/
+        run: node scripts/garde-fou-public.mjs
