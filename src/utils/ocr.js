@@ -5,6 +5,7 @@
 //  en a besoin (premier usage : ~2 Mo de données françaises).
 // =============================================================
 import { nettoyerTexte } from './lecture.js'
+import { texteDepuisOcr } from './miseEnPage.js'
 
 let travailleur = null
 let suivreProgression = () => {}
@@ -96,7 +97,15 @@ export async function reconnaitreImage(canvas, onProgression = () => {}) {
   const essayer = async (image, part, total, etape) => {
     suivreProgression = (p) => onProgression(Math.min(0.99, (part + p) / total), etape)
     const { data } = await worker.recognize(image, { rotateAuto: true }, { text: true, blocks: true })
-    return { texte: nettoyerTexte(data.text), confiance: data.confidence || 0, douteux: motsDouteux(data) }
+    // mise en page gardée (titres, listes, répliques) grâce aux positions des lignes
+    let texte = ''
+    try {
+      texte = texteDepuisOcr(data)
+    } catch (e) {
+      console.warn('Mise en page non reconnue :', e)
+    }
+    if (!texte) texte = nettoyerTexte(data.text)
+    return { texte, confiance: data.confidence || 0, douteux: motsDouteux(data) }
   }
 
   let meilleur = { ...(await essayer(canvas, 0, 1)), rotation: 0 }

@@ -3,12 +3,14 @@
 //  - PDF : on prend le texte du fichier ; si une page n'en a pas
 //    (PDF scanné), on la « photographie » et on reconnaît le texte.
 //    Les pages sont aussi dessinées pour les afficher (5 pages max).
-//  - Word (.docx) : texte des paragraphes.
-//  - Texte (.txt) : chaque ligne = un paragraphe.
+//  - Word (.docx) : titres, listes et paragraphes du fichier.
+//  - Texte (.txt) : chaque ligne est gardée.
+//  La mise en page (titres, listes, répliques) est gardée : voir miseEnPage.js.
 //  Les bibliothèques sont chargées seulement quand on en a besoin.
 // =============================================================
 import { nettoyerTexte } from './lecture.js'
 import { reconnaitreImage } from './ocr.js'
+import { texteDepuisHtmlWord, texteDepuisPdf, texteDepuisTxt } from './miseEnPage.js'
 
 export const ACCEPT_DOCUMENT =
   '.pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain'
@@ -29,36 +31,6 @@ export function typeFichier(file) {
 }
 
 const lettres = (t) => (t.match(/\p{L}/gu) || []).length
-
-// Recompose le texte d'une page PDF à partir de ses morceaux positionnés
-function assemblerPage(items) {
-  let sortie = ''
-  let yPrec = null
-  let hPrec = 0
-  let xFinPrec = 0
-  for (const it of items) {
-    if (typeof it.str !== 'string') continue
-    const [, , , d, x, y] = it.transform
-    const h = Math.abs(d) || it.height || 10
-    if (it.str === '') {
-      continue
-    }
-    if (yPrec === null) {
-      sortie += it.str
-    } else if (Math.abs(y - yPrec) > Math.max(h, hPrec) * 0.5) {
-      const ecart = Math.abs(yPrec - y)
-      sortie += ecart > Math.max(h, hPrec) * 1.9 ? '\n\n' : '\n'
-      sortie += it.str
-    } else {
-      const espace = x - xFinPrec > h * 0.15 && !/\s$/.test(sortie) && !/^\s/.test(it.str)
-      sortie += (espace ? ' ' : '') + it.str
-    }
-    yPrec = y
-    hPrec = h
-    xFinPrec = x + (it.width || 0)
-  }
-  return sortie
-}
 
 async function dessinerPage(page, coteMax) {
   const base = page.getViewport({ scale: 1 })
@@ -87,7 +59,7 @@ async function lirePdf(file, onProgression) {
 
   for (let i = 1; i <= n; i++) {
     const page = await pdf.getPage(i)
-    let texte = assemblerPage((await page.getTextContent()).items)
+    let texte = texteDepuisPdf((await page.getTextContent()).items)
     let dessin = null
 
     onProgression((i - 1) / n, `Page ${i} sur ${n}`)
@@ -100,7 +72,7 @@ async function lirePdf(file, onProgression) {
       ocr.douteux.forEach((m) => douteux.add(m))
     }
     images.push(dessin || (await dessinerPage(page, 1600)))
-    textes.push(nettoyerTexte(texte))
+    textes.push(texte.trim())
     page.cleanup()
     onProgression(i / n, `Page ${i} sur ${n}`)
   }
@@ -115,13 +87,28 @@ async function lirePdf(file, onProgression) {
 
 async function lireWord(file) {
   const { default: mammoth } = await import('mammoth/mammoth.browser.js')
-  const { value } = await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() })
+  const arrayBuffer = await file.arrayBuffer()
+  try {
+    const { value } = await mammoth.convertToHtml(
+      { arrayBuffer },
+      {
+        // titres de Word (y compris « Titre » / « Sous-titre »), images ignorées
+        styleMap: ["p[style-name='Title'] => h1:fresh", "p[style-name='Titre'] => h1:fresh", "p[style-name='Subtitle'] => h2:fresh", "p[style-name='Sous-titre'] => h2:fresh"],
+        convertImage: mammoth.images.imgElement(() => ({ src: '' })),
+      }
+    )
+    const texte = texteDepuisHtmlWord(value)
+    if (texte) return { texte, images: [], douteux: [] }
+  } catch (e) {
+    console.warn('Mise en page Word non lue :', e)
+  }
+  const { value } = await mammoth.extractRawText({ arrayBuffer })
   return { texte: nettoyerTexte(value.replace(/\n+/g, '\n\n')), images: [], douteux: [] }
 }
 
 async function lireTexteBrut(file) {
   const brut = await file.text()
-  return { texte: nettoyerTexte(brut.replace(/\r/g, '').replace(/\n+/g, '\n\n')), images: [], douteux: [] }
+  return { texte: texteDepuisTxt(brut), images: [], douteux: [] }
 }
 
 // Renvoie { texte, images: [canvas…], douteux: [mots], source }

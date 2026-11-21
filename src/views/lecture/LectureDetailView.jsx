@@ -75,7 +75,7 @@ export default function LectureDetailView() {
   }, [])
 
   const texte = lecture?.texte || ''
-  const { paragraphes, mots } = useMemo(() => decouperMots(texte), [texte])
+  const { paragraphes, infos, mots } = useMemo(() => decouperMots(texte), [texte])
   const lecteur = useLecteur(texte)
   const enLecture = lecteur.position >= 0
   const motActif = !enLecture || mots.length === 0 ? -1 : motALaPosition(mots, lecteur.position)
@@ -408,7 +408,7 @@ export default function LectureDetailView() {
           {edition !== null ? (
             <>
               <p className="mb-3 text-sm text-indigo-950/55">
-                Corrige les mots mal reconnus. Laisse une ligne vide entre deux paragraphes. (Pour un seul mot : touche-le, puis ✏️.)
+                Corrige les mots mal reconnus. Laisse une ligne vide entre deux paragraphes. Une ligne qui commence par <b>#</b> est un titre ; par <b>•</b> ou <b>1.</b>, un élément de liste ; par <b>—</b>, une réplique. (Pour un seul mot : touche-le, puis ✏️.)
               </p>
               <textarea
                 value={edition}
@@ -436,6 +436,8 @@ export default function LectureDetailView() {
               douteux={douteux}
               sonsMots={sonsMots}
               paragraphes={paragraphes}
+              infos={infos}
+              simple={!!reglages.texteSimple}
               selection={selection}
               motActif={motActif}
               phraseActive={phraseActive}

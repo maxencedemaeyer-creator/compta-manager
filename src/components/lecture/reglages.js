@@ -18,6 +18,7 @@ const DEFAUT = {
   fond: 'creme',
   focus: false,
   couleursSons: false, // « Sons en couleur » (éteint par défaut)
+  texteSimple: false, // « Texte simple » : sans la mise en page (titres, listes)
 }
 
 function lire() {

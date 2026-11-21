@@ -5,7 +5,7 @@ import { SONS } from '../../utils/phonemes.js'
 
 // =============================================================
 //  Appli « Lis-moi » : panneau « Aa » (affichage du texte)
-//  Police, taille, interligne, espacement, fond doux, sons en couleur, focus.
+//  Police, taille, interligne, espacement, fond doux, sons en couleur, focus, texte simple.
 //  Le texte derrière change en direct.
 // =============================================================
 function Titre({ children }) {
@@ -144,6 +144,20 @@ export default function PanneauAffichage({ reglages, changer, onFermer, sonsChar
           </span>
           <span className={`relative h-7 w-12 shrink-0 rounded-full transition ${reglages.focus ? 'bg-indigo-600' : 'bg-indigo-200'}`}>
             <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all ${reglages.focus ? 'left-6' : 'left-1'}`} />
+          </span>
+        </button>
+
+        <Titre>Mise en page</Titre>
+        <button
+          onClick={() => changer({ texteSimple: !reglages.texteSimple })}
+          className="flex w-full items-center gap-3 rounded-2xl bg-indigo-50/80 px-4 py-3 text-left"
+        >
+          <span className="flex-1">
+            <span className="block font-semibold text-indigo-950">Texte simple</span>
+            <span className="block text-sm text-indigo-950/55">Sans titres ni listes : le texte à la suite</span>
+          </span>
+          <span className={`relative h-7 w-12 shrink-0 rounded-full transition ${reglages.texteSimple ? 'bg-indigo-600' : 'bg-indigo-200'}`}>
+            <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all ${reglages.texteSimple ? 'left-6' : 'left-1'}`} />
           </span>
         </button>
       </div>

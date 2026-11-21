@@ -4,6 +4,7 @@
 //  - le découper en mots (pour toucher / surligner)
 //  - le découper en morceaux à envoyer à la voix
 // =============================================================
+import { typeLigne } from './miseEnPage.js'
 
 // Nettoie le texte brut de la reconnaissance (Tesseract) :
 // recolle les mots coupés en fin de ligne, refait des paragraphes,
@@ -31,7 +32,16 @@ export function nettoyerTexte(brut) {
 
 // Titre d'une lecture : ses premiers mots
 export function titreDepuis(texte) {
-  const mots = (texte || '').replace(/\s+/g, ' ').trim().split(' ').slice(0, 7).join(' ')
+  // le texte commence par un titre (« # Le loup et l'agneau ») : on le prend
+  const titre = /^\s*#+\s+([^\n]+)/.exec(texte || '')
+  if (titre) return titre[1].length > 48 ? titre[1].slice(0, 46) + '…' : titre[1]
+  const mots = (texte || '')
+    .replace(/^\s*(?:#+|[•●▪◦■□➢►▶✓✔*·]|\d{1,2}[.)]|[-–—])\s+/gm, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .split(' ')
+    .slice(0, 7)
+    .join(' ')
   return mots.length > 48 ? mots.slice(0, 46) + '…' : mots || 'Lecture'
 }
 
@@ -39,9 +49,12 @@ export function titreDepuis(texte) {
 // ou nombre à virgule (« 25,5 », lu d'un seul tenant par la voix)
 const MOT = /\p{N}+(?:[.,]\p{N}+)+|[\p{L}\p{N}]+(?:['’\-‐][\p{L}\p{N}]+)*/gu
 
-// Découpe en paragraphes, chacun en morceaux { mot, texte, debut, fin, index }
+// Découpe en lignes (« paragraphes »), chacune en morceaux { mot, texte, debut, fin, index }.
+// infos[i] = { type, marqueFin, finBloc } : type de la ligne (titre, liste, tiret, texte),
+// position de la fin de son marqueur (« # », « • », « 1. »), dernière ligne de son paragraphe ?
 export function decouperMots(texte) {
   const paragraphes = []
+  const infos = []
   let index = 0
   const regexPara = /[^\n]+/g
   let p
@@ -59,9 +72,12 @@ export function decouperMots(texte) {
     }
     if (dernier < contenu.length) morceaux.push({ mot: false, texte: contenu.slice(dernier), debut: base + dernier })
     paragraphes.push(morceaux)
+    const { type, marque } = typeLigne(contenu)
+    const apres = texte.slice(base + contenu.length, base + contenu.length + 400)
+    infos.push({ type, marqueFin: base + marque, finBloc: !/^\n[ \t]*[^\s]/.test(apres) })
   }
   const mots = paragraphes.flat().filter((m) => m.mot)
-  return { paragraphes, mots }
+  return { paragraphes, infos, mots }
 }
 
 // Phrase qui contient une position : { debut, fin } (fin non comprise).
@@ -135,7 +151,12 @@ export function decouperPourVoix(texte, debut, fin, { premier = 220, suivants = 
   const pousser = () => {
     if (!courant) return
     // retire les espaces au début / à la fin en gardant les bonnes positions
-    const brut = courant.texte.replace(/\n/g, ' ')
+    // marqueurs de mise en page non lus (« # » des titres, puces, tirets), même longueur
+    const brut = courant.texte
+      .replace(/(^|\n)([ \t]*)(#+|[•●▪◦■□➢►▶✓✔*·]|[-–—])(?=\s|\S)/g, (t, a, b, c) =>
+        c === '-' || c === '–' || c === '—' || c.startsWith('#') || /[•●▪◦■□➢►▶✓✔*·]/.test(c) ? a + b + ' '.repeat(c.length) : t
+      )
+      .replace(/\n/g, ' ')
     const avant = brut.length - brut.trimStart().length
     const propre = brut.trim()
     if (/[\p{L}\p{N}]/u.test(propre)) morceaux.push({ debut: courant.debut + avant, texte: propre })
@@ -162,6 +183,8 @@ export function decouperPourVoix(texte, debut, fin, { premier = 220, suivants = 
       if (courant && courant.texte.length + part.texte.length > limite) pousser()
       if (!courant) courant = { debut: part.debut, texte: part.texte }
       else courant.texte += part.texte
+      // fin de ligne (titre, élément de liste, réplique) : morceau à part → petite pause
+      if (part.texte.endsWith('\n')) pousser()
     }
   }
   pousser()

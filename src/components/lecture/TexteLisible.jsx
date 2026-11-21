@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef } from 'react'
+import { Fragment, memo, useEffect, useRef } from 'react'
 import { COULEUR_PAR_ID } from '../../utils/phonemes.js'
 
 // =============================================================
@@ -11,6 +11,8 @@ import { COULEUR_PAR_ID } from '../../utils/phonemes.js'
 //  - sélection en bleu (bande continue)
 //  - mots probablement mal reconnus : soulignés en pointillé orange
 //  - « Sons en couleur » (interrupteur) : les 8 sons des cartes de la classe
+//  - mise en page gardée : titres, listes (puce ou numéro en colonne), répliques ;
+//    réglage « Texte simple » : tout à la suite, comme avant
 //  - pendant la lecture : la phrase en cours est surlignée doucement,
 //    le mot prononcé en jaune ; en mode Focus, le reste s'estompe.
 //  (surlignages gérés directement dans la page : fluide même sur un long texte)
@@ -33,39 +35,87 @@ function lettresDuMot(texte, segments) {
   return sortie
 }
 
-const Paragraphe = memo(function Paragraphe({ morceaux, debutSel, finSel, douteux, sonsMots }) {
-  const dansSel = (x) => x?.mot && debutSel !== null && x.index >= debutSel && x.index <= finSel
+// Un morceau du texte (mot ou espace/ponctuation)
+function Morceau({ m, k, morceaux, dansSel, debutSel, finSel, douteux, sonsMots, cache, affiche }) {
+  if (!m.mot) {
+    const lie = dansSel(morceaux[k - 1]) && dansSel(morceaux[k + 1])
+    if (cache) return null
+    return (
+      <span data-d={m.debut} className={lie ? 'sel' : undefined}>
+        {affiche ?? m.texte}
+      </span>
+    )
+  }
+  const dedans = dansSel(m)
+  const bord = dedans && (m.index === debutSel || m.index === finSel)
   return (
-    <p className="mb-[0.9em] last:mb-0">
-      {morceaux.map((m, k) => {
-        if (!m.mot) {
-          const lie = dansSel(morceaux[k - 1]) && dansSel(morceaux[k + 1])
-          return (
-            <span key={k} data-d={m.debut} className={lie ? 'sel' : undefined}>
-              {m.texte}
-            </span>
-          )
-        }
-        const dedans = dansSel(m)
-        const bord = dedans && (m.index === debutSel || m.index === finSel)
-        return (
-          <span
-            key={k}
-            data-i={m.index}
-            data-d={m.debut}
-            className={`mot cursor-pointer rounded-[0.3em] transition-colors duration-150 ${dedans ? (bord ? 'sel sel-bord' : 'sel') : ''} ${
-              douteux.has(m.texte) ? 'douteux' : ''
-            }`}
-          >
-            {lettresDuMot(m.texte, sonsMots?.get(m.index))}
-          </span>
-        )
-      })}
-    </p>
+    <span
+      data-i={m.index}
+      data-d={m.debut}
+      className={`mot cursor-pointer rounded-[0.3em] transition-colors duration-150 ${dedans ? (bord ? 'sel sel-bord' : 'sel') : ''} ${
+        douteux.has(m.texte) ? 'douteux' : ''
+      }`}
+    >
+      {lettresDuMot(m.texte, sonsMots?.get(m.index))}
+    </span>
   )
+}
+
+// Une ligne du texte, avec sa mise en page (titre, liste, réplique, texte).
+// simple = « Texte simple » : pas de mise en page (titres et puces dans le texte).
+const Ligne = memo(function Ligne({ morceaux, info, debutSel, finSel, douteux, sonsMots, simple }) {
+  const dansSel = (x) => x?.mot && debutSel !== null && x.index >= debutSel && x.index <= finSel
+  const type = info?.type || 'texte'
+  const marqueFin = info?.marqueFin ?? -1
+  const rendre = (m, k) => {
+    const dansMarque = m.debut < marqueFin
+    // « # » des titres : jamais affiché ; puce « * » affichée « • »
+    const cache = !m.mot && dansMarque && type === 'titre'
+    const affiche = !m.mot && dansMarque && type === 'liste' && !simple ? m.texte.replace(/^(\s*)\*/, '$1•') : undefined
+    return <Morceau key={k} m={m} k={k} morceaux={morceaux} dansSel={dansSel} debutSel={debutSel} finSel={finSel} douteux={douteux} sonsMots={sonsMots} cache={cache} affiche={affiche} />
+  }
+  if (simple) return <>{morceaux.map(rendre)}</>
+
+  const marge = info?.finBloc ? 'mb-[0.9em]' : type === 'titre' ? 'mb-[0.45em]' : 'mb-[0.3em]'
+  if (type === 'titre')
+    return (
+      <p className={`${marge} last:mb-0`} style={{ fontSize: '1.3em', fontWeight: 700, lineHeight: 1.3 }}>
+        {morceaux.map(rendre)}
+      </p>
+    )
+  if (type === 'liste') {
+    // puce ou numéro dans une colonne à gauche, lignes suivantes alignées sur le texte
+    const k = morceaux.findIndex((m) => m.debut >= marqueFin)
+    const marque = k === -1 ? morceaux : morceaux.slice(0, k)
+    const reste = k === -1 ? [] : morceaux.slice(k)
+    return (
+      <p className={`${marge} last:mb-0`} style={{ paddingLeft: '1.6em', textIndent: '-1.6em' }}>
+        <span className="inline-block" style={{ minWidth: '1.6em', textIndent: 0 }}>
+          {marque.map(rendre)}
+        </span>
+        {reste.map((m, j) => rendre(m, j + marque.length))}
+      </p>
+    )
+  }
+  return <p className={`${marge} last:mb-0`}>{morceaux.map(rendre)}</p>
 })
 
 const VIDE = new Set()
+
+// Indices des lignes regroupés par paragraphe (bloc)
+function blocsDe(paragraphes, infos) {
+  const blocs = []
+  let bloc = []
+  paragraphes.forEach((_, i) => {
+    bloc.push(i)
+    if (!infos || infos[i]?.finBloc !== false) {
+      blocs.push(bloc)
+      bloc = []
+    }
+  })
+  if (bloc.length) blocs.push(bloc)
+  return blocs
+}
 
 const STYLES = `
 .lis .mot:hover{background:rgba(99,102,241,.12)}
@@ -102,6 +152,8 @@ export default function TexteLisible({
   couleur,
   douteux = VIDE,
   sonsMots = null,
+  infos = null,
+  simple = false,
 }) {
   const boite = useRef(null)
   const precedent = useRef(null)
@@ -260,9 +312,21 @@ export default function TexteLisible({
       }}
     >
       <style>{STYLES}</style>
-      {paragraphes.map((morceaux, i) => (
-        <Paragraphe key={i} morceaux={morceaux} debutSel={debutSel} finSel={finSel} douteux={douteux} sonsMots={sonsMots} />
-      ))}
+      {simple
+        ? // « Texte simple » : un paragraphe par bloc, ses lignes à la suite
+          blocsDe(paragraphes, infos).map((bloc, b) => (
+            <p key={b} className="mb-[0.9em] last:mb-0">
+              {bloc.map((i, n) => (
+                <Fragment key={i}>
+                  {n > 0 && ' '}
+                  <Ligne morceaux={paragraphes[i]} info={infos?.[i]} debutSel={debutSel} finSel={finSel} douteux={douteux} sonsMots={sonsMots} simple />
+                </Fragment>
+              ))}
+            </p>
+          ))
+        : paragraphes.map((morceaux, i) => (
+            <Ligne key={i} morceaux={morceaux} info={infos?.[i]} debutSel={debutSel} finSel={finSel} douteux={douteux} sonsMots={sonsMots} />
+          ))}
     </div>
   )
 }
