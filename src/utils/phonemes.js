@@ -23,14 +23,15 @@
 // =============================================================
 import { chargerSons, marquesTexte } from './decoupageSons.js'
 
-// ——— Les 8 sons des cartes (couleurs foncées pour le contraste ; swatchColor = couleur de la carte) ———
+// ——— Les 8 sons des cartes (couleurs lisibles et bien distinctes entre elles — an orange vif, on brun
+//     chocolat, ou rouge vif, é rose-violet : choix de Max du 21/11 ; swatchColor = couleur de la carte) ———
 export const SONS = [
-  { id: 'an', label: 'an', graphemes: ['an', 'am', 'en', 'em'], color: '#b44a00', swatchColor: '#f7a26b', code: 'o' },
+  { id: 'an', label: 'an', graphemes: ['an', 'am', 'en', 'em'], color: '#e65100', swatchColor: '#f7a26b', code: 'o' },
   { id: 'in', label: 'in', graphemes: ['in', 'im', 'ain', 'ein'], color: '#4f6d0c', swatchColor: '#b5d334', code: 'v' },
-  { id: 'e_aigu', label: 'é', graphemes: ['é', 'er', 'ez'], color: '#b8295f', swatchColor: '#f4b4c8', code: 'p' },
-  { id: 'on', label: 'on', graphemes: ['on', 'om'], color: '#6b3a10', swatchColor: '#7a4a24', code: 'm' },
+  { id: 'e_aigu', label: 'é', graphemes: ['é', 'er', 'ez'], color: '#a61e8c', swatchColor: '#f4b4c8', code: 'p' },
+  { id: 'on', label: 'on', graphemes: ['on', 'om'], color: '#4e2a0e', swatchColor: '#7a4a24', code: 'm' },
   { id: 'eu', label: 'eu', graphemes: ['eu', 'oeu', 'œu'], color: '#17708c', swatchColor: '#7fd3e8', code: 'c' },
-  { id: 'ou', label: 'ou', graphemes: ['ou'], color: '#a4161c', swatchColor: '#a4161c', code: 'r' },
+  { id: 'ou', label: 'ou', graphemes: ['ou'], color: '#d90429', swatchColor: '#a4161c', code: 'r' },
   { id: 'oi', label: 'oi', graphemes: ['oi'], color: '#000000', swatchColor: '#000000', code: 'n' },
   { id: 'o_au_eau', label: 'au / eau', graphemes: ['au', 'eau'], color: '#8a6400', swatchColor: '#f5c518', code: 'j' },
 ]

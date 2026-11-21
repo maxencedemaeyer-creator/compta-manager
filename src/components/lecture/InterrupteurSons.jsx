@@ -6,7 +6,7 @@ import { chargerDictionnaireSons } from '../../utils/phonemes.js'
 //  (comme « Aide à la lecture » de la valise de Lola sur l'autre site)
 //  Réglage mémorisé sur l'appareil (spécification de Max, 20/11) ; aussi dans le panneau Aa.
 // =============================================================
-const PASTILLES = ['#b44a00', '#4f6d0c', '#b8295f'] // an, in, é
+const PASTILLES = ['#e65100', '#4f6d0c', '#a61e8c'] // an, in, é
 
 export default function InterrupteurSons({ actif, chargement, onChange }) {
   return (
