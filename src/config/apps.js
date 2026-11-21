@@ -1,4 +1,4 @@
-import { Activity, BookAudio, BookOpenCheck, FlaskConical, Gamepad2, GitBranch, MessageSquarePlus, Projector, Scissors, Sprout, Wallet } from 'lucide-react'
+import { Activity, BookAudio, FlaskConical, Gamepad2, GitBranch, MessageSquarePlus, PenLine, Projector, Scissors, Sprout, Wallet } from 'lucide-react'
 
 // =============================================================
 //  Liste des applications du site (adresses sous /maxence).
@@ -31,9 +31,9 @@ export const APPS = [
   {
     id: 'francais',
     to: '/maxence/francais',
-    nom: 'Français',
-    description: 'Programme P5-P6 et suivi en classe',
-    icon: BookOpenCheck,
+    nom: 'Savoir écrire',
+    description: 'Idées d’écriture selon le programme P5-P6',
+    icon: PenLine,
     couleur: 'from-sky-400 to-indigo-600',
   },
   {

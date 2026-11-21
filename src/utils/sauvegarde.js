@@ -8,7 +8,9 @@ const COLLECTIONS = [
   'etudes',
   'medecinEntries',
   'remboursementsEntries',
-  'laboFrancaisP5P6Statuts',
+  'laboFrancaisP5P6Statuts', // ancien suivi « travaillé » du programme de français (conservé)
+  'savoirEcrireFiches', // Savoir écrire : fiches d'évaluation et idées gardées
+  'savoirEcrireIdees', // Savoir écrire : idées personnelles
   'lectures', // Lis-moi : textes et miniatures (les photos en grand restent dans lectures_images)
   'coachProfil', // Coach : profil, plans et séances
   'coachPlans',

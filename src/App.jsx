@@ -16,7 +16,6 @@ import VeloView from './views/VeloView.jsx'
 import EtudesView from './views/EtudesView.jsx'
 import MedecinView from './views/MedecinView.jsx'
 import RemboursementsView from './views/RemboursementsView.jsx'
-import LabView from './views/LabView.jsx'
 import GenealogieListeView from './views/genealogie/GenealogieListeView.jsx'
 import GenealogieArbreView from './views/genealogie/GenealogieArbreView.jsx'
 import ProjectionView from './views/projection/ProjectionView.jsx'
@@ -44,6 +43,8 @@ import { useLaboConfig } from './components/labo/prof/useLaboConfig.js'
 const LaboView = lazy(() => import('./views/labo/LaboView.jsx'))
 const SalleView = lazy(() => import('./views/labo/SalleView.jsx'))
 // Lis-moi (aide à la lecture, public, pour les tablettes de la classe)
+// Savoir écrire (ancienne appli Français) : chargé seulement quand on l'ouvre
+const SavoirEcrireView = lazy(() => import('./views/SavoirEcrireView.jsx'))
 const LectureView = lazy(() => import('./views/lecture/LectureView.jsx'))
 const LectureDetailView = lazy(() => import('./views/lecture/LectureDetailView.jsx'))
 const EntrainementSonsView = lazy(() => import('./views/lecture/EntrainementSonsView.jsx'))
@@ -215,8 +216,8 @@ export default function App() {
         <Route path="/maxence/coach" element={<Protege><CoachView /></Protege>} />
         <Route path="/maxence/coach/:onglet" element={<Protege><CoachView /></Protege>} />
 
-        {/* Application Programme Français P5-P6 */}
-        <Route path="/maxence/francais" element={<Protege><LabView /></Protege>} />
+        {/* Savoir écrire : générateur d'idées d'écriture (programme Français P5-P6) */}
+        <Route path="/maxence/francais" element={<Protege><Suspense fallback={<Chargement />}><SavoirEcrireView /></Suspense></Protege>} />
 
         {/* Application Projection (photo du téléphone → écran de la classe) */}
         <Route path="/maxence/projection" element={<SansPin><ProjectionView /></SansPin>} />
