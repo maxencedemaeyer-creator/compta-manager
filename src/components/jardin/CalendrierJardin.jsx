@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Check, ChevronDown, ChevronLeft, ChevronRight, Home, Scissors, Sun, Undo2, Wheat } from 'lucide-react'
 import { MOIS } from '../../data/jardin/plantes.js'
+import { CLIMATS, CLIMAT_PAR_DEFAUT } from '../../config/jardinPays.js'
 import { marquerFait, nomPlante, tachesDuMois } from '../../hooks/useJardin.js'
 
 function dateCourte(d) {
@@ -91,11 +92,11 @@ function Ligne({ t, jardinId }) {
 }
 
 // Calendrier : tailles/coupes, récoltes, rentrées et sorties du mois pour les plantes du jardin
-export default function CalendrierJardin({ jardinId, plantes, faites }) {
+export default function CalendrierJardin({ jardinId, plantes, faites, climat = CLIMAT_PAR_DEFAUT }) {
   const aujourdhui = new Date()
   const [vue, setVue] = useState({ annee: aujourdhui.getFullYear(), mois: aujourdhui.getMonth() + 1 })
 
-  const { normales, retard } = tachesDuMois({ plantes, faites, annee: vue.annee, mois: vue.mois, aujourdhui })
+  const { normales, retard } = tachesDuMois({ plantes, faites, annee: vue.annee, mois: vue.mois, aujourdhui, climat })
   // À faire d'abord, puis les faites ; rentrée, sortie, tailles, puis récoltes
   const rang = (t) => (TYPES[t.action.type] || TYPES.taille).tri
   const trier = (a, b) =>
@@ -123,6 +124,13 @@ export default function CalendrierJardin({ jardinId, plantes, faites }) {
           <ChevronRight size={22} />
         </button>
       </div>
+
+      {climat !== CLIMAT_PAR_DEFAUT && (
+        <p className="rounded-xl bg-emerald-50 px-3 py-2 text-xs text-emerald-900/70">
+          🌍 Dates adaptées au climat de ce jardin : {CLIMATS[climat].nom.toLowerCase()}
+          {CLIMATS[climat].sansRentree ? ' (pas de rentrée des plantes en pot)' : ''}.
+        </p>
+      )}
 
       {plantes.length === 0 ? (
         <p className="rounded-2xl bg-emerald-50 px-4 py-6 text-center text-emerald-900/70">

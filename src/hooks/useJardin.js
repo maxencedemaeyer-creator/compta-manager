@@ -20,7 +20,7 @@ import { anneeFenetre, cleTache, tachesDuMois } from '../utils/jardinCalendrier.
 
 // =============================================================
 //  Application « Mon jardin » (Firebase, à la racine comme le reste de Maxence)
-//  - jardins/{id}                     : { nom, adresse, contact, telephone, notes, creeLe, majLe }
+//  - jardins/{id}                     : { nom, pays (code ISO), climat, emoji, fond, adresse, contact, telephone, notes, creeLe, majLe }
 //  - jardins/{id}/plantes/{id}        : { planteId (base) | null, nomLibre, quantite, lieu ('interieur'|'exterieur'),
 //                                         culture ('pot'|'terre'), notes, photoIds[], couverture, creeLe, majLe }
 //  - jardins/{id}/photos/{id}         : { planteDocId, data }  (grande photo)
@@ -91,9 +91,13 @@ export function useJardin(id) {
   return jardin
 }
 
-export async function enregistrerJardin({ id, nom, adresse, contact, telephone, notes }) {
+export async function enregistrerJardin({ id, nom, pays, climat, emoji, fond, adresse, contact, telephone, notes }) {
   const donnees = {
     nom: nom.trim(),
+    pays: pays || '',
+    climat: climat || '',
+    emoji: emoji || '',
+    fond: fond || '',
     adresse: (adresse || '').trim(),
     contact: (contact || '').trim(),
     telephone: (telephone || '').trim(),

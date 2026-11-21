@@ -8,6 +8,8 @@ import PlanteFiche, { CULTURES, LIEUX } from '../../components/jardin/PlanteFich
 import CalendrierJardin from '../../components/jardin/CalendrierJardin.jsx'
 import { boutonPrincipal } from '../../components/jardin/Feuille.jsx'
 import { baseDePlante } from '../../data/jardin/plantes.js'
+import { climatDe } from '../../config/jardinPays.js'
+import { emojiDe, themeDe } from '../../config/jardinThemes.js'
 
 // =============================================================
 //  Mon jardin — écran 2 : un jardin, deux onglets (Mes plantes / Calendrier)
@@ -72,7 +74,7 @@ export default function JardinView() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-white to-white text-emerald-950">
+    <div className={`min-h-screen bg-gradient-to-b ${themeDe(jardin).page} text-emerald-950`}>
       <div className="mx-auto max-w-2xl px-5 sm:px-8 pt-5 sm:pt-8 pb-28">
         <div className="flex items-center justify-between">
           <Link to="/maxence/jardin" className="inline-flex items-center gap-1.5 text-sm text-emerald-900/60 hover:text-emerald-900">
@@ -88,7 +90,14 @@ export default function JardinView() {
           </button>
         </div>
 
-        <h1 className="mt-3 mb-5 text-3xl font-extrabold tracking-tight">{jardin?.nom || '…'}</h1>
+        <div className="mt-3 mb-5 flex items-center gap-3">
+          {jardin && (
+            <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-2xl ${themeDe(jardin).tuile}`}>
+              {emojiDe(jardin)}
+            </span>
+          )}
+          <h1 className="min-w-0 truncate text-3xl font-extrabold tracking-tight">{jardin?.nom || '…'}</h1>
+        </div>
 
         {/* Onglets */}
         <div className="mb-5 grid grid-cols-2 gap-1.5 rounded-2xl bg-emerald-100/70 p-1.5">
@@ -110,7 +119,7 @@ export default function JardinView() {
         </div>
 
         {enCalendrier ? (
-          <CalendrierJardin jardinId={jardinId} plantes={plantes} faites={faites} />
+          <CalendrierJardin jardinId={jardinId} plantes={plantes} faites={faites} climat={climatDe(jardin)} />
         ) : chargement ? (
           <p className="py-10 text-center text-emerald-900/50">Chargement…</p>
         ) : plantes.length === 0 ? (

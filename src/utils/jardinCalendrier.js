@@ -1,9 +1,11 @@
 import { baseDePlante } from '../data/jardin/plantes.js'
+import { CLIMATS, CLIMAT_PAR_DEFAUT } from '../config/jardinPays.js'
 
 // =============================================================
 //  Calendrier de « Mon jardin » : quelles tâches pour quel mois ?
 //  (code pur, sans Firebase : les « C'est fait » sont passés en paramètre)
 //  Types d'actions : taille, recolte, rentree, sortie
+//  Les mois sont adaptés au climat du jardin (voir src/config/jardinPays.js)
 // =============================================================
 
 export const cleTache = (plantDocId, actionId, annee) => `${plantDocId}__${actionId}__${annee}`
@@ -17,11 +19,23 @@ export function anneeFenetre(action, mois, annee) {
 export const estMeteo = (action) => action.type === 'rentree' || action.type === 'sortie'
 export const concerne = (plante, action) => !estMeteo(action) || (plante.lieu === 'exterieur' && plante.culture === 'pot')
 
+// Adapte les mois d'une action au climat du jardin (les mois de la base sont ceux de la Belgique).
+// Toute la période est décalée d'un bloc. Renvoie null si l'action ne s'applique pas à ce climat
+// (rentrée/sortie inutiles sous climat méditerranéen).
+export function actionPourClimat(action, climat = CLIMAT_PAR_DEFAUT) {
+  const c = CLIMATS[climat] || CLIMATS[CLIMAT_PAR_DEFAUT]
+  if (c.sansRentree && estMeteo(action)) return null
+  const decalage =
+    action.type === 'sortie' ? c.sortie : action.type === 'rentree' ? c.rentree : action.mois[0] <= 6 ? c.debut : c.fin
+  if (!decalage) return action
+  return { ...action, mois: action.mois.map((m) => ((((m - 1 + decalage) % 12) + 12) % 12) + 1) }
+}
+
 // Tâches à afficher pour le mois (annee, mois) : normales + « en retard » (mois en cours seulement)
 //  - taille : en retard tant que l'année n'est pas finie et que la période est passée
 //  - rentrée / sortie : en retard seulement le mois qui suit la période (sinon rappel inutile)
 //  - récolte : jamais en retard
-export function tachesDuMois({ plantes, faites, annee, mois, aujourdhui = new Date() }) {
+export function tachesDuMois({ plantes, faites, annee, mois, aujourdhui = new Date(), climat = CLIMAT_PAR_DEFAUT }) {
   const normales = []
   const retard = []
   const estMoisCourant = aujourdhui.getFullYear() === annee && aujourdhui.getMonth() + 1 === mois
@@ -32,8 +46,10 @@ export function tachesDuMois({ plantes, faites, annee, mois, aujourdhui = new Da
     const cree = plante.creeLe?.toDate ? plante.creeLe.toDate() : aujourdhui
     const creeIndex = cree.getFullYear() * 12 + cree.getMonth()
 
-    for (const action of base.actions) {
-      if (!concerne(plante, action)) continue
+    for (const actionBase of base.actions) {
+      if (!concerne(plante, actionBase)) continue
+      const action = actionPourClimat(actionBase, climat)
+      if (!action) continue
       const fenetre = anneeFenetre(action, mois, annee)
       const cle = cleTache(plante.id, action.id, fenetre)
       const donnee = faites[cle]

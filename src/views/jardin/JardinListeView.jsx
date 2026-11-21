@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, MapPin, Pencil, Plus, Sprout } from 'lucide-react'
+import { ArrowLeft, Pencil, Plus, Sprout } from 'lucide-react'
 import { useJardins, usePlantesSansFiche } from '../../hooks/useJardin.js'
 import JardinForm from '../../components/jardin/JardinForm.jsx'
 import PlantesSansFiche from '../../components/jardin/PlantesSansFiche.jsx'
 import { boutonPrincipal } from '../../components/jardin/Feuille.jsx'
+import { drapeau, paysDe } from '../../config/jardinPays.js'
+import { emojiDe, themeDe } from '../../config/jardinThemes.js'
 
 // =============================================================
 //  Mon jardin — écran 1 : choisir (ou créer) un jardin
@@ -48,32 +50,36 @@ export default function JardinListeView() {
           </div>
         ) : (
           <ul className="space-y-3">
-            {jardins.map((j) => (
-              <li key={j.id} className="flex items-stretch overflow-hidden rounded-3xl border border-emerald-100 bg-white shadow-sm shadow-emerald-900/5">
-                <button
-                  onClick={() => navigate(`/maxence/jardin/${j.id}`)}
-                  className="flex min-w-0 flex-1 items-center gap-4 px-5 py-5 text-left hover:bg-emerald-50/60 active:bg-emerald-50"
-                >
-                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-2xl">🌳</span>
-                  <span className="min-w-0">
-                    <span className="block truncate text-xl font-bold">{j.nom}</span>
-                    {j.adresse && (
-                      <span className="mt-0.5 flex items-center gap-1 truncate text-sm text-emerald-900/55">
-                        <MapPin size={13} className="shrink-0" />
-                        {j.adresse}
+            {jardins.map((j) => {
+              const theme = themeDe(j)
+              const pays = paysDe(j)
+              return (
+                <li key={j.id} className={`flex items-stretch overflow-hidden rounded-3xl border shadow-sm shadow-emerald-900/5 ${theme.carte}`}>
+                  <button
+                    onClick={() => navigate(`/maxence/jardin/${j.id}`)}
+                    className="flex min-w-0 flex-1 items-center gap-4 px-5 py-5 text-left active:opacity-70"
+                  >
+                    <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-2xl ${theme.tuile}`}>
+                      {emojiDe(j)}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-xl font-bold">{j.nom}</span>
+                      <span className="mt-0.5 block truncate text-sm text-emerald-900/55">
+                        {pays ? `${drapeau(pays.code)} ${pays.nom}` : '🌍'}
+                        {j.adresse ? ` · ${j.adresse}` : ''}
                       </span>
-                    )}
-                  </span>
-                </button>
-                <button
-                  onClick={() => setFormulaire(j)}
-                  className="flex w-14 shrink-0 items-center justify-center border-l border-emerald-50 text-emerald-600 hover:bg-emerald-50"
-                  aria-label={`Modifier ${j.nom}`}
-                >
-                  <Pencil size={18} />
-                </button>
-              </li>
-            ))}
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => setFormulaire(j)}
+                    className="flex w-14 shrink-0 items-center justify-center border-l border-black/5 text-emerald-700 active:opacity-70"
+                    aria-label={`Modifier ${j.nom}`}
+                  >
+                    <Pencil size={18} />
+                  </button>
+                </li>
+              )
+            })}
           </ul>
         )}
 
