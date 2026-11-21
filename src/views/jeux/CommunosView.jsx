@@ -126,7 +126,7 @@ export default function CommunosView() {
               </div>
               <button
                 type="button"
-                onClick={() => navigate('/maxence/jeux/communos/libre')}
+                onClick={() => navigate('/maxence/jeux/communos/libre', { state: { nouvelle: true } })}
                 className="mt-3 w-full rounded-2xl py-3 font-bold bg-gradient-to-r from-fuchsia-500 to-indigo-500 shadow-lg shadow-fuchsia-500/30 active:scale-[0.98] transition inline-flex items-center justify-center gap-2"
               >
                 <RotateCcw size={18} />

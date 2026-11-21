@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, Navigate, useParams } from 'react-router-dom'
-import { HelpCircle, Flag, Trophy, RotateCcw, LayoutGrid } from 'lucide-react'
+import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { HelpCircle, Flag, Trophy, RotateCcw, LayoutGrid, History } from 'lucide-react'
 import Chargement from '../../components/Chargement.jsx'
 import PartieCommunos from '../../components/jeux/communos/PartieCommunos.jsx'
 import { AnneauConnaissance } from '../../components/jeux/communos/Connaissance.jsx'
@@ -14,14 +14,21 @@ import { connaissanceProvince, listeProvinces, nomComplet, tirerCible } from '..
 //  - /maxence/jeux/communos/provinces/:province → une seule province
 //  Autant de parties qu'on veut ; chaque partie est un document
 //  de la collection Firebase « communosLibres ».
-//  Une partie commencée et pas finie reprend là où on l'a laissée.
+//  Une partie commencée et pas finie reprend là où on l'a laissée,
+//  SAUF quand on arrive par un bouton « Rejouer » (state.nouvelle) :
+//  là on commence toujours une partie neuve.
+//  Une partie reprise est signalée par un bandeau « Partie reprise ».
 // =============================================================
 export default function CommunosLibreView() {
   const { province: slug } = useParams()
+  const location = useLocation()
+  const navigate = useNavigate()
+  // Demande explicite d'une partie neuve (bouton « Rejouer » du défi du jour)
+  const [forcerNouvelle, setForcerNouvelle] = useState(!!location.state?.nouvelle)
   const { carte, erreur } = useCarte()
   const { parties: partiesJour, loading: chargeJour } = useCommunos()
   const { libres, loading, nouvelId, enregistrerLibre } = useCommunosLibres()
-  const [partie, setPartie] = useState(null) // { id, cible }
+  const [partie, setPartie] = useState(null) // { id, cible, reprise }
   const [regles, setRegles] = useState(false)
 
   // Zone de jeu : une province, ou toute la Belgique
@@ -39,20 +46,32 @@ export default function CommunosLibreView() {
   )
 
   function nouvellePartie() {
-    setPartie({ id: nouvelId(), cible: tirerCible(zoneTirage, partiesZone).id })
+    setPartie({ id: nouvelId(), cible: tirerCible(zoneTirage, partiesZone).id, reprise: false })
   }
+
+  // On « consomme » la demande de partie neuve : sinon, en rechargeant la page,
+  // le navigateur la renverrait et effacerait la partie en cours.
+  useEffect(() => {
+    if (location.state?.nouvelle) navigate(location.pathname, { replace: true, state: null })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Nouvelle zone → on reprend la partie en cours, sinon on en commence une
   useEffect(() => setPartie(null), [slug])
   useEffect(() => {
     if (partie || loading || !zoneTirage) return
+    if (forcerNouvelle) {
+      setForcerNouvelle(false)
+      nouvellePartie()
+      return
+    }
     const enCours = partiesZone
       .filter((p) => !p.trouve && !p.abandon && p.cible)
       .sort((a, b) => (b.debut || 0) - (a.debut || 0))[0]
-    if (enCours) setPartie({ id: enCours.id, cible: enCours.cible })
+    if (enCours) setPartie({ id: enCours.id, cible: enCours.cible, reprise: true })
     else nouvellePartie()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [partie, loading, zoneTirage, partiesZone])
+  }, [partie, loading, zoneTirage, partiesZone, forcerNouvelle])
 
   const connaissance = useMemo(
     () => (province ? connaissanceProvince(province, partiesJour, libres) : null),
@@ -70,6 +89,10 @@ export default function CommunosLibreView() {
   const cible = carte.parId.get(partie.cible)
   const debut = doc?.debut || Date.now()
   const champsCommuns = { province: zoneTirage.nom, cible: cible.id, debut }
+  const repriseVisible = partie.reprise && doc && !doc.trouve && !doc.abandon && (doc.essais || []).length > 0
+  const dateReprise = doc?.debut
+    ? new Date(doc.debut).toLocaleDateString('fr-BE', { day: 'numeric', month: 'long' })
+    : null
 
   return (
     <FondPage>
@@ -80,6 +103,23 @@ export default function CommunosLibreView() {
         <BoutonIcone label="Règles" onClick={() => setRegles(true)}><HelpCircle size={18} /></BoutonIcone>
       </EnTete>
       <OngletsModes actif={province ? 'provinces' : 'belgique'} />
+
+      {repriseVisible && (
+        <div className="cm-apparait mt-3 flex items-center gap-2 rounded-2xl bg-cyan-400/10 border border-cyan-300/25 px-3 py-2 text-sm">
+          <History size={16} className="shrink-0 text-cyan-300" />
+          <span className="flex-1 min-w-0 text-white/75">
+            Partie reprise{dateReprise ? ` (commencée le ${dateReprise})` : ''} · {doc.essais.length} essai{doc.essais.length > 1 ? 's' : ''}
+          </span>
+          <button
+            type="button"
+            onClick={nouvellePartie}
+            className="shrink-0 inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-bold bg-white/10 hover:bg-white/15 border border-white/15"
+          >
+            <RotateCcw size={13} />
+            Nouvelle partie
+          </button>
+        </div>
+      )}
 
       <PartieCommunos
         carte={carte}
