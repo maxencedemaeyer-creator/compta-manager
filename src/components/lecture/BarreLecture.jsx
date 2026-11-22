@@ -10,8 +10,8 @@ export default function BarreLecture({ etat, resume, aSelection, onEffacerSelect
   const enCours = etat === 'lecture' || etat === 'pause' || etat === 'chargement'
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-      <div className="pointer-events-auto mx-auto max-w-3xl">
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+      <div className="pointer-events-auto mx-auto max-w-lg">
         {preparationVoix !== null && (
           <div className="mb-2 rounded-2xl bg-indigo-950/90 px-4 py-2.5 text-sm text-white shadow-lg">
             <div className="flex items-center justify-between gap-3">
@@ -27,9 +27,9 @@ export default function BarreLecture({ etat, resume, aSelection, onEffacerSelect
           <p className="mb-2 rounded-2xl bg-rose-600 px-4 py-2.5 text-center text-sm font-medium text-white shadow-lg">{erreur}</p>
         )}
 
-        <div className="rounded-[2rem] border border-white/70 bg-white/90 p-2.5 shadow-2xl shadow-indigo-950/20 backdrop-blur-xl">
+        <div className="rounded-3xl border border-white/70 bg-white/90 px-2.5 py-2 shadow-xl shadow-indigo-950/20 backdrop-blur-xl">
           {/* Ce qui sera lu */}
-          <div className="flex items-center justify-between gap-2 px-2 pb-2">
+          <div className="flex items-center justify-between gap-2 px-2 pb-1">
             <p className="min-w-0 truncate text-sm text-indigo-950/60">
               {aSelection ? <span className="font-semibold text-sky-700">{resume}</span> : resume}
             </p>
@@ -43,39 +43,39 @@ export default function BarreLecture({ etat, resume, aSelection, onEffacerSelect
             )}
           </div>
 
-          <div className="flex items-center justify-center gap-3">
+          <div className="flex items-center justify-center gap-2.5">
             {/* Revenir à la phrase précédente */}
             {enCours && (
               <button
                 onClick={onRevenir}
-                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-indigo-700 active:bg-indigo-100"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-indigo-700 active:bg-indigo-100"
                 aria-label="Revenir à la phrase précédente"
                 title="Revenir en arrière"
               >
-                <RotateCcw size={20} />
+                <RotateCcw size={18} />
               </button>
             )}
             {/* Lecture / pause */}
             <button
               onClick={onPlay}
-              className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-600/40 transition active:scale-95"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-600/40 transition active:scale-95"
               aria-label={etat === 'lecture' ? 'Pause' : 'Lire'}
             >
               {etat === 'chargement' ? (
-                <Loader2 size={30} className="animate-spin" />
+                <Loader2 size={24} className="animate-spin" />
               ) : etat === 'lecture' ? (
-                <Pause size={30} fill="currentColor" />
+                <Pause size={24} fill="currentColor" />
               ) : (
-                <Play size={30} fill="currentColor" className="ml-1" />
+                <Play size={24} fill="currentColor" className="ml-1" />
               )}
             </button>
             {enCours && (
               <button
                 onClick={onStop}
-                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-indigo-700 active:bg-indigo-100"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-indigo-700 active:bg-indigo-100"
                 aria-label="Arrêter"
               >
-                <Square size={18} fill="currentColor" />
+                <Square size={16} fill="currentColor" />
               </button>
             )}
 
