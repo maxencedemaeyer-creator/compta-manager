@@ -1,12 +1,12 @@
-import { Loader2, Pause, Play, Rabbit, RotateCcw, Square, Turtle, X } from 'lucide-react'
-import { VITESSES } from '../../config/lectureVoix.js'
+import { Loader2, Pause, Play, RotateCcw, Square, X } from 'lucide-react'
 
 // =============================================================
 //  Appli « Lis-moi » : la barre de lecture (en bas de l'écran)
-//  ⟲, ▶ / ⏸, arrêt, vitesse, et ce qui va être lu.
-//  (Pas de choix de voix : décision de Max, voix fixée dans config/lectureVoix.js)
+//  ⟲, ▶ / ⏸, arrêt, et ce qui va être lu.
+//  (La vitesse se règle dans le panneau « Aa » ; pas de choix de voix : décision de Max,
+//  voix fixée dans config/lectureVoix.js)
 // =============================================================
-export default function BarreLecture({ etat, resume, aSelection, onEffacerSelection, onPlay, onStop, onRevenir, reglages, changer, erreur, preparationVoix = null }) {
+export default function BarreLecture({ etat, resume, aSelection, onEffacerSelection, onPlay, onStop, onRevenir, erreur, preparationVoix = null }) {
   const enCours = etat === 'lecture' || etat === 'pause' || etat === 'chargement'
 
   return (
@@ -43,7 +43,7 @@ export default function BarreLecture({ etat, resume, aSelection, onEffacerSelect
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center gap-3">
             {/* Revenir à la phrase précédente */}
             {enCours && (
               <button
@@ -78,26 +78,6 @@ export default function BarreLecture({ etat, resume, aSelection, onEffacerSelect
                 <Square size={18} fill="currentColor" />
               </button>
             )}
-
-            {/* Vitesse */}
-            <div className="flex min-w-0 flex-1 rounded-full bg-indigo-50/80 p-1">
-              {VITESSES.map((v) => (
-                <button
-                  key={v.id}
-                  onClick={() => {
-                    changer({ vitesse: v.id })
-                    if (enCours) onStop()
-                  }}
-                  className={`flex min-w-0 flex-1 items-center justify-center gap-1 rounded-full px-2 py-2 text-sm font-semibold transition ${
-                    reglages.vitesse === v.id ? 'bg-white text-indigo-700 shadow' : 'text-indigo-950/50'
-                  }`}
-                >
-                  {v.id === 'lent' && <Turtle size={16} className="shrink-0" />}
-                  {v.id === 'rapide' && <Rabbit size={16} className="shrink-0" />}
-                  <span className={`truncate ${v.id === 'normal' ? '' : 'hidden sm:inline'}`}>{v.nom}</span>
-                </button>
-              ))}
-            </div>
 
           </div>
         </div>

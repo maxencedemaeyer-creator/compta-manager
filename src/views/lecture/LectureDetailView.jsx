@@ -27,7 +27,7 @@ import { ecouterPreparation, prechargerPiper } from '../../utils/voixPiper.js'
 //    ▶ de la barre lit le passage choisi (ou tout le texte).
 //  - Pendant la lecture : phrase surlignée doucement, mot en jaune,
 //    ⟲ revient à la phrase précédente.
-//  - Aa : police, taille, interligne, espacement, fond doux, focus.
+//  - Aa : police, vitesse de lecture, taille, interligne, espacement, fond doux, focus.
 //  - « Sons en couleur » : les 8 sons des cartes de la classe (utils/phonemes.js), réglage mémorisé.
 //  - Ordinateur, clavier : Espace (lire/pause), Échap (tout le texte), ← (revenir).
 // =============================================================
@@ -198,6 +198,13 @@ export default function LectureDetailView() {
     let ph = phraseAutour(texte, pos)
     if (pos - ph.debut < 12 && ph.debut > d.debut) ph = phraseAutour(texte, Math.max(0, ph.debut - 2))
     lire(Math.max(d.debut, ph.debut), d.fin)
+  }
+
+  // La vitesse se règle dans le panneau « Aa » : si une lecture est en cours, on l'arrête
+  // (elle repartira à la nouvelle vitesse au prochain ▶)
+  const changerVitesse = (id) => {
+    changer({ vitesse: id })
+    if (lecteur.etat !== 'arret') lecteur.arreter()
   }
 
   const effacerSelection = () => {
@@ -469,8 +476,6 @@ export default function LectureDetailView() {
           onPlay={play}
           onStop={lecteur.arreter}
           onRevenir={revenir}
-          reglages={reglages}
-          changer={changer}
           erreur={lecteur.erreur}
           preparationVoix={preparationVoix}
         />
@@ -496,6 +501,7 @@ export default function LectureDetailView() {
           reglages={reglages}
           changer={changer}
           onFermer={() => setPanneau(false)}
+          onChangerVitesse={changerVitesse}
           sonsChargement={chargementSons}
         />
       )}

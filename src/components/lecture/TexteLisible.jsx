@@ -1,5 +1,6 @@
 import { Fragment, memo, useEffect, useRef } from 'react'
 import { COULEUR_PAR_ID } from '../../utils/phonemes.js'
+import { motProche } from '../../utils/motProche.js'
 
 // =============================================================
 //  Appli « Lis-moi » : le texte, mot par mot
@@ -7,6 +8,8 @@ import { COULEUR_PAR_ID } from '../../utils/phonemes.js'
 //  - choisir un passage, comme sur iPhone ou sur ordinateur :
 //      souris : cliquer sur le premier mot et glisser jusqu'au dernier
 //      doigt  : appui court sur le premier mot, puis glisser
+//      (on peut aussi poser le doigt un peu à côté du mot, à gauche ou à droite, ou dans la marge
+//       de la carte : c'est le mot le plus proche de la même ligne qui est pris)
 //    → onChoisirPlage(a, b) pendant le glissement, onFinPlage(a, b, élément) à la fin
 //  - sélection en bleu (bande continue)
 //  - mots probablement mal reconnus : soulignés en pointillé orange
@@ -207,13 +210,14 @@ export default function TexteLisible({
     const el = boite.current
     if (!el) return
     let t = null
-    const motSous = (x, y) => document.elementFromPoint(x, y)?.closest?.('[data-i]')
+    const motSous = (x, y) => document.elementFromPoint(x, y)?.closest?.('[data-i]') || motProche(el, x, y)
     const debut = (e) => {
       if (e.touches.length !== 1) return
-      const mot = e.target.closest?.('[data-i]')
+      const doigt = e.touches[0]
+      // sur un mot, ou un peu à côté (à gauche du premier mot, entre deux mots, dans la marge)
+      const mot = e.target.closest?.('[data-i]') || motProche(el, doigt.clientX, doigt.clientY)
       if (!mot) return
       const i = Number(mot.dataset.i)
-      const doigt = e.touches[0]
       t = { x: doigt.clientX, y: doigt.clientY, depart: i, dernier: i, element: mot, actif: false }
       t.minuteur = setTimeout(() => {
         if (!t) return
@@ -297,14 +301,14 @@ export default function TexteLisible({
       // ---------- À la souris : cliquer sur le premier mot et glisser jusqu'au dernier ----------
       onPointerDown={(e) => {
         if (e.pointerType !== 'mouse' || e.button !== 0) return
-        const el = e.target.closest('[data-i]')
+        const el = e.target.closest('[data-i]') || motProche(boite.current, e.clientX, e.clientY)
         if (el) glisse.current = { depart: Number(el.dataset.i), dernier: Number(el.dataset.i), element: el, bouge: false }
       }}
       onPointerMove={(e) => {
         const g = glisse.current
         if (!g || e.pointerType !== 'mouse') return
         defilerSiBord(e.clientY)
-        const el = document.elementFromPoint(e.clientX, e.clientY)?.closest?.('[data-i]')
+        const el = document.elementFromPoint(e.clientX, e.clientY)?.closest?.('[data-i]') || motProche(boite.current, e.clientX, e.clientY)
         if (!el || !boite.current.contains(el)) return
         const i = Number(el.dataset.i)
         if (i === g.dernier) return
@@ -330,7 +334,9 @@ export default function TexteLisible({
         const el = e.target.closest('[data-i]')
         if (el) onToucherMot(Number(el.dataset.i), el)
       }}
-      className={`lis select-none ${focus && phDebut >= 0 ? 'focus-actif' : ''}`}
+      // le bloc déborde dans la marge de la carte (-mx / px égaux : rien ne bouge à l'écran) :
+      // un doigt posé à gauche du premier mot est bien entendu
+      className={`lis select-none -mx-5 px-5 sm:-mx-9 sm:px-9 ${focus && phDebut >= 0 ? 'focus-actif' : ''}`}
       style={{
         fontSize: taillePx,
         fontFamily: famille,

@@ -1,11 +1,11 @@
-import { Minus, Plus, X } from 'lucide-react'
-import { TAILLES_TEXTE } from '../../config/lectureVoix.js'
+import { Minus, Plus, Rabbit, Turtle, X } from 'lucide-react'
+import { TAILLES_TEXTE, VITESSES } from '../../config/lectureVoix.js'
 import { ESPACEMENTS, FONDS, INTERLIGNES, POLICES } from './reglages.js'
 import { SONS } from '../../utils/phonemes.js'
 
 // =============================================================
-//  Appli « Lis-moi » : panneau « Aa » (affichage du texte)
-//  Police, taille, interligne, espacement, fond doux, sons en couleur, focus, texte simple.
+//  Appli « Lis-moi » : panneau « Aa » (réglages du texte et de la lecture)
+//  Police, vitesse de lecture, taille, interligne, espacement, fond doux, sons en couleur, focus, texte simple.
 //  Le texte derrière change en direct.
 // =============================================================
 function Titre({ children }) {
@@ -28,7 +28,7 @@ function Segments({ options, valeur, onChange }) {
   )
 }
 
-export default function PanneauAffichage({ reglages, changer, onFermer, sonsChargement = false }) {
+export default function PanneauAffichage({ reglages, changer, onFermer, onChangerVitesse, sonsChargement = false }) {
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center p-3 sm:items-center" onClick={onFermer}>
       <div
@@ -36,7 +36,7 @@ export default function PanneauAffichage({ reglages, changer, onFermer, sonsChar
         className="max-h-[85dvh] w-full max-w-md overflow-y-auto rounded-[2rem] bg-white p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-2xl shadow-indigo-950/30 ring-1 ring-indigo-950/5"
       >
         <div className="mb-3 flex items-center justify-between px-1">
-          <p className="text-lg font-bold text-indigo-950">Affichage du texte</p>
+          <p className="text-lg font-bold text-indigo-950">Réglages du texte et de la lecture</p>
           <button onClick={onFermer} className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-50 text-indigo-700" aria-label="Fermer">
             <X size={20} />
           </button>
@@ -54,6 +54,23 @@ export default function PanneauAffichage({ reglages, changer, onFermer, sonsChar
                 Aa
               </span>
               <span className={`block text-xs ${reglages.police === id ? 'text-white/80' : 'text-indigo-950/55'}`}>{p.detail}</span>
+            </button>
+          ))}
+        </div>
+
+        <Titre>Vitesse de lecture</Titre>
+        <div className="flex rounded-2xl bg-indigo-50/80 p-1">
+          {VITESSES.map((v) => (
+            <button
+              key={v.id}
+              onClick={() => (onChangerVitesse ? onChangerVitesse(v.id) : changer({ vitesse: v.id }))}
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-sm font-semibold transition ${
+                reglages.vitesse === v.id ? 'bg-white text-indigo-700 shadow' : 'text-indigo-950/55'
+              }`}
+            >
+              {v.id === 'lent' && <Turtle size={16} className="shrink-0" />}
+              {v.id === 'rapide' && <Rabbit size={16} className="shrink-0" />}
+              {v.nom}
             </button>
           ))}
         </div>

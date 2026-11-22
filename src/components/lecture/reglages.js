@@ -3,7 +3,8 @@ import { TAILLES_TEXTE, VITESSE_DEFAUT, VOIX_DEFAUT } from '../../config/lecture
 
 // =============================================================
 //  Appli « Lis-moi » : réglages de la tablette
-//  (vitesse, police, taille, interligne, espacement, fond, focus, sons en couleur)
+//  (vitesse, police, taille, interligne, espacement, fond, focus, texte simple ;
+//  « sons en couleur » : seulement le temps de la lecture, jamais mémorisé)
 //  Petits réglages d'affichage seulement, gardés sur l'appareil —
 //  aucune donnée de lecture.
 // =============================================================
@@ -17,13 +18,15 @@ const DEFAUT = {
   espacement: 'normal',
   fond: 'creme',
   focus: false,
-  couleursSons: false, // « Sons en couleur » (éteint par défaut)
+  couleursSons: false, // « Sons en couleur » : éteint à chaque ouverture, jamais mémorisé
   texteSimple: false, // « Texte simple » : sans la mise en page (titres, listes)
 }
 
+// « Sons en couleur » n'est jamais mémorisé : à chaque ouverture d'une lecture il est éteint,
+// et c'est l'élève qui l'allume (même si une ancienne valeur « allumé » traîne sur la tablette).
 function lire() {
   try {
-    return { ...DEFAUT, ...JSON.parse(localStorage.getItem(CLE) || '{}') }
+    return { ...DEFAUT, ...JSON.parse(localStorage.getItem(CLE) || '{}'), couleursSons: false }
   } catch {
     return DEFAUT
   }
@@ -60,7 +63,9 @@ export function useReglages() {
 
   useEffect(() => {
     try {
-      localStorage.setItem(CLE, JSON.stringify(reglages))
+      // eslint-disable-next-line no-unused-vars
+      const { couleursSons, ...memorisables } = reglages
+      localStorage.setItem(CLE, JSON.stringify(memorisables))
     } catch {
       /* navigation privée : tant pis */
     }
