@@ -11,6 +11,8 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@fontsource/andika": "^5.3.0",
+    "@fontsource/lexend": "^5.3.0",
     "@mediapipe/tasks-vision": "^0.10.21",
     "@mintplex-labs/piper-tts-web": "^1.0.5",
     "fflate": "^0.8.2",

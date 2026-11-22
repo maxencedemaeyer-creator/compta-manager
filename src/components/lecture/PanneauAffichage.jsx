@@ -105,7 +105,7 @@ export default function PanneauAffichage({ reglages, changer, onFermer, onChange
         <Titre>Espace entre les lignes</Titre>
         <Segments options={INTERLIGNES} valeur={reglages.interligne} onChange={(id) => changer({ interligne: id })} />
 
-        <Titre>Espace entre les lettres</Titre>
+        <Titre>Espace entre les lettres et les mots</Titre>
         <Segments options={ESPACEMENTS} valeur={reglages.espacement} onChange={(id) => changer({ espacement: id })} />
 
         <Titre>Couleur du fond</Titre>
