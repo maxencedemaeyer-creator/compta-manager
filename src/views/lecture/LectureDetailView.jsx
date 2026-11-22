@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Check, FilePlus2, Pencil, Pointer, Trash2, Type, X } from 'lucide-react'
 import { ajouterPage, majLecture, modifierTexte, supprimerLecture, useCorrectionsSons, useLecture } from '../../hooks/useLecture.js'
-import { decouperMots, motALaPosition, phraseAutour } from '../../utils/lecture.js'
+import { decouperMots, motALaPosition, phraseAutour, remplacerMot } from '../../utils/lecture.js'
 import { VITESSES, VOIX_DEFAUT } from '../../config/lectureVoix.js'
 import TexteLisible from '../../components/lecture/TexteLisible.jsx'
 import BarreLecture from '../../components/lecture/BarreLecture.jsx'
@@ -253,7 +253,7 @@ export default function LectureDetailView() {
     const m = motBulle
     setBulle(null)
     try {
-      await modifierTexte(lecture.id, texte.slice(0, m.debut) + nouveau + texte.slice(m.fin), {
+      await modifierTexte(lecture.id, remplacerMot(texte, m.debut, m.fin, nouveau), {
         douteux: (lecture.douteux || []).filter((d) => d !== m.texte),
       })
     } catch (e) {

@@ -36,7 +36,8 @@ export default function BulleMot({ mot, ancre, passage = false, onLirePassage, o
 
   const valider = () => {
     const v = edition.trim()
-    if (v && v !== mot.texte) onCorriger(v)
+    // case vide = supprimer le mot (ex. une lettre qui n'existe pas, lue par erreur sur la photo)
+    if (v !== mot.texte) onCorriger(v)
     else onFermer()
   }
 
@@ -82,6 +83,7 @@ export default function BulleMot({ mot, ancre, passage = false, onLirePassage, o
           <input
             autoFocus
             value={edition}
+            placeholder="Vide = supprimer"
             onChange={(e) => setEdition(e.target.value)}
             className="h-11 w-44 rounded-xl bg-white px-3 text-lg text-indigo-950 outline-none"
             autoCapitalize="off"

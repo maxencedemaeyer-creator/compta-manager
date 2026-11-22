@@ -227,6 +227,17 @@ export function prononciationVoix(texte) {
   return PRONONCIATIONS.reduce((t, [regex, remplace]) => t.replace(regex, remplace), texte)
 }
 
+// Remplace le mot [debut, fin[ par « nouveau ». Si « nouveau » est vide, le mot est supprimé
+// avec une espace voisine (pas de double espace) : espaces après le mot, sinon l'espace avant.
+export function remplacerMot(texte, debut, fin, nouveau) {
+  if (nouveau === '') {
+    const blanc = (c) => c === ' ' || c === '\t'
+    if (blanc(texte[fin])) while (blanc(texte[fin])) fin++
+    else if (debut > 0 && blanc(texte[debut - 1])) debut--
+  }
+  return texte.slice(0, debut) + nouveau + texte.slice(fin)
+}
+
 // Petit son vide (WAV) : joué au moment du toucher pour « débloquer »
 // le son sur iPad/iPhone avant l'arrivée de la vraie voix.
 export function sonVide() {
