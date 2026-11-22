@@ -209,6 +209,24 @@ export function decouperPourVoix(texte, debut, fin, { premier = 220, suivants = 
   return morceaux
 }
 
+// =============================================================
+//  Prononciations corrigées pour la voix (demande de Max, 22/11/2026).
+//  Piper lit « p'tit » comme « pé tit » : on lui envoie « pti ».
+//  Le texte AFFICHÉ ne change pas (seul le texte envoyé à la voix est remplacé) ;
+//  pour ajouter un mot : une ligne [expression, remplacement] dans la liste.
+// =============================================================
+const SANS_LETTRE_AVANT = '(?<![\\p{L}\\p{N}])'
+const PRONONCIATIONS = [
+  // p'tit, P'tit, p'tits (apostrophe droite ou typographique) : le « t » final ne se dit pas → « pti »
+  [new RegExp(`${SANS_LETTRE_AVANT}([pP])['’]tit(s?)(?![\\p{L}\\p{N}])`, 'gu'), '$1ti$2'],
+  // p'tite, p'tites : le « t » se dit → « ptite »
+  [new RegExp(`${SANS_LETTRE_AVANT}([pP])['’]tite(s?)(?![\\p{L}\\p{N}])`, 'gu'), '$1tite$2'],
+]
+// « P'tit » → « Pti », « p'tits » → « ptis », « p'tite » → « ptite »
+export function prononciationVoix(texte) {
+  return PRONONCIATIONS.reduce((t, [regex, remplace]) => t.replace(regex, remplace), texte)
+}
+
 // Petit son vide (WAV) : joué au moment du toucher pour « débloquer »
 // le son sur iPad/iPhone avant l'arrivée de la vraie voix.
 export function sonVide() {

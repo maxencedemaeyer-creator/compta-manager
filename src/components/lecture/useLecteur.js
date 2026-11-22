@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { decouperPourVoix, dureeWav, estimerMots, sonVide } from '../../utils/lecture.js'
+import { decouperPourVoix, dureeWav, estimerMots, prononciationVoix, sonVide } from '../../utils/lecture.js'
 import { MOTEUR_VOIX } from '../../config/lectureVoix.js'
 import { syntheseLocale } from '../../utils/voixPiper.js'
 import {
@@ -44,7 +44,8 @@ function garder(cle, resultat) {
 async function demanderVoixPiper(texte) {
   const cle = `piper|${texte}`
   if (cache.has(cle)) return cache.get(cle)
-  const buffer = await syntheseLocale(texte)
+  // la voix reçoit le texte avec les prononciations corrigées (« p'tit » → « pti ») ; le surlignage reste calé sur le texte affiché
+  const buffer = await syntheseLocale(prononciationVoix(texte))
   const mots = estimerMots(texte, dureeWav(buffer))
   return garder(cle, { url: URL.createObjectURL(new Blob([buffer], { type: 'audio/wav' })), mots })
 }
