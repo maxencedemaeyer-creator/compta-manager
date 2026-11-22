@@ -83,11 +83,11 @@ export default function LectureDetailView() {
   // le dictionnaire des sons est chargé dès que le réglage est allumé
   const sonsActifs = !!reglages.couleursSons
   const [dicoSons, setDicoSons] = useState(null)
-  const [chargementSons, setChargementSons] = useState(false)
+  // « chargement » déduit (et non mémorisé à part) : le petit rond qui tourne ne peut plus rester bloqué
+  const chargementSons = sonsActifs && !dicoSons
   useEffect(() => {
     if (!sonsActifs || dicoSons) return
     let vivant = true
-    setChargementSons(true)
     chargerDictionnaireSons()
       .then((d) => vivant && setDicoSons(d))
       .catch(() => {
@@ -95,7 +95,6 @@ export default function LectureDetailView() {
         changer({ couleursSons: false })
         alert('Les sons en couleur ne sont pas disponibles pour le moment (connexion ?).')
       })
-      .finally(() => vivant && setChargementSons(false))
     return () => {
       vivant = false
     }
