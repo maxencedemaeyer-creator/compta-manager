@@ -11,6 +11,7 @@ import { estSiteGalerie } from '../hooks/useCouture.js'
 //    /julie     → « J. » rose
 //    /maxence/projection → photo projetée violet-ambre (appli Projection)
 //    /labo      → fiole d'Erlenmeyer fluo (labo de sciences)
+//    /lecture   → livre audio blanc sur dégradé indigo-violet (Lis-moi, même dessin que son bouton)
 //    /couture et couture-julie.vercel.app (galerie) → « J. » rose aussi,
 //    mais l'icône posée sur l'écran d'accueil ouvre la galerie, pas l'atelier
 //  Les fichiers sont dans public/icons/<dossier>/.
@@ -28,6 +29,9 @@ function choisir(pathname) {
   if (/^\/maxence\/projection(\/|$)/i.test(pathname)) {
     return { dossier: 'projection', manifeste: 'projection', nom: 'Projection', theme: '#0f0a1f', version: 'v=1' }
   }
+  // Lis-moi (/lecture, public) : icône et manifeste à part (installable sur la tablette de l'élève).
+  // L'Entraînement (/maxence/lecture/…) garde l'icône de Maxence.
+  if (premier === 'lecture') return { dossier: 'lecture', manifeste: 'lecture', nom: 'Lis-moi', theme: '#fbf7f0', version: 'v=1' }
   if (premier === 'labo') return { dossier: 'labo', manifeste: 'labo', nom: 'Le labo', theme: '#070b16', version: 'v=5' }
   const profil = trouverProfil(PAGES_DE[premier] || premier)
   if (profil?.icone) {

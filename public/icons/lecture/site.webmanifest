@@ -1,0 +1,18 @@
+{
+  "id": "/lecture",
+  "name": "Lis-moi",
+  "short_name": "Lis-moi",
+  "description": "Aide à la lecture : une photo ou un document, lu à voix haute",
+  "lang": "fr",
+  "orientation": "any",
+  "start_url": "/lecture",
+  "scope": "/lecture",
+  "display": "standalone",
+  "background_color": "#fbf7f0",
+  "theme_color": "#fbf7f0",
+  "icons": [
+    { "src": "/icons/lecture/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/lecture/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/lecture/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -66,6 +66,23 @@
           document.getElementById('nom-appli-apple').content = 'Projection'
           return
         }
+        // Lis-moi (/lecture, élèves, sans code) : sa propre icône (livre audio, comme son bouton
+        // sur la plateforme) et son propre manifeste → s'installe comme une appli sur la tablette
+        // et s'ouvre directement sur /lecture. (L'Entraînement /maxence/lecture/… garde l'icône de Maxence.)
+        if (premier === 'lecture') {
+          window.__NOM_ESPACE__ = 'Lis-moi'
+          document.documentElement.classList.add('espace-lecture')
+          document.title = 'Lis-moi'
+          document.getElementById('icone-svg').href = '/icons/lecture/favicon.svg?v=1'
+          document.getElementById('icone-png').href = '/icons/lecture/favicon-32.png?v=1'
+          document.getElementById('icone-192').href = '/icons/lecture/icon-192.png?v=1'
+          document.getElementById('icone-apple').href = '/icons/lecture/apple-touch-icon.png?v=1'
+          document.getElementById('icone-manifest').href = '/icons/lecture/site.webmanifest?v=1'
+          document.getElementById('couleur-theme').content = '#fbf7f0'
+          document.getElementById('nom-appli').content = 'Lis-moi'
+          document.getElementById('nom-appli-apple').content = 'Lis-moi'
+          return
+        }
         // Le labo de sciences (élèves) : écran de départ sombre, nom « Le labo »
         if (premier === 'labo') {
           window.__NOM_ESPACE__ = 'Le labo'
@@ -115,6 +132,13 @@
         .espace-julie .ecran-depart .nom { font-family: 'Instrument Serif', Georgia, serif; font-style: italic; font-weight: 400; }
         .espace-julie .ecran-depart .roue { border-color: rgba(166, 38, 101, 0.15); border-top-color: #c9347b; }
         .espace-julie .ecran-depart .texte { color: rgba(122, 32, 82, 0.6); }
+        /* Lis-moi : écran de chargement crème et violet (même teinte que l'icône) */
+        .espace-lecture, .espace-lecture body { background: #fbf7f0; }
+        .espace-lecture .ecran-depart { background: #fbf7f0; color: #3b1f8f; }
+        .espace-lecture .ecran-depart .forme1 { background: rgba(129, 140, 248, 0.35); }
+        .espace-lecture .ecran-depart .forme2 { background: rgba(196, 181, 253, 0.4); }
+        .espace-lecture .ecran-depart .roue { border-color: rgba(99, 102, 241, 0.15); border-top-color: #6d4be0; }
+        .espace-lecture .ecran-depart .texte { color: rgba(59, 31, 143, 0.6); }
         .espace-labo .ecran-depart { background: #070b16; color: #7cff6b; }
         .espace-labo .ecran-depart .forme1 { background: rgba(124, 255, 107, 0.25); }
         .espace-labo .ecran-depart .forme2 { background: rgba(181, 123, 255, 0.25); }
