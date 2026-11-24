@@ -74,7 +74,7 @@ export function origineAutorisee(req) {
   }
   const hoteDemande = req.headers['x-forwarded-host'] || req.headers.host
   if (hote === hoteDemande) return true
-  return /^localhost(:\d+)?$/.test(hote) || /^compta-manager[a-z0-9-]*\.vercel\.app$/.test(hote)
+  return /^localhost(:\d+)?$/.test(hote) || /^(compta-manager|maxxence)[a-z0-9-]*\.vercel\.app$/.test(hote)
 }
 
 // Frein anti-robot (simple) : nombre de demandes par adresse IP sur 10 minutes.

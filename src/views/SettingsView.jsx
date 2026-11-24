@@ -5,6 +5,7 @@ import {
   ArrowUp,
   Check,
   ChevronLeft,
+  Copy,
   Download,
   Eye,
   EyeOff,
@@ -13,6 +14,7 @@ import {
   Loader2,
   Lock,
   Mail,
+  Smartphone,
   Timer,
 } from 'lucide-react'
 import { usePin } from '../context/PinContext.jsx'
@@ -256,7 +258,72 @@ function GererApps() {
   )
 }
 
-// ---------- 3. Verrouillage automatique ----------
+// ---------- 3. Raccourcis des applications ----------
+// L'adresse complète de chaque appli (celle du site tel qu'il est ouvert : marche avec n'importe
+// quel nom de domaine). Ouverte sur une tablette ou un téléphone et posée sur l'écran d'accueil,
+// elle rouvre directement l'appli (icône et nom propres : voir src/config/installables.js).
+function Raccourcis() {
+  const { profilId, parametres } = usePin()
+  const profil = trouverProfil(profilId)
+  const [copie, setCopie] = useState('')
+  const applis = appsDuProfil(profil, parametres.appsOrdre)
+
+  async function copier(id, adresse) {
+    try {
+      await navigator.clipboard.writeText(adresse)
+    } catch {
+      // vieux navigateur : on sélectionne via une zone de texte cachée
+      const zone = document.createElement('textarea')
+      zone.value = adresse
+      document.body.appendChild(zone)
+      zone.select()
+      document.execCommand('copy')
+      zone.remove()
+    }
+    setCopie(id)
+    setTimeout(() => setCopie((actuel) => (actuel === id ? '' : actuel)), 2000)
+  }
+
+  return (
+    <Section
+      icon={Smartphone}
+      titre="Raccourcis des applications"
+      description="Une adresse par application, pour l'enregistrer seule sur une tablette ou un téléphone."
+    >
+      <ul className="divide-y divide-emerald-900/5 rounded-2xl border border-emerald-900/10 bg-white">
+        {applis.map((a) => {
+          const adresse = `${window.location.origin}${a.to}`
+          return (
+            <li key={a.id} className="flex items-center gap-3 px-3 py-2.5">
+              <span className={`w-9 h-9 rounded-xl bg-gradient-to-br ${a.couleur} text-white flex items-center justify-center shrink-0`}>
+                <a.icon size={18} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-emerald-950">{a.nom}</p>
+                <p className="text-xs text-emerald-900/50 truncate">{adresse.replace(/^https?:\/\//, '')}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => copier(a.id, adresse)}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 text-emerald-800 px-2.5 py-1.5 text-xs font-medium hover:bg-emerald-100 shrink-0"
+              >
+                {copie === a.id ? <Check size={14} /> : <Copy size={14} />}
+                {copie === a.id ? 'Copié' : 'Copier'}
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+      <p className="text-xs text-emerald-900/45 mt-3 leading-relaxed">
+        Sur la tablette : ouvre l'adresse, puis <strong>Partager → Sur l'écran d'accueil</strong> (iPad) ou menu ⋮ →{' '}
+        <strong>Installer l'application</strong> (Android). L'icône ouvre directement l'application
+        {profilId === PROFIL_PRINCIPAL ? ' (après le code PIN, sauf Lis-moi, le Labo et Projection)' : ' (après le code PIN)'}.
+      </p>
+    </Section>
+  )
+}
+
+// ---------- 4. Verrouillage automatique ----------
 const DELAIS = [
   [0, 'Jamais'],
   [5, '5 min'],
@@ -293,7 +360,7 @@ function Verrouillage() {
   )
 }
 
-// ---------- 4. Sauvegarde ----------
+// ---------- 5. Sauvegarde ----------
 function Sauvegarde() {
   const { parametres, majParametres } = usePin()
   const [enCours, setEnCours] = useState(false)
@@ -366,6 +433,7 @@ export default function SettingsView() {
           <ChangerPin />
           <AdresseMail />
           <GererApps />
+          <Raccourcis />
           <Verrouillage />
           {/* La sauvegarde concerne les données de Maxence (compta, généalogie, programme) */}
           {profilId === PROFIL_PRINCIPAL && <Sauvegarde />}

@@ -1,0 +1,33 @@
+{
+  "id": "/maxence/francais",
+  "name": "Savoir écrire",
+  "short_name": "Savoir écrire",
+  "description": "Idées d’écriture selon le programme P5-P6",
+  "lang": "fr",
+  "orientation": "any",
+  "start_url": "/maxence/francais",
+  "scope": "/maxence/francais",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#f8fafc",
+  "icons": [
+    {
+      "src": "/icons/francais/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/francais/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/francais/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

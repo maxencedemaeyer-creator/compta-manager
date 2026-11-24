@@ -1,0 +1,33 @@
+{
+  "id": "/maxence/requetes",
+  "name": "Requêtes",
+  "short_name": "Requêtes",
+  "description": "Demandes de nouvelles applis et idées",
+  "lang": "fr",
+  "orientation": "any",
+  "start_url": "/maxence/requetes",
+  "scope": "/maxence/requetes",
+  "display": "standalone",
+  "background_color": "#f4f1ea",
+  "theme_color": "#f4f1ea",
+  "icons": [
+    {
+      "src": "/icons/requetes/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/requetes/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/requetes/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

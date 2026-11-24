@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { trouverProfil } from '../config/profils.js'
 import { estSiteGalerie } from '../hooks/useCouture.js'
+import { installablePour, VERSION_ICONES_APPLIS } from '../config/installables.js'
 
 // =============================================================
 //  Icône du site (onglet du navigateur + écran d'accueil de
@@ -12,6 +13,9 @@ import { estSiteGalerie } from '../hooks/useCouture.js'
 //    /maxence/projection → photo projetée violet-ambre (appli Projection)
 //    /labo      → fiole d'Erlenmeyer fluo (labo de sciences)
 //    /lecture   → livre audio blanc sur dégradé indigo-violet (Lis-moi, même dessin que son bouton)
+//    /maxence/compta, /genealogie, /francais, /jeux, /jardin, /coach, /requetes, /julie/couture,
+//    /julie/requetes → l'icône de chaque appli (liste : src/config/installables.js, icônes dans
+//    public/icons/<id>/ fabriquées par scripts/icones/generer-icones-applis.mjs)
 //    /couture et couture-julie.vercel.app (galerie) → « J. » rose aussi,
 //    mais l'icône posée sur l'écran d'accueil ouvre la galerie, pas l'atelier
 //  Les fichiers sont dans public/icons/<dossier>/.
@@ -33,6 +37,9 @@ function choisir(pathname) {
   // L'Entraînement (/maxence/lecture/…) garde l'icône de Maxence.
   if (premier === 'lecture') return { dossier: 'lecture', manifeste: 'lecture', nom: 'Lis-moi', theme: '#fbf7f0', version: 'v=1' }
   if (premier === 'labo') return { dossier: 'labo', manifeste: 'labo', nom: 'Le labo', theme: '#070b16', version: 'v=5' }
+  // Applications installables seules (Compta, Généalogie, Jeux, Coach…) : leur icône, leur nom
+  const appli = installablePour(pathname)
+  if (appli) return { dossier: appli.id, manifeste: appli.id, nom: appli.nom, theme: appli.theme, version: VERSION_ICONES_APPLIS }
   const profil = trouverProfil(PAGES_DE[premier] || premier)
   if (profil?.icone) {
     return { dossier: profil.icone, manifeste: premier === 'couture' ? 'couture' : profil.icone, nom: profil.nom }

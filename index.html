@@ -98,6 +98,29 @@
           document.getElementById('nom-appli-apple').content = 'Le labo'
           return
         }
+        // Applications installables seules (Compta, Généalogie, Jeux, Coach…) : chacune a son icône,
+        // son nom et son manifeste → l'icône posée sur l'écran d'accueil rouvre directement cette appli.
+        // La liste vient de src/config/installables.js : vite.config.js recopie ici (à la fabrication
+        // du site) la ligne ci-dessous ; ne pas la modifier à la main.
+        var APPLIS = /*APPLIS_INSTALLABLES*/[]
+        var chemin = location.pathname.toLowerCase()
+        for (var i = 0; i < APPLIS.length; i++) {
+          var appli = APPLIS[i]
+          if (chemin !== appli.chemin && chemin.indexOf(appli.chemin + '/') !== 0) continue
+          var base = '/icons/' + appli.id + '/'
+          window.__NOM_ESPACE__ = appli.nom
+          if (appli.julie) document.documentElement.classList.add('espace-julie')
+          document.title = appli.nom
+          document.getElementById('icone-svg').href = base + 'favicon.svg?v=1'
+          document.getElementById('icone-png').href = base + 'favicon-32.png?v=1'
+          document.getElementById('icone-192').href = base + 'icon-192.png?v=1'
+          document.getElementById('icone-apple').href = base + 'apple-touch-icon.png?v=1'
+          document.getElementById('icone-manifest').href = base + 'site.webmanifest?v=1'
+          document.getElementById('couleur-theme').content = appli.theme
+          document.getElementById('nom-appli').content = appli.nom
+          document.getElementById('nom-appli-apple').content = appli.nom
+          return
+        }
         if (!ESPACES[premier]) return
         if (ESPACES[premier] === 'Julie') document.documentElement.classList.add('espace-julie')
         var dossier = '/icons/' + (DOSSIERS[premier] || premier) + '/'

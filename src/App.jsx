@@ -257,6 +257,9 @@ export default function App() {
         <Route path="/francais" element={<VersMaxence />} />
         <Route path="/projection/*" element={<VersMaxence />} />
         <Route path="/jeux" element={<VersMaxence />} />
+        {/* adresses courtes faciles à retenir : maxxence.vercel.app/coach, /jardin */}
+        <Route path="/coach/*" element={<VersMaxence />} />
+        <Route path="/jardin/*" element={<VersMaxence />} />
         <Route path="/settings" element={<VersMaxence />} />
         <Route path="/setting" element={<Navigate to="/maxence/settings" replace />} />
         <Route path="/parametres" element={<Navigate to="/maxence/settings" replace />} />

@@ -1,0 +1,33 @@
+{
+  "id": "/julie/couture",
+  "name": "Couture",
+  "short_name": "Couture",
+  "description": "Ma galerie et mes commandes",
+  "lang": "fr",
+  "orientation": "any",
+  "start_url": "/julie/couture",
+  "scope": "/julie/couture",
+  "display": "standalone",
+  "background_color": "#fffafc",
+  "theme_color": "#fffafc",
+  "icons": [
+    {
+      "src": "/icons/couture-atelier/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/couture-atelier/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/couture-atelier/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
