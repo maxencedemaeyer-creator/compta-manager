@@ -224,18 +224,14 @@ export default function PartieCommunos({ carte, cle, cible, zone, idsEssaisFireb
       )}
 
       {/* Message */}
-      <div className="min-h-[2.75rem] flex items-center justify-center text-center px-2">
-        {message ? (
+      {message && (
+        <div className="mt-3 min-h-[2.75rem] flex items-center justify-center text-center px-2">
           <p key={message.texte} className={`cm-apparait text-sm sm:text-base font-semibold inline-flex items-center gap-1.5 ${tonMessage[message.ton]}`}>
             {iconeMessage}
             {message.texte}
           </p>
-        ) : !fini ? (
-          <p className="text-sm text-white/50">
-            {essais.length ? 'Explore la carte et tente une autre commune.' : zone ? `Tape le nom d’une commune de la zone : ${zone.court}.` : 'Tape le nom de n’importe quelle commune pour commencer.'}
-          </p>
-        ) : null}
-      </div>
+        </div>
+      )}
 
       {/* Options de la carte */}
       <div className="mt-3 flex items-center gap-2 text-sm">
