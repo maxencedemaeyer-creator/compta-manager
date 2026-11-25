@@ -40,6 +40,8 @@ import { ANCIENNES_ADRESSES, EXPERIENCE as EXPERIENCES_LABO } from './config/lab
 import { useLaboConfig } from './components/labo/prof/useLaboConfig.js'
 
 // Le labo de sciences (public, sans PIN) : chargé seulement quand on l'ouvre
+// Cave : chargée seulement quand on l'ouvre (grosse base d'appellations et de plats)
+const CaveView = lazy(() => import('./views/cave/CaveView.jsx'))
 const LaboView = lazy(() => import('./views/labo/LaboView.jsx'))
 const SalleView = lazy(() => import('./views/labo/SalleView.jsx'))
 // Lis-moi (aide à la lecture, public, pour les tablettes de la classe)
@@ -216,6 +218,10 @@ export default function App() {
         <Route path="/maxence/coach" element={<Protege><CoachView /></Protege>} />
         <Route path="/maxence/coach/:onglet" element={<Protege><CoachView /></Protege>} />
 
+        {/* Cave : gestionnaire de cave et accords mets-vins */}
+        <Route path="/maxence/cave" element={<Protege><Suspense fallback={<Chargement />}><CaveView /></Suspense></Protege>} />
+        <Route path="/maxence/cave/:onglet" element={<Protege><Suspense fallback={<Chargement />}><CaveView /></Suspense></Protege>} />
+
         {/* Savoir écrire : générateur d'idées d'écriture (programme Français P5-P6) */}
         <Route path="/maxence/francais" element={<Protege><Suspense fallback={<Chargement />}><SavoirEcrireView /></Suspense></Protege>} />
 
@@ -260,6 +266,7 @@ export default function App() {
         {/* adresses courtes faciles à retenir : maxxence.vercel.app/coach, /jardin */}
         <Route path="/coach/*" element={<VersMaxence />} />
         <Route path="/jardin/*" element={<VersMaxence />} />
+        <Route path="/cave/*" element={<VersMaxence />} />
         <Route path="/settings" element={<VersMaxence />} />
         <Route path="/setting" element={<Navigate to="/maxence/settings" replace />} />
         <Route path="/parametres" element={<Navigate to="/maxence/settings" replace />} />

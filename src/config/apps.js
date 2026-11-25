@@ -1,4 +1,4 @@
-import { Activity, BookAudio, FlaskConical, Gamepad2, GitBranch, MessageSquarePlus, PenLine, Projector, Scissors, Sprout, Wallet } from 'lucide-react'
+import { Activity, BookAudio, FlaskConical, Gamepad2, GitBranch, MessageSquarePlus, PenLine, Projector, Scissors, Sprout, Wallet, Wine } from 'lucide-react'
 
 // =============================================================
 //  Liste des applications du site (adresses sous /maxence).
@@ -68,6 +68,15 @@ export const APPS = [
     description: 'Sport, plans et nutrition, avec sources',
     icon: Activity,
     couleur: 'from-sky-400 to-indigo-600',
+    profils: ['maxence'],
+  },
+  {
+    id: 'cave',
+    to: '/maxence/cave',
+    nom: 'Cave',
+    description: 'Ma cave à vin et l’accord avec le plat du soir',
+    icon: Wine,
+    couleur: 'from-rose-500 to-red-800',
     profils: ['maxence'],
   },
   {
