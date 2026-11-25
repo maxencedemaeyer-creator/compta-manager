@@ -19,8 +19,8 @@ export const PARTIES = {
     retiens: 'Environ une fois par cycle, un ovule mûrit et quitte un ovaire : c’est l’ovulation.',
   },
   trompe: {
-    nom: 'Trompe de Fallope',
-    phrase: 'Touche une trompe de Fallope',
+    nom: 'Trompe utérine',
+    phrase: 'Touche une trompe utérine',
     taille: 'un tube fin d’environ 10 cm',
     texte: 'Une trompe part de chaque côté de l’utérus. Son bout en forme de franges (le pavillon) attrape l’ovule quand il sort de l’ovaire, puis l’ovule avance dans la trompe vers l’utérus.',
     retiens: 'C’est dans la trompe qu’un ovule peut rencontrer un spermatozoïde.',

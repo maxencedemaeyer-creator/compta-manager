@@ -7,7 +7,7 @@ import { EXPERIENCE } from '../../../config/laboAteliers.js'
 // =============================================================
 //  R13 · Défi — le grand test de l'expérience « Les règles ».
 //  Volontairement CALME : pas de chrono, pas de classement, pas de
-//  surnom enregistré (le sujet est personnel). 12 questions, 2 par
+//  surnom enregistré (le sujet est personnel). 12 questions, 1 par
 //  activité, avec une explication à chaque réponse, puis un bilan
 //  par activité (« à revoir » → lien direct).
 // =============================================================
@@ -17,8 +17,8 @@ const BANQUE = [
   ['dedans', 'Dans quelle partie du corps l’ovule mûrit-il ?', 'Dans l’ovaire', ['Dans l’utérus', 'Dans le vagin', 'Dans le col'], 'Les ovaires contiennent les ovules.'],
   ['dedans', 'Comment s’appelle la couche qui tapisse l’intérieur de l’utérus ?', 'L’endomètre', ['Le pavillon', 'Le col', 'L’ovule'], 'L’endomètre s’épaissit puis se détache : ce sont les règles.'],
   ['dedans', 'Par où sortent les règles ?', 'Par le vagin', ['Par le trou du pipi', 'Par les trompes', 'Par l’ovaire'], 'Les règles sortent par le vagin ; le pipi sort par l’urètre, une autre ouverture.'],
-  ['dedans', 'Quel organe relie l’utérus au vagin ?', 'Le col de l’utérus', ['La trompe de Fallope', 'L’ovaire', 'L’endomètre'], 'Le col est un passage très étroit, en bas de l’utérus.'],
-  ['dedans', 'Que fait la trompe de Fallope ?', 'Elle guide l’ovule de l’ovaire vers l’utérus', ['Elle fabrique le sang des règles', 'Elle stocke l’urine', 'Elle protège le col'], 'L’ovule voyage dans la trompe, qui part de chaque côté de l’utérus.'],
+  ['dedans', 'Quel organe relie l’utérus au vagin ?', 'Le col de l’utérus', ['La trompe utérine', 'L’ovaire', 'L’endomètre'], 'Le col est un passage très étroit, en bas de l’utérus.'],
+  ['dedans', 'Que fait la trompe utérine ?', 'Elle guide l’ovule de l’ovaire vers l’utérus', ['Elle fabrique le sang des règles', 'Elle stocke l’urine', 'Elle protège le col'], 'L’ovule voyage dans la trompe, qui part de chaque côté de l’utérus.'],
   ['cycle', 'À partir de quel jour compte-t-on le début du cycle ?', 'Du premier jour des règles', ['Du jour de l’ovulation', 'De la fin des règles', 'Du jour où l’endomètre est le plus épais'], 'Le jour 1 du cycle est le premier jour des règles.'],
   ['cycle', 'Un cycle dure souvent…', 'entre 21 et 35 jours', ['exactement 28 jours', 'toujours 30 jours', 'moins de 10 jours'], '28 jours est une moyenne : il y a beaucoup de variations, surtout au début.'],
   ['cycle', 'Comment s’appelle l’étape où un ovule quitte l’ovaire ?', 'L’ovulation', ['La fécondation', 'Les règles', 'La puberté'], 'Elle a lieu environ 14 jours avant les règles suivantes.'],
@@ -39,9 +39,21 @@ const BANQUE = [
   ['vrai-faux', 'Un tampon peut-il se perdre dans le corps ?', 'Non, jamais', ['Oui, souvent', 'Oui, dans l’estomac', 'Oui, dans la tête'], 'Le col de l’utérus est trop étroit pour qu’il passe.'],
   ['vrai-faux', 'Quand les règles s’arrêtent-elles, en général ?', 'À la ménopause, vers 50 ans', ['À 18 ans', 'À 25 ans', 'Jamais'], 'Elles s’arrêtent à la ménopause.'],
   ['vrai-faux', 'Les règles, c’est…', 'Une partie normale du fonctionnement du corps', ['Sale', 'Une maladie', 'Une punition'], 'C’est du sang et de petits morceaux de l’endomètre : rien de sale.'],
+  ['calendrier', 'Les cycles passés de Lou durent 24, 24 et 25 jours. Environ quelle est la moyenne ?', '24 jours', ['14 jours', '35 jours', '50 jours'], 'On additionne les durées puis on divise : environ 24 jours.'],
+  ['calendrier', 'Les cycles d’une personne sont irréguliers. Que peut-on prévoir ?', 'Seulement une fourchette de dates', ['Le jour exact, toujours', 'Rien du tout, jamais', 'Que les règles ne viendront plus'], 'Au début de la vie de règles, les cycles varient beaucoup.'],
+  ['absorbe', 'Combien de sang représentent les règles en tout, environ ?', '2 à 5 cuillères à soupe', ['Un grand seau', 'Un litre', 'Une baignoire'], 'Environ 30 à 80 ml : moins qu’un petit verre.'],
+  ['absorbe', 'Dans une serviette, que fait la couche imperméable ?', 'Elle empêche le liquide de traverser vers la culotte', ['Elle absorbe tout le liquide', 'Elle parfume la serviette', 'Elle rend la serviette réutilisable'], 'Le cœur absorbe, la couche du dessous bloque.'],
+  ['humeurs', 'Qu’est-ce qu’une hormone ?', 'Un messager chimique fabriqué par le corps', ['Un os', 'Un vêtement', 'Un aliment'], 'Les hormones changent pendant le cycle.'],
+  ['humeurs', 'Tout le monde ressent les mêmes humeurs avant les règles ?', 'Non, c’est très variable', ['Oui, toujours', 'Oui, mais seulement les filles de 12 ans', 'Oui, sauf le lundi'], 'Certaines personnes ressentent beaucoup de choses, d’autres presque rien.'],
+  ['douleurs', 'Une douleur si forte qu’on ne peut pas aller à l’école. Que faire ?', 'En parler à un adulte ou à un médecin', ['La supporter sans rien dire', 'Attendre un an', 'Ne rien manger'], 'On n’a pas à supporter seul·e une forte douleur.'],
+  ['douleurs', 'Qu’est-ce qui peut aider contre les crampes ?', 'Une bouillotte tiède, bouger doucement, se reposer', ['Rester dehors sans bouger du tout', 'Courir un marathon', 'Ne plus boire'], 'La chaleur et le repos détendent le muscle de l’utérus.'],
+  ['toute-la-vie', 'À quel âge les règles s’arrêtent-elles en général (la ménopause) ?', 'Vers 50 ans', ['Vers 20 ans', 'Vers 30 ans', 'Jamais'], 'Entre 45 et 55 ans, selon les personnes.'],
+  ['toute-la-vie', 'Toutes les personnes ont-elles leurs règles de la même façon ?', 'Non, chacune a son histoire', ['Oui, exactement', 'Oui, toutes à 12 ans', 'Oui, toutes 5 jours'], 'L’âge, la durée, le cycle et l’abondance varient.'],
+  ['ensemble', 'Une camarade demande discrètement une protection. Que fais-tu ?', 'Je l’aide discrètement', ['Je le dis à toute la classe', 'Je me moque', 'Je fais semblant de ne pas entendre'], 'L’entraide, simple et discrète, est le bon réflexe.'],
+  ['ensemble', 'Qui peut comprendre les règles ?', 'Tout le monde', ['Seulement les filles', 'Seulement les adultes', 'Seulement les médecins'], 'Comprendre aide à respecter et à soutenir les autres.'],
 ]
 
-const PAR_ACTIVITE = 2
+const PAR_ACTIVITE = 1
 
 function tirage() {
   const acts = [...new Set(BANQUE.map((q) => q[0]))]

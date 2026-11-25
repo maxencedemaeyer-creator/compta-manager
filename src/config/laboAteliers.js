@@ -231,7 +231,7 @@ export const EXPERIENCES = [
   },
   {
     id: 'regles',
-    numero: '05',
+    numero: '99',
     titre: 'Les règles',
     accroche: 'Comprendre le cycle, le corps et les protections : mieux se connaître pour mieux comprendre les autres.',
     niveau: 'P6',
@@ -253,30 +253,30 @@ export const EXPERIENCES = [
       { id: 'cycle', code: 'R2', nom: 'Cycle', consigne: 'Suis un cycle jour après jour', icon: Clock, couleur: '#9BCBB0', attendus: [] },
       { id: 'ovule', code: 'R3', nom: 'Ovule', consigne: 'Suis le voyage d’un ovule', icon: Egg, couleur: '#F6C77E', attendus: [] },
       {
-        id: 'calendrier', code: 'R4', nom: 'Calendrier', consigne: 'Prévois les prochaines règles', icon: CalendarDays, couleur: '#8DB9D9', attendus: [], pret: false,
+        id: 'calendrier', code: 'R4', nom: 'Calendrier', consigne: 'Prévois les prochaines règles', icon: CalendarDays, couleur: '#8DB9D9', attendus: [],
         detail: 'On suit des personnages fictifs sur plusieurs cycles (courts, longs, irréguliers au début) et on prédit leurs prochaines règles.',
       },
       { id: 'protections', code: 'R5', nom: 'Protections', consigne: 'Serviette, tampon, cup… qui est qui ?', icon: ShieldCheck, couleur: '#B9A6DA', attendus: [] },
       {
-        id: 'absorbe', code: 'R6', nom: 'Absorbe', consigne: 'Comment ça absorbe ?', icon: Droplet, couleur: '#7FC8D6', attendus: [], pret: false,
-        detail: 'Le rôle des protections avec une mini-expérience d’absorption, et une jauge pour se rendre compte de la vraie quantité de sang (quelques cuillères à soupe en tout).',
+        id: 'absorbe', code: 'R6', nom: 'Absorbe', consigne: 'Comment ça absorbe ?', icon: Droplet, couleur: '#7FC8D6', attendus: [],
+        detail: 'Le rôle des protections avec une mini-expérience d’absorption, et une jauge pour se rendre compte de la vraie quantité de sang (2 à 5 cuillères à soupe en tout).',
       },
       { id: 'premieres', code: 'R7', nom: 'Premières', consigne: 'Premières règles : que faire ?', icon: Sparkles, couleur: '#F2B3C6', attendus: [] },
       {
-        id: 'humeurs', code: 'R8', nom: 'Humeurs', consigne: 'Pourquoi les humeurs changent ?', icon: Smile, couleur: '#F6D58E', attendus: [], pret: false,
+        id: 'humeurs', code: 'R8', nom: 'Humeurs', consigne: 'Pourquoi les humeurs changent ?', icon: Smile, couleur: '#F6D58E', attendus: [],
         detail: 'Hormones, humeur, fatigue, boutons : ça varie, et pas pareil chez tout le monde.',
       },
       {
-        id: 'douleurs', code: 'R9', nom: 'Douleurs', consigne: 'Normal ou à montrer ?', icon: Thermometer, couleur: '#F2A65A', attendus: [], pret: false,
+        id: 'douleurs', code: 'R9', nom: 'Douleurs', consigne: 'Normal ou à montrer ?', icon: Thermometer, couleur: '#F2A65A', attendus: [],
         detail: 'Les crampes, ce qui aide (chaleur, mouvement, repos) et les signes qui méritent d’en parler à un adulte ou à un médecin.',
       },
       { id: 'vrai-faux', code: 'R10', nom: 'Vrai ou faux', consigne: 'Démonte les idées reçues', icon: CircleHelp, couleur: '#A8D5A2', attendus: [] },
       {
-        id: 'toute-la-vie', code: 'R11', nom: 'Toute la vie', consigne: 'De la puberté à la ménopause', icon: Hourglass, couleur: '#C9B8E8', attendus: [], pret: false,
+        id: 'toute-la-vie', code: 'R11', nom: 'Toute la vie', consigne: 'De la puberté à la ménopause', icon: Hourglass, couleur: '#C9B8E8', attendus: [],
         detail: 'Une frise de vie : toutes les personnes n’ont pas leurs règles, ni au même âge, ni en même quantité, ni toute leur vie.',
       },
       {
-        id: 'ensemble', code: 'R12', nom: 'Ensemble', consigne: 'Comprendre les autres', icon: Users, couleur: '#F4B8A0', attendus: [], pret: false,
+        id: 'ensemble', code: 'R12', nom: 'Ensemble', consigne: 'Comprendre les autres', icon: Users, couleur: '#F4B8A0', attendus: [],
         detail: 'Les dimensions sociales et culturelles, les mots justes et comment réagir avec bienveillance à l’école.',
       },
       { id: 'defi', code: 'R13', nom: 'Défi', consigne: 'Le grand test : sans chrono !', test: true, icon: Zap, couleur: '#FFE45E', attendus: [] },

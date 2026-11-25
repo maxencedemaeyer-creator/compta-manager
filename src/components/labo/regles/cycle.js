@@ -68,3 +68,25 @@ export const reglesCeJour = (jour) => jour <= DUREE_REGLES
 
 // Jours avant les prochaines règles (jour 1 du cycle suivant)
 export const joursAvantReglesSuivantes = (jour, longueur) => longueur - jour + 1
+
+// ---- Hormones (courbes SCHÉMATIQUES, de 0 à 1, pas des mesures) ----
+// Œstrogènes : montent avant l'ovulation, petit pic après, chutent avant les règles.
+// Progestérone : basse puis haute après l'ovulation (corps jaune), chute avant les règles.
+const pic = (x, centre, largeur) => Math.exp(-(((x - centre) / largeur) ** 2))
+export function oestrogenes(jour, longueur) {
+  const o = jourOvulation(longueur)
+  return Math.min(1, 0.12 + 0.88 * pic(jour, o - 1, 2.6) + 0.4 * pic(jour, o + 7, 3.6))
+}
+export function progesterone(jour, longueur) {
+  const o = jourOvulation(longueur)
+  return Math.min(1, 0.05 + 0.95 * pic(jour, o + 7, 3.8))
+}
+
+// ---- Calendrier : prévoir les prochaines règles ----
+// starts = jours (numérotés) où commencent les règles passées. Renvoie la moyenne arrondie des cycles
+// et le jour prévu pour les prochaines règles.
+export function prevision(starts) {
+  const durees = starts.slice(1).map((d, i) => d - starts[i])
+  const moyenne = Math.round(durees.reduce((a, b) => a + b, 0) / durees.length)
+  return { durees, moyenne, prochain: starts.at(-1) + moyenne }
+}

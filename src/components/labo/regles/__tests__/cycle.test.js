@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { CYCLES, DUREE_REGLES, epaisseurEndometre, etapes, etatOvaire, jourOvulation, joursAvantReglesSuivantes, ovuleDuJour, phaseDuJour } from '../cycle.js'
+import { CYCLES, DUREE_REGLES, oestrogenes, progesterone, prevision, epaisseurEndometre, etapes, etatOvaire, jourOvulation, joursAvantReglesSuivantes, ovuleDuJour, phaseDuJour } from '../cycle.js'
 import { estVisible } from '../../../../config/laboVisibilite.js'
 
 describe('cycle menstruel', () => {
@@ -56,6 +56,30 @@ describe('cycle menstruel', () => {
   it('compte les jours avant les prochaines règles', () => {
     expect(joursAvantReglesSuivantes(28, 28)).toBe(1)
     expect(joursAvantReglesSuivantes(1, 28)).toBe(28)
+  })
+})
+
+describe('hormones et calendrier', () => {
+  it('les courbes restent entre 0 et 1 et la progestérone culmine après l’ovulation', () => {
+    for (const l of CYCLES) {
+      const o = jourOvulation(l)
+      for (let j = 1; j <= l; j++) {
+        for (const v of [oestrogenes(j, l), progesterone(j, l)]) {
+          expect(v).toBeGreaterThanOrEqual(0)
+          expect(v).toBeLessThanOrEqual(1)
+        }
+      }
+      expect(progesterone(o + 7, l)).toBeGreaterThan(progesterone(o - 3, l))
+      expect(oestrogenes(o - 1, l)).toBeGreaterThan(oestrogenes(1, l))
+    }
+  })
+
+  it('prévoit les prochaines règles d’après la moyenne des cycles', () => {
+    const r = prevision([1, 29, 57, 85])
+    expect(r.durees).toEqual([28, 28, 28])
+    expect(r.moyenne).toBe(28)
+    expect(r.prochain).toBe(113)
+    expect(prevision([1, 25, 50]).moyenne).toBe(25)
   })
 })
 

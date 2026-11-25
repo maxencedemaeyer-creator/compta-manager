@@ -104,6 +104,12 @@ const LABO_JEUX = {
   'regles/premieres': lazy(() => import('./views/labo/regles/PremieresView.jsx')),
   'regles/vrai-faux': lazy(() => import('./views/labo/regles/VraiFauxView.jsx')),
   'regles/defi': lazy(() => import('./views/labo/regles/DefiReglesView.jsx')),
+  'regles/calendrier': lazy(() => import('./views/labo/regles/CalendrierView.jsx')),
+  'regles/absorbe': lazy(() => import('./views/labo/regles/AbsorbeView.jsx')),
+  'regles/humeurs': lazy(() => import('./views/labo/regles/HumeursView.jsx')),
+  'regles/douleurs': lazy(() => import('./views/labo/regles/DouleursView.jsx')),
+  'regles/toute-la-vie': lazy(() => import('./views/labo/regles/TouteLaVieView.jsx')),
+  'regles/ensemble': lazy(() => import('./views/labo/regles/EnsembleView.jsx')),
   'espace/defi': lazy(() => import('./views/labo/espace/DefiEspaceView.jsx')),
 }
 

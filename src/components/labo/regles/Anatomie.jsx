@@ -2,7 +2,7 @@ import { useId } from 'react'
 
 // =============================================================
 //  Le dessin de l'appareil reproducteur (vue de face, en coupe) :
-//  utérus (muscle + endomètre), col, vagin, deux trompes de Fallope
+//  utérus (muscle + endomètre), col, vagin, deux trompes utérines
 //  avec leurs franges, deux ovaires avec leurs follicules.
 //
 //  UN SEUL dessin, réutilisé partout (explorateur, cycle, ovule, hall)
