@@ -8,7 +8,7 @@ import './labo.css'
 import PiedLabo from '../../components/labo/PiedLabo.jsx'
 import CodeProf from '../../components/labo/prof/CodeProf.jsx'
 import AdminLabo from '../../components/labo/prof/AdminLabo.jsx'
-import { useLaboConfig } from '../../components/labo/prof/useLaboConfig.js'
+import { estVisible, useLaboConfig } from '../../components/labo/prof/useLaboConfig.js'
 
 // =============================================================
 //  Le hall du labo de sciences (/labo) : public, sans code PIN.
@@ -22,12 +22,13 @@ import { useLaboConfig } from '../../components/labo/prof/useLaboConfig.js'
 // =============================================================
 export default function LaboView() {
   const [etape, setEtape] = useState(null) // null | 'code' | 'admin'
-  const { masquees, pret } = useLaboConfig()
+  const config = useLaboConfig()
+  const { pret } = config
 
   if (etape === 'admin') return <AdminLabo onQuitter={() => setEtape(null)} />
 
   // On attend la réponse de Firebase pour ne pas montrer une expérience masquée une seconde
-  const visibles = pret ? EXPERIENCES.filter((e) => !masquees.includes(e.id)) : []
+  const visibles = pret ? EXPERIENCES.filter((e) => estVisible(config, e)) : []
 
   return (
     <div className="labo relative min-h-[100dvh] overflow-x-hidden">
@@ -67,19 +68,19 @@ export default function LaboView() {
                 key={e.id}
                 to={`/labo/${e.id}`}
                 className="labo-apparait group relative flex overflow-hidden rounded-3xl border-2 active:scale-[.98]"
-                style={{ borderColor: `${e.couleur}88`, background: 'rgba(14,20,40,.9)', animationDelay: `${i * 80}ms` }}
+                style={{ borderColor: `${e.couleur}88`, background: e.clair ? '#FFF8EC' : 'rgba(14,20,40,.9)', animationDelay: `${i * 80}ms` }}
               >
-                <span className="labo-scan opacity-40" style={{ background: e.couleur }} />
-                <div className="relative h-44 w-32 flex-none" style={{ background: `radial-gradient(circle at 50% 45%, rgba(${e.rgb},.18), transparent 70%)` }}>
+                {!e.clair && <span className="labo-scan opacity-40" style={{ background: e.couleur }} />}
+                <div className="relative h-44 w-32 flex-none" style={{ background: e.clair ? 'transparent' : `radial-gradient(circle at 50% 45%, rgba(${e.rgb},.18), transparent 70%)` }}>
                   <VisuelExperience type={e.visuel} className="h-full w-full" />
                 </div>
                 <div className="relative flex min-w-0 flex-1 flex-col justify-between gap-2 p-4 pl-1">
                   <div>
-                    <p className="labo-mono text-[11px] tracking-[.1em]" style={{ color: e.couleur }}>
+                    <p className="labo-mono text-[11px] tracking-[.1em]" style={{ color: e.clair ? '#C24C68' : e.couleur }}>
                       EXPÉRIENCE {e.numero}
                     </p>
-                    <h3 className="labo-titre mt-1 text-[21px] font-bold leading-tight text-[#F4F6FF]">{e.titre}</h3>
-                    <p className="mt-1 text-sm leading-snug text-[#B9C1E3]">{e.accroche}</p>
+                    <h3 className={`mt-1 text-[21px] font-bold leading-tight ${e.clair ? 'text-[#3E2A35]' : 'labo-titre text-[#F4F6FF]'}`} style={e.clair ? { fontFamily: "'Fredoka', 'Nunito', system-ui, sans-serif" } : undefined}>{e.titre}</h3>
+                    <p className="mt-1 text-sm leading-snug" style={{ color: e.clair ? '#6F5864' : '#B9C1E3' }}>{e.accroche}</p>
                   </div>
                   <div className="flex items-center justify-end">
                     <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full transition group-hover:translate-x-0.5" style={{ background: e.couleur, color: '#070B16' }}>

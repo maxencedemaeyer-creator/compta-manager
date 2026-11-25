@@ -5,12 +5,15 @@ import { usePin } from '../../../context/PinContext.jsx'
 import { docConfig, PROFIL_PRINCIPAL } from '../../../config/profils.js'
 import { sha256Hex } from '../../../utils/hash.js'
 import { withTimeout } from '../../../utils/withTimeout.js'
+import { estVisible } from '../../../config/laboVisibilite.js'
 
 // =============================================================
 //  Réglages du labo choisis par le prof (page « Espace prof »).
-//  Firebase : laboConfig/experiences  →  { masquees: ['espace', …] }
+//  Firebase : laboConfig/experiences  →  { masquees: ['espace', …], visibles: ['regles', …] }
 //  Par défaut (document absent) toutes les expériences sont visibles,
 //  et une nouvelle expérience est visible tant qu'on ne la masque pas.
+//  Exception : une expérience marquée « masqueeParDefaut » (ex. « Les règles »)
+//  reste cachée aux élèves tant que le prof ne l'a pas activée (liste « visibles »).
 // =============================================================
 
 const refConfig = () => doc(db, 'laboConfig', 'experiences')
@@ -22,7 +25,7 @@ const DELAI_SECOURS_MS = 8000
 // Expériences masquées, en temps réel. `pret` = la réponse de Firebase est arrivée.
 export function useLaboConfig() {
   const { authReady } = usePin()
-  const [etat, setEtat] = useState({ masquees: [], pret: false })
+  const [etat, setEtat] = useState({ masquees: [], visibles: [], pret: false })
 
   useEffect(() => {
     const secours = setTimeout(() => setEtat((e) => (e.pret ? e : { ...e, pret: true })), DELAI_SECOURS_MS)
@@ -34,8 +37,9 @@ export function useLaboConfig() {
     return onSnapshot(
       refConfig(),
       (snap) => {
-        const liste = snap.exists() ? snap.data().masquees : []
-        setEtat({ masquees: Array.isArray(liste) ? liste : [], pret: true })
+        const donnees = snap.exists() ? snap.data() : {}
+        const liste = (cle) => (Array.isArray(donnees[cle]) ? donnees[cle] : [])
+        setEtat({ masquees: liste('masquees'), visibles: liste('visibles'), pret: true })
       },
       (err) => {
         console.error('Erreur Firestore (réglages du labo) :', err)
@@ -47,18 +51,14 @@ export function useLaboConfig() {
   return etat
 }
 
-// Affiche ou masque une expérience pour les élèves
-export async function reglerVisibilite(experienceId, visible) {
-  await withTimeout(
-    setDoc(
-      refConfig(),
-      {
-        masquees: visible ? arrayRemove(experienceId) : arrayUnion(experienceId),
-        updatedAt: serverTimestamp(),
-      },
-      { merge: true }
-    )
-  )
+export { estVisible }
+
+// Affiche (visible = true) ou masque une expérience pour les élèves
+export async function reglerVisibilite(experience, visible) {
+  const donnees = experience.masqueeParDefaut
+    ? { visibles: visible ? arrayUnion(experience.id) : arrayRemove(experience.id) }
+    : { masquees: visible ? arrayRemove(experience.id) : arrayUnion(experience.id) }
+  await withTimeout(setDoc(refConfig(), { ...donnees, updatedAt: serverTimestamp() }, { merge: true }))
 }
 
 // Le code prof = le code d'accès de la plateforme de Maxence (config/securite,

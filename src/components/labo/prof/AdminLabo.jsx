@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { ArrowLeft, Eye, EyeOff, FlaskConical } from 'lucide-react'
 import { DecorLabo } from '../DecorLabo.jsx'
 import { EXPERIENCES } from '../../../config/laboAteliers.js'
-import { reglerVisibilite, useLaboConfig } from './useLaboConfig.js'
+import { estVisible, reglerVisibilite, useLaboConfig } from './useLaboConfig.js'
 
 // =============================================================
 //  Page d'administration du labo (après le code prof).
@@ -32,18 +32,19 @@ function Pastille({ actif, couleur, onClick, disabled, nom }) {
 }
 
 export default function AdminLabo({ onQuitter }) {
-  const { masquees, pret } = useLaboConfig()
+  const config = useLaboConfig()
+  const { pret } = config
   const [enCours, setEnCours] = useState(null)
   const [erreur, setErreur] = useState('')
 
-  const nbVisibles = EXPERIENCES.filter((e) => !masquees.includes(e.id)).length
+  const nbVisibles = EXPERIENCES.filter((e) => estVisible(config, e)).length
 
   async function basculer(e) {
-    const visible = !masquees.includes(e.id)
+    const visible = estVisible(config, e)
     setEnCours(e.id)
     setErreur('')
     try {
-      await reglerVisibilite(e.id, !visible)
+      await reglerVisibilite(e, !visible)
     } catch (err) {
       setErreur(err.message || 'Impossible d’enregistrer. Réessaie.')
     } finally {
@@ -80,7 +81,7 @@ export default function AdminLabo({ onQuitter }) {
 
           <ul className="mt-4 flex flex-col gap-2.5">
             {EXPERIENCES.map((e) => {
-              const visible = !masquees.includes(e.id)
+              const visible = estVisible(config, e)
               return (
                 <li
                   key={e.id}

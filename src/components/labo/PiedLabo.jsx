@@ -6,13 +6,13 @@ import { FlaskConical, Info, X } from 'lucide-react'
 //  « © 2026 · Créé par Maxence De Maeyer · Tous droits réservés »
 //  + petite fenêtre d'informations (le projet, la vie privée, les sources).
 // =============================================================
-export default function PiedLabo({ className = '' }) {
+export default function PiedLabo({ className = '', clair = false }) {
   const [ouvert, setOuvert] = useState(false)
   return (
     <>
-      <footer className={`mt-auto pt-6 text-center text-[11px] leading-relaxed text-[#6E779A] ${className}`}>
+      <footer className={`mt-auto pt-6 text-center text-[11px] leading-relaxed ${clair ? 'text-[#6F5864]' : 'text-[#6E779A]'} ${className}`}>
         © 2026 · Créé par Maxence De Maeyer · Tous droits réservés ·{' '}
-        <button type="button" onClick={() => setOuvert(true)} className="inline-flex items-center gap-0.5 font-bold text-[#B9C1E3] underline decoration-dotted underline-offset-2">
+        <button type="button" onClick={() => setOuvert(true)} className={`inline-flex items-center gap-0.5 font-bold underline decoration-dotted underline-offset-2 ${clair ? 'text-[#3E2A35]' : 'text-[#B9C1E3]'}`}>
           <Info size={11} /> Infos
         </button>
       </footer>
@@ -23,25 +23,25 @@ export default function PiedLabo({ className = '' }) {
             role="dialog"
             aria-modal="true"
             aria-label="Informations sur le labo"
-            className="labo-apparait max-h-[85dvh] w-full max-w-md overflow-y-auto rounded-3xl border border-[#7CFF6B]/40 bg-[#0E1428] p-5 text-left"
+            className={`labo-apparait max-h-[85dvh] w-full max-w-md overflow-y-auto rounded-3xl border p-5 text-left ${clair ? 'border-[#EBD9C4] bg-[#FFF8EC] text-[#3E2A35]' : 'border-[#7CFF6B]/40 bg-[#0E1428]'}`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 flex-none items-center justify-center rounded-2xl bg-[#7CFF6B]/15 text-[#7CFF6B]">
+                <div className={`flex h-11 w-11 flex-none items-center justify-center rounded-2xl ${clair ? 'bg-[#FBE3E6] text-[#C24C68]' : 'bg-[#7CFF6B]/15 text-[#7CFF6B]'}`}>
                   <FlaskConical size={22} />
                 </div>
                 <div>
-                  <p className="labo-mono text-[11px] tracking-[.1em] text-[#7CFF6B]">À PROPOS</p>
-                  <p className="labo-titre text-lg font-bold text-white">Le labo de sciences</p>
+                  <p className={`labo-mono text-[11px] tracking-[.1em] ${clair ? 'text-[#C24C68]' : 'text-[#7CFF6B]'}`}>À PROPOS</p>
+                  <p className={`labo-titre text-lg font-bold ${clair ? 'text-[#3E2A35]' : 'text-white'}`}>Le labo de sciences</p>
                 </div>
               </div>
-              <button type="button" aria-label="Fermer" onClick={() => setOuvert(false)} className="flex h-10 w-10 flex-none items-center justify-center rounded-xl border border-white/15 text-white">
+              <button type="button" aria-label="Fermer" onClick={() => setOuvert(false)} className={`flex h-10 w-10 flex-none items-center justify-center rounded-xl border ${clair ? 'border-[#EBD9C4] text-[#3E2A35]' : 'border-white/15 text-white'}`}>
                 <X size={18} />
               </button>
             </div>
 
-            <div className="mt-4 space-y-3 text-[14px] leading-relaxed text-[#DDE2F7]">
+            <div className={`mt-4 space-y-3 text-[14px] leading-relaxed ${clair ? 'text-[#3E2A35] [&_*]:!text-inherit [&_.labo-mono]:!text-[#6F5864] [&_ul]:!text-[#3E2A35]' : 'text-[#DDE2F7]'}`}>
               <p>
                 Un laboratoire de sciences interactif pour l’école primaire, conçu et réalisé par <b className="text-white">Maxence De Maeyer</b>, enseignant. Les activités suivent le référentiel de sciences du tronc commun de la Fédération Wallonie-Bruxelles.
               </p>
@@ -60,6 +60,7 @@ export default function PiedLabo({ className = '' }) {
                   <li>Détection du corps et des mains : MediaPipe (Google), licence Apache 2.0.</li>
                   <li>Textures des astres (expérience « L’espace ») : Terre, carte « Blue Marble » de la NASA ; lumières des villes et Lune : NASA ; Mercure, Vénus, Mars, Jupiter, Saturne, Uranus, Neptune et Soleil : cartes de Planet Pixel Emporium (J. Hastings-Trew) d’après des images NASA/JPL/USGS, usage non commercial. Données des planètes : NASA ; définitions : Union astronomique internationale.</li>
                   <li>Affichage 3D : three.js (licence MIT). Icônes : Lucide (licence ISC).</li>
+                  <li>Expérience « Les règles » : schémas dessinés pour ce site, sans photos ; contenus rédigés pour ce site, en prolongement de l’animation « Règles de 3 » de BruZelle asbl.</li>
                 </ul>
               </div>
               <p className="border-t border-white/10 pt-3 text-[12px] text-[#8A93B8]">

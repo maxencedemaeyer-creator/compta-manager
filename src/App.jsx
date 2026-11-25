@@ -37,7 +37,7 @@ import CoutureAtelierView from './views/couture/CoutureAtelierView.jsx'
 import CodeAcces from './components/couture/CodeAcces.jsx'
 import { estSiteGalerie } from './hooks/useCouture.js'
 import { ANCIENNES_ADRESSES, EXPERIENCE as EXPERIENCES_LABO } from './config/laboAteliers.js'
-import { useLaboConfig } from './components/labo/prof/useLaboConfig.js'
+import { estVisible, useLaboConfig } from './components/labo/prof/useLaboConfig.js'
 
 // Le labo de sciences (public, sans PIN) : chargé seulement quand on l'ouvre
 // Cave : chargée seulement quand on l'ouvre (grosse base d'appellations et de plats)
@@ -97,6 +97,13 @@ const LABO_JEUX = {
   'espace/galaxie': lazy(() => import('./views/labo/espace/GalaxieView.jsx')),
   'espace/modeles': lazy(() => import('./views/labo/espace/ModelesView.jsx')),
   'espace/mots': lazy(() => import('./views/labo/espace/MotsView.jsx')),
+  'regles/dedans': lazy(() => import('./views/labo/regles/DedansView.jsx')),
+  'regles/cycle': lazy(() => import('./views/labo/regles/CycleView.jsx')),
+  'regles/ovule': lazy(() => import('./views/labo/regles/OvuleView.jsx')),
+  'regles/protections': lazy(() => import('./views/labo/regles/ProtectionsView.jsx')),
+  'regles/premieres': lazy(() => import('./views/labo/regles/PremieresView.jsx')),
+  'regles/vrai-faux': lazy(() => import('./views/labo/regles/VraiFauxView.jsx')),
+  'regles/defi': lazy(() => import('./views/labo/regles/DefiReglesView.jsx')),
   'espace/defi': lazy(() => import('./views/labo/espace/DefiEspaceView.jsx')),
 }
 
@@ -104,12 +111,13 @@ const LABO_JEUX = {
 // même en tapant son adresse : retour au hall.
 function Labo({ children }) {
   const { pathname } = useLocation()
-  const { masquees, pret } = useLaboConfig()
+  const config = useLaboConfig()
+  const { pret } = config
   const experience = pathname.split('/')[2]
-  const fond = <div style={{ minHeight: '100dvh', background: '#070b16' }} />
+  const fond = <div style={{ minHeight: '100dvh', background: EXPERIENCES_LABO[experience]?.clair ? '#FFF8EC' : '#070b16' }} />
   if (experience && EXPERIENCES_LABO[experience]) {
     if (!pret) return fond
-    if (masquees.includes(experience)) return <Navigate to="/labo" replace />
+    if (!estVisible(config, EXPERIENCES_LABO[experience])) return <Navigate to="/labo" replace />
   }
   return <Suspense fallback={fond}>{children}</Suspense>
 }

@@ -1,6 +1,7 @@
 import Corps3D from './Corps3D.jsx'
 import Circulation3D from './circulation/Circulation3D.jsx'
 import Scene3D from './espace/Scene3D.jsx'
+import Anatomie from './regles/Anatomie.jsx'
 import { ambiance, creerAstre, creerTerre, deg } from './espace/outils3d.js'
 
 // =============================================================
@@ -12,6 +13,7 @@ export default function VisuelExperience({ type, className = '' }) {
   if (type === 'squelette') return <Corps3D className={`pointer-events-none ${className}`} tourner credit={false} marge={1.02} />
   if (type === 'ampoule') return <Ampoule className={className} />
   if (type === 'espace') return <Espace className={className} />
+  if (type === 'regles') return <Anatomie className={className} ep={0.55} ovaire={{ etat: 'follicule', p: 0.7 }} />
   if (type === 'coeur')
     return (
       <Circulation3D

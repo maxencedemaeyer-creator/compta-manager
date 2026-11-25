@@ -38,6 +38,17 @@ import {
   BookA,
   CloudMoon,
   Sparkles,
+  Flower2,
+  Egg,
+  CalendarDays,
+  ShieldCheck,
+  Droplet,
+  Smile,
+  CircleHelp,
+  Users,
+  Hourglass,
+  Thermometer,
+  Clock,
 } from 'lucide-react'
 
 // =============================================================
@@ -216,6 +227,59 @@ export const EXPERIENCES = [
       { id: 'mots', code: 'S12', nom: 'Mots', consigne: 'Rotation, révolution, satellite…', icon: Tags, couleur: '#A66BFF', attendus: [100, 108],
         detail: 'Le vocabulaire de l’espace : rotation, révolution, satellite, étoile, planète, modèle.' },
       { id: 'defi', code: 'S13', nom: 'Défi', consigne: 'Le grand test : bats le record !', test: true, icon: Zap, couleur: '#FFE45E', attendus: [99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109] },
+    ],
+  },
+  {
+    id: 'regles',
+    numero: '05',
+    titre: 'Les règles',
+    accroche: 'Comprendre le cycle, le corps et les protections : mieux se connaître pour mieux comprendre les autres.',
+    niveau: 'P6',
+    chapitre: 'Éducation menstruelle (prolonge l’animation « Règles de 3 » de BruZelle asbl)',
+    attendus: '',
+    couleur: '#E0708A',
+    couleur2: '#6FB39B',
+    rgb: '224,112,138',
+    rgb2: '111,179,155',
+    chiffres: ['un cycle de 21 à 35 jours', 'des règles de 2 à 7 jours'],
+    visuel: 'regles',
+    // Thème clair (fond crème, schémas dessinés, pas de 3D) : salle et jeux propres, voir components/labo/regles/
+    clair: true,
+    // Masquée pour les élèves tant que le prof ne l'a pas activée (Espace prof)
+    masqueeParDefaut: true,
+    vedette: { id: 'cycle', texte: 'Fais défiler les jours d’un cycle et regarde ce qui change dans l’ovaire et l’utérus.' },
+    activites: [
+      { id: 'dedans', code: 'R1', nom: 'Dedans', consigne: 'Découvre l’intérieur du corps', icon: Flower2, couleur: '#F4A6A0', attendus: [] },
+      { id: 'cycle', code: 'R2', nom: 'Cycle', consigne: 'Suis un cycle jour après jour', icon: Clock, couleur: '#9BCBB0', attendus: [] },
+      { id: 'ovule', code: 'R3', nom: 'Ovule', consigne: 'Suis le voyage d’un ovule', icon: Egg, couleur: '#F6C77E', attendus: [] },
+      {
+        id: 'calendrier', code: 'R4', nom: 'Calendrier', consigne: 'Prévois les prochaines règles', icon: CalendarDays, couleur: '#8DB9D9', attendus: [], pret: false,
+        detail: 'On suit des personnages fictifs sur plusieurs cycles (courts, longs, irréguliers au début) et on prédit leurs prochaines règles.',
+      },
+      { id: 'protections', code: 'R5', nom: 'Protections', consigne: 'Serviette, tampon, cup… qui est qui ?', icon: ShieldCheck, couleur: '#B9A6DA', attendus: [] },
+      {
+        id: 'absorbe', code: 'R6', nom: 'Absorbe', consigne: 'Comment ça absorbe ?', icon: Droplet, couleur: '#7FC8D6', attendus: [], pret: false,
+        detail: 'Le rôle des protections avec une mini-expérience d’absorption, et une jauge pour se rendre compte de la vraie quantité de sang (quelques cuillères à soupe en tout).',
+      },
+      { id: 'premieres', code: 'R7', nom: 'Premières', consigne: 'Premières règles : que faire ?', icon: Sparkles, couleur: '#F2B3C6', attendus: [] },
+      {
+        id: 'humeurs', code: 'R8', nom: 'Humeurs', consigne: 'Pourquoi les humeurs changent ?', icon: Smile, couleur: '#F6D58E', attendus: [], pret: false,
+        detail: 'Hormones, humeur, fatigue, boutons : ça varie, et pas pareil chez tout le monde.',
+      },
+      {
+        id: 'douleurs', code: 'R9', nom: 'Douleurs', consigne: 'Normal ou à montrer ?', icon: Thermometer, couleur: '#F2A65A', attendus: [], pret: false,
+        detail: 'Les crampes, ce qui aide (chaleur, mouvement, repos) et les signes qui méritent d’en parler à un adulte ou à un médecin.',
+      },
+      { id: 'vrai-faux', code: 'R10', nom: 'Vrai ou faux', consigne: 'Démonte les idées reçues', icon: CircleHelp, couleur: '#A8D5A2', attendus: [] },
+      {
+        id: 'toute-la-vie', code: 'R11', nom: 'Toute la vie', consigne: 'De la puberté à la ménopause', icon: Hourglass, couleur: '#C9B8E8', attendus: [], pret: false,
+        detail: 'Une frise de vie : toutes les personnes n’ont pas leurs règles, ni au même âge, ni en même quantité, ni toute leur vie.',
+      },
+      {
+        id: 'ensemble', code: 'R12', nom: 'Ensemble', consigne: 'Comprendre les autres', icon: Users, couleur: '#F4B8A0', attendus: [], pret: false,
+        detail: 'Les dimensions sociales et culturelles, les mots justes et comment réagir avec bienveillance à l’école.',
+      },
+      { id: 'defi', code: 'R13', nom: 'Défi', consigne: 'Le grand test : sans chrono !', test: true, icon: Zap, couleur: '#FFE45E', attendus: [] },
     ],
   },
 ]

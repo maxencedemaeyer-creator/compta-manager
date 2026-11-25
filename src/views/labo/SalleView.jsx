@@ -7,6 +7,7 @@ import { EXPERIENCE } from '../../config/laboAteliers.js'
 import './labo.css'
 import PiedLabo from '../../components/labo/PiedLabo.jsx'
 import LogoActivite from '../../components/labo/LogoActivite.jsx'
+import SalleRegles from '../../components/labo/regles/SalleRegles.jsx'
 
 // =============================================================
 //  La salle d'une expérience (/labo/:experience) : le chapitre,
@@ -23,6 +24,8 @@ export default function SalleView() {
   const e = EXPERIENCE[experience]
   const [apercu, setApercu] = useState(null)
   if (!e) return <Navigate to="/labo" replace />
+  // Expérience en thème clair (« Les règles ») : sa propre salle
+  if (e.clair) return <SalleRegles e={e} />
 
   const vedette = e.vedette && e.activites.find((a) => a.id === e.vedette.id)
   const test = e.activites.find((a) => a.test)
