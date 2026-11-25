@@ -1,5 +1,8 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Gamepad2, Lock, Trophy, Zap, Flame, Joystick, MapPinned, WholeWord } from 'lucide-react'
+import { ArrowLeft, Gamepad2, Loader2, Lock, Plus, Trash2, Trophy, X, Zap, Flame, Joystick, MapPinned, WholeWord } from 'lucide-react'
+import { usePin } from '../context/PinContext.jsx'
+import { faviconDe, hoteDe, normaliserUrl } from '../config/apps.js'
 import { useCommunos } from '../hooks/useCommunos.js'
 import { dateDuJour, statistiques } from '../utils/communos.js'
 
@@ -29,6 +32,14 @@ const JEUX = [
     pret: true,
     to: '/maxence/jeux/motus',
   },
+]
+
+// Jeux ajoutés à la main (liens vers un site) : couleurs néon en rotation
+const COULEURS_PERSO = [
+  { couleur: 'from-cyan-400 via-sky-500 to-blue-600', lueur: 'shadow-cyan-400/40' },
+  { couleur: 'from-amber-300 via-orange-500 to-rose-600', lueur: 'shadow-orange-400/40' },
+  { couleur: 'from-pink-400 via-rose-500 to-red-600', lueur: 'shadow-pink-500/40' },
+  { couleur: 'from-emerald-300 via-teal-500 to-cyan-600', lueur: 'shadow-teal-400/40' },
 ]
 
 // Animations propres au Game Center
@@ -61,8 +72,10 @@ const STYLES = `
 }
 `
 
-function CarteJeu({ jeu, numero, info }) {
+function CarteJeu({ jeu, numero, info, onSupprimer }) {
   const Icone = jeu.icon || Joystick
+  const [echec, setEchec] = useState(false)
+  const favicon = jeu.externe && !echec ? faviconDe(jeu.url) : null
   const contenu = (
     <div
       className={`relative h-full rounded-3xl p-[2px] bg-gradient-to-br ${jeu.couleur} shadow-xl ${jeu.lueur} transition-transform duration-200 ${
@@ -88,7 +101,15 @@ function CarteJeu({ jeu, numero, info }) {
 
         <div className="flex-1 flex items-center justify-center py-8">
           <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${jeu.couleur} flex items-center justify-center shadow-lg ${jeu.lueur} ${jeu.pret ? '' : 'opacity-60'}`}>
-            {jeu.pret ? <Icone size={38} /> : <Lock size={34} />}
+            {favicon ? (
+              <span className="w-14 h-14 rounded-xl bg-white flex items-center justify-center">
+                <img src={favicon} alt="" referrerPolicy="no-referrer" onError={() => setEchec(true)} className="w-9 h-9 object-contain" />
+              </span>
+            ) : jeu.pret ? (
+              <Icone size={38} />
+            ) : (
+              <Lock size={34} />
+            )}
           </div>
         </div>
 
@@ -99,6 +120,21 @@ function CarteJeu({ jeu, numero, info }) {
     </div>
   )
 
+  if (jeu.externe) {
+    return (
+      <div className="relative h-full">
+        <a href={jeu.url} target="_blank" rel="noopener noreferrer" className="block h-full">{contenu}</a>
+        <button
+          type="button"
+          onClick={() => onSupprimer(jeu)}
+          className="absolute bottom-3 right-3 w-8 h-8 rounded-full bg-white/10 hover:bg-red-500/30 text-white/50 hover:text-red-200 flex items-center justify-center transition-colors"
+          aria-label={`Supprimer ${jeu.titre}`}
+        >
+          <Trash2 size={14} />
+        </button>
+      </div>
+    )
+  }
   return jeu.pret && jeu.to ? (
     <Link to={jeu.to} className="block h-full">{contenu}</Link>
   ) : (
@@ -106,8 +142,110 @@ function CarteJeu({ jeu, numero, info }) {
   )
 }
 
+// Slot vide « NOUVEAU JEU » : ouvre la fenêtre d'ajout
+function SlotNouveau({ numero, onClick }) {
+  return (
+    <button type="button" onClick={onClick} className="group relative h-full w-full text-left">
+      <div className="relative h-full rounded-3xl p-[2px] bg-gradient-to-br from-fuchsia-500/40 via-purple-500/30 to-cyan-400/40 group-hover:from-fuchsia-500 group-hover:to-cyan-400 group-hover:shadow-xl group-hover:shadow-fuchsia-500/30 transition-all duration-200 group-hover:-translate-y-1">
+        <div className="relative h-full rounded-[22px] bg-slate-950/90 border-2 border-dashed border-white/10 p-5 flex flex-col">
+          <div className="flex items-start justify-between">
+            <span className="font-mono text-xs tracking-[0.3em] text-white/40">SLOT 0{numero}</span>
+            <span className="text-[10px] font-bold tracking-widest px-2 py-1 rounded-full bg-cyan-400/15 text-cyan-300">AJOUTER</span>
+          </div>
+          <div className="flex-1 flex items-center justify-center py-8">
+            <div className="w-20 h-20 rounded-2xl border-2 border-dashed border-white/20 group-hover:border-fuchsia-400 group-hover:shadow-lg group-hover:shadow-fuchsia-500/40 flex items-center justify-center text-white/40 group-hover:text-fuchsia-300 transition-all">
+              <Plus size={38} />
+            </div>
+          </div>
+          <p className="font-bold text-lg tracking-tight text-white/70">NOUVEAU JEU</p>
+          <p className="text-sm text-white/40">Coller le lien d'un site</p>
+        </div>
+      </div>
+    </button>
+  )
+}
+
+// Fenêtre d'ajout d'un jeu (lien vers un site)
+function FenetreNouveauJeu({ onFermer, onAjouter }) {
+  const [url, setUrl] = useState('')
+  const [nom, setNom] = useState('')
+  const [erreur, setErreur] = useState('')
+  const [envoi, setEnvoi] = useState(false)
+  const adresse = normaliserUrl(url)
+  const apercu = adresse ? faviconDe(adresse) : null
+
+  async function valider(e) {
+    e.preventDefault()
+    if (!adresse) return setErreur("Cette adresse n'a pas l'air valide (ex. chess.com).")
+    setEnvoi(true)
+    setErreur('')
+    try {
+      await onAjouter({ nom: nom.trim() || hoteDe(adresse), url: adresse })
+      onFermer()
+    } catch (err) {
+      setErreur(err.message || "Impossible d'ajouter le jeu.")
+      setEnvoi(false)
+    }
+  }
+
+  const champ = 'w-full rounded-xl bg-white/[0.06] border border-white/15 px-3 py-2.5 text-base text-white placeholder:text-white/30 outline-none focus:border-fuchsia-400 focus:shadow-[0_0_16px_rgba(217,70,239,.35)]'
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={onFermer}>
+      <form onSubmit={valider} onClick={(e) => e.stopPropagation()} className="w-full max-w-sm rounded-3xl p-[2px] bg-gradient-to-br from-fuchsia-500 via-purple-500 to-cyan-400 shadow-2xl shadow-fuchsia-500/30">
+        <div className="rounded-[22px] bg-[#0c0626] p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="font-mono text-[10px] tracking-[0.3em] text-cyan-300/80">NOUVEAU SLOT</p>
+              <h2 className="jx-titre text-xl font-black uppercase">Ajouter un jeu</h2>
+            </div>
+            <button type="button" onClick={onFermer} className="w-9 h-9 rounded-full flex items-center justify-center text-white/50 hover:bg-white/10" aria-label="Fermer">
+              <X size={18} />
+            </button>
+          </div>
+          <label className="block font-mono text-xs tracking-widest text-white/50 mb-1">ADRESSE DU SITE</label>
+          <input autoFocus inputMode="url" autoCapitalize="none" autoCorrect="off" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://www.chess.com" className={`${champ} mb-3`} />
+          <label className="block font-mono text-xs tracking-widest text-white/50 mb-1">NOM DU JEU</label>
+          <div className="flex items-center gap-3 mb-1">
+            <span className="w-11 h-11 rounded-xl bg-white/[0.06] border border-white/15 flex items-center justify-center shrink-0">
+              {apercu ? <img src={apercu} alt="" className="w-7 h-7 object-contain" /> : <Plus size={18} className="text-white/30" />}
+            </span>
+            <input value={nom} onChange={(e) => setNom(e.target.value)} placeholder={adresse ? hoteDe(adresse) : 'Échecs'} maxLength={24} className={champ} />
+          </div>
+          <p className="text-xs text-white/40 mb-4">L'icône est celle du site (favicon).</p>
+          {erreur && <p className="text-sm text-red-400 mb-3">{erreur}</p>}
+          <button type="submit" disabled={envoi || !url.trim()} className="w-full rounded-xl bg-gradient-to-r from-fuchsia-500 to-cyan-400 disabled:opacity-40 text-slate-950 font-black tracking-widest py-3 inline-flex items-center justify-center gap-2 shadow-lg shadow-fuchsia-500/30">
+            {envoi && <Loader2 size={16} className="animate-spin" />}
+            AJOUTER AU GAME CENTER
+          </button>
+        </div>
+      </form>
+    </div>
+  )
+}
+
 export default function JeuxView() {
-  const prets = JEUX.filter((j) => j.pret).length
+  const { parametres, majParametres } = usePin()
+  const [ajout, setAjout] = useState(false)
+  const perso = (parametres.jeuxPerso || []).map((j, i) => ({
+    id: j.id,
+    titre: j.nom.toUpperCase(),
+    texte: hoteDe(j.url),
+    url: j.url,
+    externe: true,
+    pret: true,
+    ...COULEURS_PERSO[i % COULEURS_PERSO.length],
+  }))
+  const tous = [...JEUX, ...perso]
+  const prets = tous.filter((j) => j.pret).length
+
+  async function ajouterJeu({ nom, url }) {
+    const id = `jeu-${Date.now().toString(36)}`
+    await majParametres({ jeuxPerso: [...(parametres.jeuxPerso || []), { id, nom, url }] })
+  }
+  function supprimerJeu(jeu) {
+    if (!window.confirm(`Retirer « ${jeu.titre} » du Game Center ?`)) return
+    majParametres({ jeuxPerso: (parametres.jeuxPerso || []).filter((j) => j.id !== jeu.id) })
+  }
   const { parties } = useCommunos()
   const aujourdhui = dateDuJour()
   const stats = statistiques(parties, aujourdhui)
@@ -171,7 +309,7 @@ export default function JeuxView() {
           <div className="mt-4 grid grid-cols-3 gap-2 text-center">
             <div className="rounded-2xl bg-white/[0.04] py-2">
               <Joystick size={16} className="mx-auto text-fuchsia-400" />
-              <p className="font-black text-lg mt-0.5">{prets}/{JEUX.length}</p>
+              <p className="font-black text-lg mt-0.5">{prets}/{tous.length}</p>
               <p className="text-[10px] uppercase tracking-wider text-white/40">Jeux</p>
             </div>
             <div className="rounded-2xl bg-white/[0.04] py-2">
@@ -193,15 +331,17 @@ export default function JeuxView() {
           <h2 className="font-mono text-sm tracking-[0.25em] text-white/70">SÉLECTIONNE UN JEU</h2>
         </div>
         <div className="mt-3 grid grid-cols-2 gap-3 sm:gap-5">
-          {JEUX.map((jeu, i) => (
-            <CarteJeu key={jeu.id} jeu={jeu} numero={i + 1} info={jeu.id === 'communos' ? infoCommunos : jeu.id === 'motus' ? '● Mots de 5 à 12 lettres' : null} />
+          {tous.map((jeu, i) => (
+            <CarteJeu key={jeu.id} jeu={jeu} numero={i + 1} onSupprimer={supprimerJeu} info={jeu.id === 'communos' ? infoCommunos : jeu.id === 'motus' ? '● Mots de 5 à 12 lettres' : null} />
           ))}
+          <SlotNouveau numero={tous.length + 1} onClick={() => setAjout(true)} />
         </div>
 
         <p className="mt-10 text-center font-mono text-xs tracking-[0.3em] text-white/40">
           INSERT COIN <span className="jx-clignote">▮</span>
         </p>
       </div>
+      {ajout && <FenetreNouveauJeu onFermer={() => setAjout(false)} onAjouter={ajouterJeu} />}
     </div>
   )
 }

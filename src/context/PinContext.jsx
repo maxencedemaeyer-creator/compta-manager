@@ -53,6 +53,7 @@ export const PARAMETRES_PAR_DEFAUT = {
   appsMasquees: [],
   appsOrdre: [],
   appsPerso: [],
+  jeuxPerso: [],
   derniereSauvegarde: null,
 }
 
