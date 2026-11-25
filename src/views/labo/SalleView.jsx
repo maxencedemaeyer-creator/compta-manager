@@ -24,7 +24,7 @@ export default function SalleView() {
   const e = EXPERIENCE[experience]
   const [apercu, setApercu] = useState(null)
   if (!e) return <Navigate to="/labo" replace />
-  // Expérience en thème clair (« Les règles ») : sa propre salle
+  // Expérience en thème clair (« Règle de 3 ») : sa propre salle
   if (e.clair) return <SalleRegles e={e} />
 
   const vedette = e.vedette && e.activites.find((a) => a.id === e.vedette.id)

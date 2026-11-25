@@ -12,7 +12,7 @@ import { estVisible } from '../../../config/laboVisibilite.js'
 //  Firebase : laboConfig/experiences  →  { masquees: ['espace', …], visibles: ['regles', …] }
 //  Par défaut (document absent) toutes les expériences sont visibles,
 //  et une nouvelle expérience est visible tant qu'on ne la masque pas.
-//  Exception : une expérience marquée « masqueeParDefaut » (ex. « Les règles »)
+//  Exception : une expérience marquée « masqueeParDefaut » (ex. « Règle de 3 »)
 //  reste cachée aux élèves tant que le prof ne l'a pas activée (liste « visibles »).
 // =============================================================
 

@@ -1,5 +1,5 @@
 // =============================================================
-//  Les fiches de l'expérience « Les règles » : textes courts,
+//  Les fiches de l'expérience « Règle de 3 » : textes courts,
 //  vérifiés, à la portée d'un élève de 10-12 ans.
 //  Repères chiffrés (ordres de grandeur) :
 //   - cycle : 21 à 35 jours en général, jour 1 = 1er jour des règles

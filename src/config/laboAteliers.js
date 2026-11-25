@@ -232,7 +232,7 @@ export const EXPERIENCES = [
   {
     id: 'regles',
     numero: '99',
-    titre: 'Les règles',
+    titre: 'Règle de 3',
     accroche: 'Comprendre le cycle, le corps et les protections : mieux se connaître pour mieux comprendre les autres.',
     niveau: 'P6',
     chapitre: 'Éducation menstruelle (prolonge l’animation « Règles de 3 » de BruZelle asbl)',

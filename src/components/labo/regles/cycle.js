@@ -1,5 +1,5 @@
 // =============================================================
-//  Le modèle du cycle menstruel (expérience « Les règles »).
+//  Le modèle du cycle menstruel (expérience « Règle de 3 »).
 //
 //  Repères (cycle « type ») :
 //   - le jour 1 est le premier jour des règles ;

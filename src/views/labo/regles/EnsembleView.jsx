@@ -56,7 +56,7 @@ const SITUATIONS = [
     choix: [
       ['Lui expliquer simplement : « Une fois par cycle, la couche à l’intérieur de l’utérus se détache et sort avec un peu de sang. »', true, 'Super : poser une question, c’est normal, et y répondre calmement aide tout le monde.'],
       ['Se moquer de lui parce qu’il ne sait pas.', false, 'Personne ne naît en sachant. Se moquer empêche de poser des questions.'],
-      ['L’inviter à voir l’expérience « Les règles » ou à demander à un adulte.', true, 'Très bien aussi : on peut chercher ensemble de bonnes informations.'],
+      ['L’inviter à voir l’expérience « Règle de 3 » ou à demander à un adulte.', true, 'Très bien aussi : on peut chercher ensemble de bonnes informations.'],
     ],
   },
 ]

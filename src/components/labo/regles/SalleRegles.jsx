@@ -6,7 +6,7 @@ import PiedLabo from '../PiedLabo.jsx'
 import { C, DecorRegles, LogoActiviteClair } from './ui.jsx'
 
 // =============================================================
-//  La salle de l'expérience « Les règles » (thème clair).
+//  La salle de l'expérience « Règle de 3 » (thème clair).
 //  Même organisation que SalleView (vedette, activités, Défi),
 //  mais sur fond crème et avec des schémas dessinés.
 //  Les activités « pret: false » s'affichent « bientôt ».

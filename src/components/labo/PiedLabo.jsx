@@ -60,7 +60,7 @@ export default function PiedLabo({ className = '', clair = false }) {
                   <li>Détection du corps et des mains : MediaPipe (Google), licence Apache 2.0.</li>
                   <li>Textures des astres (expérience « L’espace ») : Terre, carte « Blue Marble » de la NASA ; lumières des villes et Lune : NASA ; Mercure, Vénus, Mars, Jupiter, Saturne, Uranus, Neptune et Soleil : cartes de Planet Pixel Emporium (J. Hastings-Trew) d’après des images NASA/JPL/USGS, usage non commercial. Données des planètes : NASA ; définitions : Union astronomique internationale.</li>
                   <li>Affichage 3D : three.js (licence MIT). Icônes : Lucide (licence ISC).</li>
-                  <li>Expérience « Les règles » : schémas dessinés pour ce site, sans photos ; contenus rédigés pour ce site, en prolongement de l’animation « Règles de 3 » de BruZelle asbl.</li>
+                  <li>Expérience « Règle de 3 » : schémas dessinés pour ce site, sans photos ; contenus rédigés pour ce site, en prolongement de l’animation « Règles de 3 » de BruZelle asbl.</li>
                 </ul>
               </div>
               <p className="border-t border-white/10 pt-3 text-[12px] text-[#8A93B8]">

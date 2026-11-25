@@ -8,7 +8,7 @@ import { useLocation } from 'react-router-dom'
 import './regles.css'
 
 // =============================================================
-//  Pièces communes de l'expérience « Les règles » (thème clair).
+//  Pièces communes de l'expérience « Règle de 3 » (thème clair).
 //  Pas de 3D, pas de photos : des schémas dessinés (SVG).
 // =============================================================
 
@@ -76,7 +76,7 @@ export function PageRegles({ children, large = false, tresLarge = false, droite 
           {activite && <LogoActiviteClair activite={activite} taille={44} />}
           <div className="min-w-0 flex-1">
             <p className="regles-mono truncate text-[11px] uppercase" style={{ color: C.doux }}>
-              Les règles · activité {activite?.code}
+              Règle de 3 · activité {activite?.code}
             </p>
             <h1 className="regles-titre truncate text-[26px] leading-tight" style={{ color: C.texte }}>
               {activite?.nom}
