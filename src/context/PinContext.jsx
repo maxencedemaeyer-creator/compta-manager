@@ -52,6 +52,7 @@ export const PARAMETRES_PAR_DEFAUT = {
   verrouillageMinutes: 0, // 0 = jamais
   appsMasquees: [],
   appsOrdre: [],
+  appsPerso: [],
   derniereSauvegarde: null,
 }
 

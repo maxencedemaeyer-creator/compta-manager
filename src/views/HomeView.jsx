@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Lock, Plus, Settings, Users } from 'lucide-react'
+import { Loader2, Lock, Plus, Settings, Users, X } from 'lucide-react'
 import { usePin } from '../context/PinContext.jsx'
-import { appsDuProfil } from '../config/apps.js'
+import { appsDuProfil, faviconDe, hoteDe, normaliserUrl } from '../config/apps.js'
+import AppIcone from '../components/accueil/AppIcone.jsx'
 import Signature from '../components/Signature.jsx'
 import { trouverProfil } from '../config/profils.js'
 
@@ -28,7 +29,6 @@ const NIVEAUX = [
 ]
 const GAP = 12
 const HAUTEUR_FIXE = 300 // date + nom + libellé + signature + marges
-const MAX_PLACEHOLDER = 12 // au-delà, on n'affiche plus la tuile « Bientôt »
 
 function useViewport() {
   const lire = () => ({ w: window.innerWidth, h: window.innerHeight })
@@ -59,20 +59,100 @@ function calculerGrille(n, { w, h }) {
   return dernier
 }
 
+// Fenêtre « Nouvelle application » : un nom + l'adresse d'un site existant
+function NouvelleApp({ onFermer, onAjouter }) {
+  const [url, setUrl] = useState('')
+  const [nom, setNom] = useState('')
+  const [erreur, setErreur] = useState('')
+  const [envoi, setEnvoi] = useState(false)
+  const adresse = normaliserUrl(url)
+  const apercu = adresse ? faviconDe(adresse) : null
+
+  async function valider(e) {
+    e.preventDefault()
+    if (!adresse) return setErreur("Cette adresse n'a pas l'air valide (ex. facebook.com).")
+    setEnvoi(true)
+    setErreur('')
+    try {
+      await onAjouter({ nom: nom.trim() || hoteDe(adresse), url: adresse })
+      onFermer()
+    } catch (err) {
+      setErreur(err.message || "Impossible d'ajouter l'application.")
+      setEnvoi(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-emerald-950/40 backdrop-blur-sm p-4" onClick={onFermer}>
+      <form
+        onSubmit={valider}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-sm rounded-3xl bg-white p-5 shadow-2xl border border-emerald-900/10"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-display text-xl font-semibold text-emerald-950">Nouvelle application</h2>
+          <button type="button" onClick={onFermer} className="w-9 h-9 rounded-full flex items-center justify-center text-emerald-900/50 hover:bg-emerald-50" aria-label="Fermer">
+            <X size={18} />
+          </button>
+        </div>
+        <label className="block text-sm font-medium text-emerald-900/70 mb-1">Adresse du site</label>
+        <input
+          autoFocus
+          inputMode="url"
+          autoCapitalize="none"
+          autoCorrect="off"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder="https://www.facebook.com"
+          className="w-full rounded-xl border border-emerald-900/15 px-3 py-2.5 text-base text-emerald-950 outline-none focus:border-emerald-500 mb-3"
+        />
+        <label className="block text-sm font-medium text-emerald-900/70 mb-1">Nom de l'application</label>
+        <div className="flex items-center gap-3 mb-1">
+          <span className="w-11 h-11 rounded-xl bg-emerald-900/5 border border-emerald-900/10 flex items-center justify-center shrink-0 overflow-hidden">
+            {apercu ? <img src={apercu} alt="" className="w-7 h-7 object-contain" /> : <Plus size={18} className="text-emerald-900/30" />}
+          </span>
+          <input
+            value={nom}
+            onChange={(e) => setNom(e.target.value)}
+            placeholder={adresse ? hoteDe(adresse) : 'Facebook'}
+            maxLength={30}
+            className="w-full rounded-xl border border-emerald-900/15 px-3 py-2.5 text-base text-emerald-950 outline-none focus:border-emerald-500"
+          />
+        </div>
+        <p className="text-xs text-emerald-900/45 mb-4">L'icône est celle du site (favicon).</p>
+        {erreur && <p className="text-sm text-red-600 mb-3">{erreur}</p>}
+        <button
+          type="submit"
+          disabled={envoi || !url.trim()}
+          className="w-full rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white font-semibold py-3 inline-flex items-center justify-center gap-2"
+        >
+          {envoi && <Loader2 size={16} className="animate-spin" />}
+          Ajouter
+        </button>
+      </form>
+    </div>
+  )
+}
+
 export default function HomeView() {
   const vp = useViewport()
-  const { lock, parametres, profilId } = usePin()
+  const { lock, parametres, majParametres, profilId } = usePin()
+  const [ajout, setAjout] = useState(false)
   const profil = trouverProfil(profilId)
   const masquees = parametres.appsMasquees || []
-  const apps = appsDuProfil(profil, parametres.appsOrdre).filter((a) => !masquees.includes(a.id))
+  const apps = appsDuProfil(profil, parametres.appsOrdre, parametres.appsPerso).filter((a) => !masquees.includes(a.id))
   const date = new Date().toLocaleDateString('fr-BE', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
   })
 
-  const placeholder = apps.length < MAX_PLACEHOLDER
-  const { cols, niveau } = calculerGrille(apps.length + (placeholder ? 1 : 0), vp)
+  const { cols, niveau } = calculerGrille(apps.length + 1, vp)
+
+  async function ajouterApp({ nom, url }) {
+    const id = `perso-${Date.now().toString(36)}`
+    await majParametres({ appsPerso: [...(parametres.appsPerso || []), { id, nom, url }] })
+  }
 
   return (
     <div className="min-h-dvh bg-creme text-emerald-950 relative overflow-hidden">
@@ -125,70 +205,64 @@ export default function HomeView() {
           Applications
         </p>
         <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
-          {apps.map(({ to, nom, description, icon: Icon, couleur }) =>
-            niveau ? (
-              <Link
-                key={to}
-                to={to}
+          {apps.map((app) => {
+            const { to, nom, description } = app
+            const Tuile = app.externe ? 'a' : Link
+            const lien = app.externe ? { href: to, target: '_blank', rel: 'noopener noreferrer' } : { to }
+            return niveau ? (
+              <Tuile
+                key={app.id}
+                {...lien}
                 className={`tuile group flex items-center gap-3 rounded-2xl bg-white/80 backdrop-blur border border-emerald-900/5 ${niveau.pad} shadow-[0_1px_2px_rgba(6,78,59,0.04),0_8px_24px_-12px_rgba(6,78,59,0.18)] hover:bg-white hover:-translate-y-0.5 transition-all`}
               >
-                <span
-                  className={`${niveau.icone} rounded-xl bg-gradient-to-br ${couleur} flex items-center justify-center text-white shadow-md shrink-0 group-hover:scale-105 transition-transform`}
-                >
-                  <Icon size={niveau.ico} strokeWidth={2} />
-                </span>
+                <AppIcone app={app} classe={`${niveau.icone} rounded-xl`} taille={niveau.ico} extra="group-hover:scale-105 transition-transform" />
                 <span className="min-w-0 w-full">
                   <span className={`block ${niveau.titre} font-semibold text-emerald-950 truncate`}>{nom}</span>
                   {niveau.desc && (
                     <span className="block text-xs text-emerald-900/55 truncate">{description}</span>
                   )}
                 </span>
-              </Link>
+              </Tuile>
             ) : (
-              <Link
-                key={to}
-                to={to}
+              <Tuile
+                key={app.id}
+                {...lien}
                 className="tuile group flex flex-col items-start gap-3 rounded-3xl bg-white/80 backdrop-blur border border-emerald-900/5 p-4 shadow-[0_1px_2px_rgba(6,78,59,0.04),0_8px_24px_-12px_rgba(6,78,59,0.18)] hover:bg-white hover:-translate-y-0.5 transition-all"
               >
-                <span
-                  className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${couleur} flex items-center justify-center text-white shadow-md shrink-0 group-hover:scale-105 transition-transform`}
-                >
-                  <Icon size={24} strokeWidth={2} />
-                </span>
+                <AppIcone app={app} classe="w-12 h-12 rounded-2xl" taille={24} extra="group-hover:scale-105 transition-transform" />
                 <span className="min-w-0 w-full">
                   <span className="block text-base font-semibold text-emerald-950">{nom}</span>
                   <span className="block text-xs text-emerald-900/55 line-clamp-2">{description}</span>
                 </span>
-              </Link>
-            ),
-          )}
+              </Tuile>
+            )
+          })}
 
-          {placeholder && (
-            <div
-              className={`tuile tuile-vide flex items-center gap-3 rounded-2xl border-2 border-dashed border-emerald-900/10 ${
-                niveau ? niveau.pad : 'p-4'
-              } ${!niveau && apps.length % 2 === 0 ? 'col-span-2' : ''}`}
+          <button
+            type="button"
+            onClick={() => setAjout(true)}
+            className={`tuile tuile-vide group flex items-center gap-3 rounded-2xl border-2 border-dashed border-emerald-900/15 hover:border-emerald-500/50 hover:bg-white/50 text-left transition-colors ${
+              niveau ? niveau.pad : 'p-4'
+            } ${!niveau && apps.length % 2 === 0 ? 'col-span-2' : ''}`}
+          >
+            <span
+              className={`${niveau ? niveau.icone : 'w-12 h-12'} rounded-xl bg-emerald-900/5 group-hover:bg-emerald-500/10 flex items-center justify-center text-emerald-900/40 group-hover:text-emerald-600 shrink-0 transition-colors`}
             >
-              <span
-                className={`${niveau ? niveau.icone : 'w-12 h-12'} rounded-xl bg-emerald-900/5 flex items-center justify-center text-emerald-900/30 shrink-0`}
-              >
-                <Plus size={niveau ? niveau.ico : 24} />
+              <Plus size={niveau ? niveau.ico : 24} />
+            </span>
+            <span className="min-w-0">
+              <span className={`block ${niveau ? niveau.titre : 'text-base'} font-semibold text-emerald-900/55 truncate`}>
+                Nouvelle application
               </span>
-              <span className="min-w-0">
-                <span className={`block ${niveau ? niveau.titre : 'text-base'} font-semibold text-emerald-900/40 truncate`}>
-                  {apps.length === 0 ? 'Ton espace prend forme' : 'Bientôt'}
-                </span>
-                {(!niveau || niveau.desc) && (
-                  <span className="block text-xs text-emerald-900/35 truncate">
-                    {apps.length === 0 ? 'Tes premières applications arrivent bientôt' : 'La prochaine application'}
-                  </span>
-                )}
-              </span>
-            </div>
-          )}
+              {(!niveau || niveau.desc) && (
+                <span className="block text-xs text-emerald-900/40 truncate">Ajouter un lien vers un site</span>
+              )}
+            </span>
+          </button>
         </div>
 
         <Signature className="mt-auto pt-6 sm:pt-6" />
+        {ajout && <NouvelleApp onFermer={() => setAjout(false)} onAjouter={ajouterApp} />}
       </div>
     </div>
   )

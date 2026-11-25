@@ -16,7 +16,9 @@ import {
   Mail,
   Smartphone,
   Timer,
+  Trash2,
 } from 'lucide-react'
+import AppIcone from '../components/accueil/AppIcone.jsx'
 import { usePin } from '../context/PinContext.jsx'
 import { appsDuProfil } from '../config/apps.js'
 import { PROFIL_PRINCIPAL, trouverProfil } from '../config/profils.js'
@@ -178,7 +180,7 @@ function AdresseMail() {
 // ---------- 2. Applications de l'accueil ----------
 function GererApps() {
   const { parametres, majParametres, profilId } = usePin()
-  const apps = appsDuProfil(trouverProfil(profilId), parametres.appsOrdre)
+  const apps = appsDuProfil(trouverProfil(profilId), parametres.appsOrdre, parametres.appsPerso)
   if (apps.length === 0) return null
   const masquees = parametres.appsMasquees || []
 
@@ -188,6 +190,15 @@ function GererApps() {
     if (cible < 0 || cible >= ids.length) return
     ;[ids[index], ids[cible]] = [ids[cible], ids[index]]
     majParametres({ appsOrdre: ids })
+  }
+
+  function supprimer(app) {
+    if (!window.confirm(`Supprimer « ${app.nom} » de l'accueil ?`)) return
+    majParametres({
+      appsPerso: (parametres.appsPerso || []).filter((a) => a.id !== app.id),
+      appsOrdre: (parametres.appsOrdre || []).filter((id) => id !== app.id),
+      appsMasquees: masquees.filter((id) => id !== app.id),
+    })
   }
 
   function basculer(id) {
@@ -205,19 +216,12 @@ function GererApps() {
       <ul className="divide-y divide-emerald-900/5">
         {apps.map((app, i) => {
           const visible = !masquees.includes(app.id)
-          const Icon = app.icon
           return (
             <li key={app.id} className="flex items-center gap-3 py-2.5">
-              <span
-                className={`w-10 h-10 rounded-xl bg-gradient-to-br ${app.couleur} text-white flex items-center justify-center shrink-0 ${
-                  visible ? '' : 'opacity-30 grayscale'
-                }`}
-              >
-                <Icon size={19} />
-              </span>
+              <AppIcone app={app} classe="w-10 h-10 rounded-xl" taille={19} extra={visible ? '' : 'opacity-30 grayscale'} />
               <span className={`flex-1 min-w-0 font-medium ${visible ? 'text-emerald-950' : 'text-emerald-900/35'}`}>
                 {app.nom}
-                <span className="block text-xs font-normal text-emerald-900/40">{app.to}</span>
+                <span className="block text-xs font-normal text-emerald-900/40 truncate">{app.externe ? app.description : app.to}</span>
               </span>
               <button
                 type="button"
@@ -247,6 +251,16 @@ function GererApps() {
               >
                 {visible ? <Eye size={17} /> : <EyeOff size={17} />}
               </button>
+              {app.externe && (
+                <button
+                  type="button"
+                  onClick={() => supprimer(app)}
+                  className="w-9 h-9 rounded-lg flex items-center justify-center text-red-500/70 hover:bg-red-50"
+                  aria-label="Supprimer"
+                >
+                  <Trash2 size={17} />
+                </button>
+              )}
             </li>
           )
         })}
@@ -266,7 +280,7 @@ function Raccourcis() {
   const { profilId, parametres } = usePin()
   const profil = trouverProfil(profilId)
   const [copie, setCopie] = useState('')
-  const applis = appsDuProfil(profil, parametres.appsOrdre)
+  const applis = appsDuProfil(profil, parametres.appsOrdre).filter((a) => !a.externe)
 
   async function copier(id, adresse) {
     try {

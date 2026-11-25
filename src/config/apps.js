@@ -1,4 +1,4 @@
-import { Activity, BookAudio, FlaskConical, Gamepad2, GitBranch, MessageSquarePlus, PenLine, Projector, Scissors, Sprout, Wallet, Wine } from 'lucide-react'
+import { Activity, Globe, BookAudio, FlaskConical, Gamepad2, GitBranch, MessageSquarePlus, PenLine, Projector, Scissors, Sprout, Wallet, Wine } from 'lucide-react'
 
 // =============================================================
 //  Liste des applications du site (adresses sous /maxence).
@@ -118,20 +118,66 @@ export const APPS = [
 ]
 
 // Applications dans l'ordre choisi dans Paramètres
-export function appsOrdonnees(ordre = []) {
+export function appsOrdonnees(ordre = [], supplementaires = []) {
+  const liste = [...APPS, ...supplementaires]
   const position = (id) => {
     const i = ordre.indexOf(id)
-    return i === -1 ? 1000 + APPS.findIndex((a) => a.id === id) : i
+    return i === -1 ? 1000 + liste.findIndex((a) => a.id === id) : i
   }
-  return [...APPS].sort((a, b) => position(a.id) - position(b.id))
+  return liste.sort((a, b) => position(a.id) - position(b.id))
 }
 
 // Applications d'un profil (voir src/config/profils.js), dans l'ordre choisi dans ses Paramètres
-export function appsDuProfil(profil, ordre = []) {
-  const toutes = appsOrdonnees(ordre)
+export function appsDuProfil(profil, ordre = [], appsPerso = []) {
   if (!profil) return []
+  const toutes = appsOrdonnees(ordre, appsPersoEnApps(appsPerso))
   return toutes
-    .filter((a) => !a.profils || a.profils.includes(profil.id))
-    .filter((a) => profil.apps === 'toutes' || a.pourTous || profil.apps.includes(a.id))
+    .filter((a) => a.externe || !a.profils || a.profils.includes(profil.id))
+    .filter((a) => a.externe || profil.apps === 'toutes' || a.pourTous || profil.apps.includes(a.id))
     .map((a) => (a.pourTous ? { ...a, to: `/${profil.id}/${a.id}` } : a))
+}
+
+// ---------- Applications ajoutées à la main (simples liens vers un site) ----------
+// Enregistrées dans les paramètres du profil (appsPerso : [{ id, nom, url }]).
+export function normaliserUrl(saisie) {
+  let texte = String(saisie || '').trim()
+  if (!texte) return null
+  if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(texte)) texte = `https://${texte}`
+  try {
+    const u = new URL(texte)
+    if (!['http:', 'https:'].includes(u.protocol) || !u.hostname.includes('.')) return null
+    return u.href
+  } catch {
+    return null
+  }
+}
+
+export function hoteDe(url) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '')
+  } catch {
+    return url
+  }
+}
+
+// Favicon du site (service public de Google, mis à l'échelle)
+export function faviconDe(url) {
+  try {
+    return `https://www.google.com/s2/favicons?sz=128&domain_url=${encodeURIComponent(new URL(url).origin)}`
+  } catch {
+    return null
+  }
+}
+
+export function appsPersoEnApps(appsPerso = []) {
+  return appsPerso.map((a) => ({
+    id: a.id,
+    to: a.url,
+    url: a.url,
+    externe: true,
+    nom: a.nom,
+    description: hoteDe(a.url),
+    icon: Globe,
+    couleur: 'from-slate-400 to-slate-600',
+  }))
 }
