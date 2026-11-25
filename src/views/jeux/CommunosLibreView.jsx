@@ -4,7 +4,7 @@ import { HelpCircle, Flag, Trophy, RotateCcw, LayoutGrid, History } from 'lucide
 import Chargement from '../../components/Chargement.jsx'
 import PartieCommunos from '../../components/jeux/communos/PartieCommunos.jsx'
 import { AnneauConnaissance } from '../../components/jeux/communos/Connaissance.jsx'
-import { BoutonIcone, EnTete, FondPage, OngletsModes, Regles, useCarte } from '../../components/jeux/communos/Communs.jsx'
+import { BoutonIcone, EnTete, FondPage, Regles, useCarte } from '../../components/jeux/communos/Communs.jsx'
 import { useCommunos, useCommunosLibres } from '../../hooks/useCommunos.js'
 import { connaissanceProvince, listeProvinces, nomComplet, tirerCible } from '../../utils/communos.js'
 
@@ -102,7 +102,6 @@ export default function CommunosLibreView() {
       >
         <BoutonIcone label="Règles" onClick={() => setRegles(true)}><HelpCircle size={18} /></BoutonIcone>
       </EnTete>
-      <OngletsModes actif={province ? 'provinces' : 'belgique'} />
 
       {repriseVisible && (
         <div className="cm-apparait mt-3 flex items-center gap-2 rounded-2xl bg-cyan-400/10 border border-cyan-300/25 px-3 py-2 text-sm">

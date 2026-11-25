@@ -155,10 +155,34 @@ export default function PartieCommunos({ carte, cle, cible, zone, idsEssaisFireb
     <>
       {fete && <Confettis />}
 
+      {/* Bandeau de fin (fourni par le mode de jeu) */}
+      {fini && cible && (
+        <div className="mt-4">{finPartie({ statut, nbEssais: essais.length })}</div>
+      )}
+
+      {/* Carte */}
+      <div className="mt-4 rounded-3xl p-[1.5px] bg-gradient-to-br from-fuchsia-500/60 via-indigo-500/30 to-cyan-400/60 shadow-2xl shadow-indigo-900/40">
+        <div className="rounded-[22px] overflow-hidden bg-[radial-gradient(ellipse_at_center,#141a3a_0%,#0a0c22_70%)] p-2 sm:p-3">
+          <CarteCommunos
+            carte={carte}
+            essais={essais}
+            cible={cible}
+            statut={statut}
+            dernier={dernier}
+            reperes={reperes}
+            selection={selection}
+            cadre={zone?.boite}
+            actives={zone?.ids}
+            echelle={echelle}
+            onToucher={(id) => setSelection(id && (dejaEssayes.has(id) || (fini && id === cible?.id)) ? id : null)}
+          />
+        </div>
+      </div>
+
       {/* Saisie */}
       {!fini && (
         <form
-          className={`mt-4 relative ${tremble ? 'cm-tremble' : ''}`}
+          className={`mt-3 relative ${tremble ? 'cm-tremble' : ''}`}
           onSubmit={(e) => {
             e.preventDefault()
             proposer(propositions.length === 1 ? propositions[0] : null)
@@ -181,7 +205,7 @@ export default function PartieCommunos({ carte, cle, cible, zone, idsEssaisFireb
             </button>
           </div>
           {propositions.length > 0 && (
-            <ul className="absolute z-30 left-0 right-0 mt-2 rounded-2xl bg-[#130f33] border border-white/15 shadow-2xl overflow-hidden">
+            <ul className="absolute z-30 left-0 right-0 bottom-full mb-2 rounded-2xl bg-[#130f33] border border-white/15 shadow-2xl overflow-hidden">
               {propositions.map((c) => (
                 <li key={c.id}>
                   <button
@@ -211,28 +235,6 @@ export default function PartieCommunos({ carte, cle, cible, zone, idsEssaisFireb
             {essais.length ? 'Explore la carte et tente une autre commune.' : zone ? `Tape le nom d’une commune de la zone : ${zone.court}.` : 'Tape le nom de n’importe quelle commune pour commencer.'}
           </p>
         ) : null}
-      </div>
-
-      {/* Bandeau de fin (fourni par le mode de jeu) */}
-      {fini && cible && finPartie({ statut, nbEssais: essais.length })}
-
-      {/* Carte */}
-      <div className="rounded-3xl p-[1.5px] bg-gradient-to-br from-fuchsia-500/60 via-indigo-500/30 to-cyan-400/60 shadow-2xl shadow-indigo-900/40">
-        <div className="rounded-[22px] overflow-hidden bg-[radial-gradient(ellipse_at_center,#141a3a_0%,#0a0c22_70%)] p-2 sm:p-3">
-          <CarteCommunos
-            carte={carte}
-            essais={essais}
-            cible={cible}
-            statut={statut}
-            dernier={dernier}
-            reperes={reperes}
-            selection={selection}
-            cadre={zone?.boite}
-            actives={zone?.ids}
-            echelle={echelle}
-            onToucher={(id) => setSelection(id && (dejaEssayes.has(id) || (fini && id === cible?.id)) ? id : null)}
-          />
-        </div>
       </div>
 
       {/* Options de la carte */}

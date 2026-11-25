@@ -94,7 +94,7 @@ export default function CommunosView() {
         <BoutonIcone label="Règles" onClick={() => setFenetre('regles')}><HelpCircle size={18} /></BoutonIcone>
         <BoutonIcone label="Statistiques" onClick={() => setFenetre('stats')}><BarChart3 size={18} /></BoutonIcone>
       </EnTete>
-      <OngletsModes actif="belgique" />
+      {!(partie?.essais?.length || partie?.abandon) && <OngletsModes actif="belgique" />}
 
       <PartieCommunos
         carte={carte}
