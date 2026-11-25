@@ -104,7 +104,7 @@ function CarteJeu({ jeu, numero, onSupprimer }) {
           </div>
         </div>
 
-        <p className="font-bold text-lg tracking-tight">{jeu.titre}</p>
+        <p className="font-bold text-lg tracking-tight text-center">{jeu.titre}</p>
       </div>
     </div>
   )
@@ -145,7 +145,7 @@ function SlotNouveau({ numero, onClick }) {
               <Plus size={32} />
             </div>
           </div>
-          <p className="font-bold text-lg tracking-tight text-white/70">NOUVEAU JEU</p>
+          <p className="font-bold text-lg tracking-tight text-center text-white/70">NOUVEAU JEU</p>
         </div>
       </div>
     </button>
