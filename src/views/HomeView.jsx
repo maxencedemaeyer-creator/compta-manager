@@ -36,7 +36,7 @@ export default function HomeView() {
       <div className="blob pointer-events-none absolute -top-32 -right-24 w-80 h-80 sm:w-[30rem] sm:h-[30rem] rounded-full bg-emerald-300/40 blur-3xl" />
       <div className="blob pointer-events-none absolute bottom-0 -left-32 w-80 h-80 rounded-full bg-douceur/50 blur-3xl" />
 
-      <div className="relative max-w-3xl mx-auto px-5 sm:px-8 pt-5 sm:pt-10 pb-6 sm:pb-10 min-h-dvh flex flex-col">
+      <div className="relative max-w-3xl lg:max-w-5xl mx-auto px-5 sm:px-8 pt-5 sm:pt-6 pb-4 sm:pb-6 min-h-dvh flex flex-col">
         <div className="flex items-center justify-between">
           <p className="text-sm text-emerald-900/60 first-letter:uppercase">{date}</p>
           <div className="flex items-center gap-2">
@@ -68,24 +68,24 @@ export default function HomeView() {
         </div>
 
         {/* Nom */}
-        <header className="mt-8 sm:mt-20 mb-7 sm:mb-16">
+        <header className="mt-8 sm:mt-6 lg:mt-4 mb-7 sm:mb-6 lg:mb-5">
           <p className="text-base sm:text-lg text-emerald-900/60">{salutation()},</p>
-          <h1 className="nom-profil font-display text-[3.5rem] leading-[1] sm:text-8xl font-semibold tracking-tight text-emerald-900">
+          <h1 className="nom-profil font-display text-[3.5rem] leading-[1] sm:text-7xl lg:text-6xl font-semibold tracking-tight text-emerald-900">
             {profil?.nom}
             <span className={profil?.accent || 'text-emerald-500'}>.</span>
           </h1>
         </header>
 
         {/* Applications */}
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-900/40 mb-3 sm:mb-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-900/40 mb-3 sm:mb-3">
           Applications
         </p>
-        <div className="grid grid-cols-2 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-3">
           {apps.map(({ to, nom, description, icon: Icon, couleur }) => (
             <Link
               key={to}
               to={to}
-              className="tuile group flex flex-col items-start sm:flex-row sm:items-center gap-3 sm:gap-4 rounded-3xl bg-white/80 backdrop-blur border border-emerald-900/5 p-4 sm:p-5 shadow-[0_1px_2px_rgba(6,78,59,0.04),0_8px_24px_-12px_rgba(6,78,59,0.18)] hover:bg-white hover:-translate-y-0.5 transition-all"
+              className="tuile group flex flex-col items-start sm:flex-row sm:items-center gap-3 sm:gap-4 rounded-3xl bg-white/80 backdrop-blur border border-emerald-900/5 p-4 sm:p-3.5 shadow-[0_1px_2px_rgba(6,78,59,0.04),0_8px_24px_-12px_rgba(6,78,59,0.18)] hover:bg-white hover:-translate-y-0.5 transition-all"
             >
               <span
                 className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br ${couleur} flex items-center justify-center text-white shadow-md shrink-0 group-hover:scale-105 transition-transform`}
@@ -102,7 +102,7 @@ export default function HomeView() {
           ))}
 
           <div
-            className={`tuile tuile-vide flex items-center gap-4 rounded-3xl border-2 border-dashed border-emerald-900/10 p-4 sm:p-5 ${
+            className={`tuile tuile-vide flex items-center gap-4 rounded-3xl border-2 border-dashed border-emerald-900/10 p-4 sm:p-3.5 ${
               apps.length % 2 === 0 ? 'col-span-2 sm:col-span-1' : ''
             }`}
           >
@@ -120,7 +120,7 @@ export default function HomeView() {
           </div>
         </div>
 
-        <Signature className="mt-auto pt-8 sm:pt-16" />
+        <Signature className="mt-auto pt-6 sm:pt-6" />
       </div>
     </div>
   )
