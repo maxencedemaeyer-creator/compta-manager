@@ -72,7 +72,7 @@ const STYLES = `
 }
 `
 
-function CarteJeu({ jeu, numero, info, onSupprimer }) {
+function CarteJeu({ jeu, numero, onSupprimer }) {
   const Icone = jeu.icon || Joystick
   const [echec, setEchec] = useState(false)
   const favicon = jeu.externe && !echec ? faviconDe(jeu.url) : null
@@ -82,40 +82,29 @@ function CarteJeu({ jeu, numero, info, onSupprimer }) {
         jeu.pret ? 'hover:-translate-y-1 hover:scale-[1.02]' : ''
       }`}
     >
-      <div className="relative h-full rounded-[22px] bg-slate-950/90 overflow-hidden p-5 flex flex-col">
+      <div className="relative h-full rounded-[22px] bg-slate-950/90 overflow-hidden p-4 flex flex-col">
         {/* Reflet qui balaie la carte */}
         <div className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/3 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12 jx-balaye" />
 
         <div className="flex items-start justify-between">
           <span className="font-mono text-xs tracking-[0.3em] text-white/40">SLOT 0{numero}</span>
-          {jeu.pret ? (
-            <span className="text-[10px] font-bold tracking-widest px-2 py-1 rounded-full bg-emerald-400/20 text-emerald-300">
-              JOUER
-            </span>
-          ) : (
-            <span className="text-[10px] font-bold tracking-widest px-2 py-1 rounded-full bg-white/10 text-white/60">
-              BIENTÔT
-            </span>
-          )}
         </div>
 
-        <div className="flex-1 flex items-center justify-center py-8">
-          <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${jeu.couleur} flex items-center justify-center shadow-lg ${jeu.lueur} ${jeu.pret ? '' : 'opacity-60'}`}>
+        <div className="flex-1 flex items-center justify-center py-5">
+          <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${jeu.couleur} flex items-center justify-center shadow-lg ${jeu.lueur} ${jeu.pret ? '' : 'opacity-60'}`}>
             {favicon ? (
-              <span className="w-14 h-14 rounded-xl bg-white flex items-center justify-center">
-                <img src={favicon} alt="" referrerPolicy="no-referrer" onError={() => setEchec(true)} className="w-9 h-9 object-contain" />
+              <span className="w-11 h-11 rounded-xl bg-white flex items-center justify-center">
+                <img src={favicon} alt="" referrerPolicy="no-referrer" onError={() => setEchec(true)} className="w-7 h-7 object-contain" />
               </span>
             ) : jeu.pret ? (
-              <Icone size={38} />
+              <Icone size={32} />
             ) : (
-              <Lock size={34} />
+              <Lock size={28} />
             )}
           </div>
         </div>
 
         <p className="font-bold text-lg tracking-tight">{jeu.titre}</p>
-        <p className="text-sm text-white/50">{jeu.texte}</p>
-        {info && <p className="mt-2 text-xs font-bold text-cyan-300">{info}</p>}
       </div>
     </div>
   )
@@ -147,18 +136,16 @@ function SlotNouveau({ numero, onClick }) {
   return (
     <button type="button" onClick={onClick} className="group relative h-full w-full text-left">
       <div className="relative h-full rounded-3xl p-[2px] bg-gradient-to-br from-fuchsia-500/40 via-purple-500/30 to-cyan-400/40 group-hover:from-fuchsia-500 group-hover:to-cyan-400 group-hover:shadow-xl group-hover:shadow-fuchsia-500/30 transition-all duration-200 group-hover:-translate-y-1">
-        <div className="relative h-full rounded-[22px] bg-slate-950/90 border-2 border-dashed border-white/10 p-5 flex flex-col">
+        <div className="relative h-full rounded-[22px] bg-slate-950/90 border-2 border-dashed border-white/10 p-4 flex flex-col">
           <div className="flex items-start justify-between">
             <span className="font-mono text-xs tracking-[0.3em] text-white/40">SLOT 0{numero}</span>
-            <span className="text-[10px] font-bold tracking-widest px-2 py-1 rounded-full bg-cyan-400/15 text-cyan-300">AJOUTER</span>
           </div>
-          <div className="flex-1 flex items-center justify-center py-8">
-            <div className="w-20 h-20 rounded-2xl border-2 border-dashed border-white/20 group-hover:border-fuchsia-400 group-hover:shadow-lg group-hover:shadow-fuchsia-500/40 flex items-center justify-center text-white/40 group-hover:text-fuchsia-300 transition-all">
-              <Plus size={38} />
+          <div className="flex-1 flex items-center justify-center py-5">
+            <div className="w-16 h-16 rounded-2xl border-2 border-dashed border-white/20 group-hover:border-fuchsia-400 group-hover:shadow-lg group-hover:shadow-fuchsia-500/40 flex items-center justify-center text-white/40 group-hover:text-fuchsia-300 transition-all">
+              <Plus size={32} />
             </div>
           </div>
           <p className="font-bold text-lg tracking-tight text-white/70">NOUVEAU JEU</p>
-          <p className="text-sm text-white/40">Coller le lien d'un site</p>
         </div>
       </div>
     </button>
@@ -249,14 +236,6 @@ export default function JeuxView() {
   const { parties } = useCommunos()
   const aujourdhui = dateDuJour()
   const stats = statistiques(parties, aujourdhui)
-  const partieDuJour = parties.find((p) => p.id === aujourdhui)
-  const infoCommunos = partieDuJour?.trouve
-    ? `✓ Trouvée en ${(partieDuJour.essais || []).length} essais`
-    : partieDuJour?.abandon
-      ? 'Partie du jour terminée'
-      : partieDuJour
-        ? `En cours · ${(partieDuJour.essais || []).length} essais`
-        : '● Nouvelle commune à trouver'
   const niveau = 1 + Math.floor(stats.gagnees / 5)
   const progression = ((stats.gagnees % 5) / 5) * 100
 
@@ -332,7 +311,7 @@ export default function JeuxView() {
         </div>
         <div className="mt-3 grid grid-cols-2 gap-3 sm:gap-5">
           {tous.map((jeu, i) => (
-            <CarteJeu key={jeu.id} jeu={jeu} numero={i + 1} onSupprimer={supprimerJeu} info={jeu.id === 'communos' ? infoCommunos : jeu.id === 'motus' ? '● Mots de 5 à 12 lettres' : null} />
+            <CarteJeu key={jeu.id} jeu={jeu} numero={i + 1} onSupprimer={supprimerJeu} />
           ))}
           <SlotNouveau numero={tous.length + 1} onClick={() => setAjout(true)} />
         </div>
