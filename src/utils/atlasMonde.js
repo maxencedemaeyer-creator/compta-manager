@@ -7,6 +7,9 @@ import { geoCylindricalEqualArea, geoMollweide, geoRobinson, geoWinkel3 } from '
 //  c'est d3-geo qui les projette, selon la projection choisie.
 // =============================================================
 
+// Projection de base des 4 premiers volets : Robinson (parallèles droits, méridiens courbes, pôles aplatis)
+export const PROJECTION_BASE = 'robinson'
+
 export const LARGEUR = 1000 // largeur de la carte, en unités du SVG
 
 // ---------- Continents ----------
@@ -23,7 +26,7 @@ export const CONTINENTS = [
 // Océans : un ou plusieurs emplacements pour le nom (le Pacifique est coupé en deux sur une carte centrée sur Greenwich)
 export const OCEANS = [
   { id: 'atlantique', nom: 'Océan Atlantique', lieux: [[-36, 27]] },
-  { id: 'pacifique', nom: 'Océan Pacifique', lieux: [[-138, 8], [166, 24]] },
+  { id: 'pacifique', nom: 'Océan Pacifique', lieux: [[-138, 8], [164, 11]] },
   { id: 'indien', nom: 'Océan Indien', lieux: [[78, -18]] },
   { id: 'arctique', nom: 'Océan Arctique', lieux: [[40, 84]] },
   { id: 'austral', nom: 'Océan Austral', lieux: [[75, -60]] },

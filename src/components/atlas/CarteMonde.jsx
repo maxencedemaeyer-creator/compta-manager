@@ -334,8 +334,8 @@ export default function CarteMonde({ vue, donneesContinents, couleurs, nomsConti
           {fuseaux && (
             <g pointerEvents="none" textAnchor="middle" fontWeight="800" fill="#1e3a8a">
               {bandesFuseaux.map((f) => {
-                const haut = vue.place(f.milieu, 85)
-                const bas = vue.place(f.milieu, 72)
+                const haut = vue.place(f.milieu, -47)
+                const bas = vue.place(f.milieu, -57)
                 if (!haut || !bas) return null
                 const fs = px(f.de === f.a || f.a - f.de < 10 ? 11 : 14)
                 const { h, jour } = heureDuFuseau(heure, f.n)

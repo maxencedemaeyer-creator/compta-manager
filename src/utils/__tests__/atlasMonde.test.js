@@ -8,6 +8,7 @@ import {
   INCLINAISON,
   OCEANS,
   PLANISPHERES,
+  PROJECTION_BASE,
   PROJECTIONS,
   ZONES_CLIMAT,
   construireVue,
@@ -112,6 +113,13 @@ describe('ATLAS · Monde · projections', () => {
     const globe = construireVue({ projectionId: 'globe' })
     expect(globe.place(0, 20)).not.toBeNull()
     expect(globe.place(180, -20)).toBeNull()
+  })
+
+  it('la projection de base est Robinson : parallèles droits, méridiens courbes', () => {
+    expect(PROJECTION_BASE).toBe('robinson')
+    const vue = construireVue({ projectionId: PROJECTION_BASE })
+    expect(vue.place(-150, 40)[1]).toBeCloseTo(vue.place(150, 40)[1], 3) // un parallèle est horizontal
+    expect(vue.place(90, 0)[0]).not.toBeCloseTo(vue.place(90, 60)[0], 0) // un méridien se rapproche du centre vers les pôles
   })
 
   it('planisphères : tous se construisent', () => {

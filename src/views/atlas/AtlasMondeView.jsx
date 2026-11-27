@@ -4,7 +4,7 @@ import { ArrowLeft, Check, Maximize, Minimize } from 'lucide-react'
 import Chargement from '../../components/Chargement.jsx'
 import CarteMonde from '../../components/atlas/CarteMonde.jsx'
 import { useAtlasMonde } from '../../hooks/useAtlasMonde.js'
-import { LIGNES, PLANISPHERES, PROJECTIONS, PROPRIETES, ZONES_CLIMAT, construireVue } from '../../utils/atlasMonde.js'
+import { LIGNES, PLANISPHERES, PROJECTIONS, PROJECTION_BASE, PROPRIETES, ZONES_CLIMAT, construireVue } from '../../utils/atlasMonde.js'
 
 // =============================================================
 //  ATLAS · Monde
@@ -125,11 +125,11 @@ export default function AtlasMondeView() {
   const defProjection = PROJECTIONS.find((p) => p.id === projection)
   const defPlani = PLANISPHERES.find((p) => p.id === planisphere)
 
-  // La projection de la carte selon le volet (les 4 premiers volets : carte « plate carrée », la plus lisible pour les lignes)
+  // La projection de la carte selon le volet (les 4 premiers volets : la projection de base, Robinson)
   const reglage = useMemo(() => {
     if (volet === 'projections') return { projectionId: projection, centre, pole: 'nord' }
     if (volet === 'planispheres') return { projectionId: defPlani.projection, centre: defPlani.centre, inverse: !!defPlani.inverse, pole: defPlani.pole || 'nord' }
-    return { projectionId: 'equirectangulaire', centre: 0 }
+    return { projectionId: PROJECTION_BASE, centre: 0 }
   }, [volet, projection, centre, defPlani])
   const vue = useMemo(() => construireVue(reglage), [reglage])
 
@@ -223,7 +223,7 @@ export default function AtlasMondeView() {
               </div>
               <Explication
                 titre="Comment lire la carte ?"
-                texte="En haut : le décalage de chaque fuseau avec Greenwich (+1 = une heure de plus). En dessous : l’heure qu’il y est quand il est l’heure choisie à Greenwich. « +1j » : déjà le lendemain ; « −1j » : encore la veille. La Belgique est dans le fuseau +1 (+2 en été, à l’heure d’été)."
+                texte="Rangée du haut : le décalage de chaque fuseau avec Greenwich (+1 = une heure de plus). Rangée du dessous : l’heure qu’il y est quand il est l’heure choisie à Greenwich. « +1j » : déjà le lendemain ; « −1j » : encore la veille. La Belgique est dans le fuseau +1 (+2 en été, à l’heure d’été)."
               />
             </>
           )}
