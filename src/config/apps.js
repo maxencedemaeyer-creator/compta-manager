@@ -1,4 +1,4 @@
-import { Activity, Globe, BookAudio, FlaskConical, Gamepad2, GitBranch, MessageSquarePlus, PenLine, Projector, Scissors, Sprout, Wallet, Wine } from 'lucide-react'
+import { Activity, Globe, BookAudio, FlaskConical, Gamepad2, GitBranch, Map as CarteIcone, MessageSquarePlus, PenLine, Projector, Scissors, Sprout, Wallet, Wine } from 'lucide-react'
 
 // =============================================================
 //  Liste des applications du site (adresses sous /maxence).
@@ -43,6 +43,14 @@ export const APPS = [
     description: 'Photo prise en classe, projetée au tableau',
     icon: Projector,
     couleur: 'from-violet-500 to-amber-400',
+  },
+  {
+    id: 'atlas',
+    to: '/maxence/atlas',
+    nom: 'Atlas',
+    description: 'Bibliothèque de cartes de géographie, à projeter',
+    icon: CarteIcone,
+    couleur: 'from-sky-400 via-cyan-500 to-emerald-500',
   },
   {
     id: 'jeux',

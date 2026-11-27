@@ -23,6 +23,7 @@ export const INSTALLABLES = [
   { id: 'compta', app: 'compta', chemin: '/maxence/compta', nom: 'Compta', theme: '#ffffff' },
   { id: 'genealogie', app: 'genealogie', chemin: '/maxence/genealogie', nom: 'Généalogie', theme: '#020617' },
   { id: 'francais', app: 'francais', chemin: '/maxence/francais', nom: 'Savoir écrire', theme: '#f8fafc' },
+  { id: 'atlas', app: 'atlas', chemin: '/maxence/atlas', nom: 'Atlas', theme: '#f4f6f8' },
   { id: 'jeux', app: 'jeux', chemin: '/maxence/jeux', nom: 'Jeux', theme: '#07031a' },
   { id: 'jardin', app: 'jardin', chemin: '/maxence/jardin', nom: 'Mon jardin', theme: '#ecfdf5' },
   { id: 'coach', app: 'coach', chemin: '/maxence/coach', nom: 'Coach', theme: '#f0f9ff' },
