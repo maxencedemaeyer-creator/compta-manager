@@ -60,4 +60,20 @@ describe('ATLAS · Belgique', () => {
     expect(Object.keys(p.villes)).toHaveLength(villes.length)
     expect(placerEtiquettes({ zones: [], villes, avecNomsVilles: false, rivieres: [], avecNomsRivieres: false, px }).villes).toEqual({})
   })
+
+  it('le nom de Bruxelles s\u2019écarte de celui de la Région flamande (plus de superposition)', () => {
+    const px = (n) => n * 6.83
+    const pos = atlas.etiquettes.regions
+    const zones = [
+      { id: 'flandre', lignes: ['Région', 'flamande'] },
+      { id: 'wallonie', lignes: ['Région', 'wallonne'] },
+      { id: 'bruxelles', lignes: ['Bruxelles-', 'Capitale'] },
+    ].map((z) => ({ ...z, x: pos[z.id].x, y: pos[z.id].y, fs: px(20) }))
+    const p = placerEtiquettes({ zones, villes: [], avecNomsVilles: false, rivieres: [], avecNomsRivieres: false, px })
+    const [fl, , br] = p.zones
+    expect(br.trait).toBeTruthy() // relié à sa zone par un trait
+    const demi = (z) => (Math.max(...z.lignes.map((l) => l.length)) * z.fs * 0.63) / 2
+    const chevauche = Math.abs(fl.x - br.x) < demi(fl) + demi(br) && Math.abs(fl.y - br.y) < fl.fs * 1.15 * 2
+    expect(chevauche).toBe(false)
+  })
 })

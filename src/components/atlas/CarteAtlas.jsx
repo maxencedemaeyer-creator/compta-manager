@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Minus, Plus, Maximize2, MapPin } from 'lucide-react'
-import { TAILLES_VILLES, construireZones, ecartZone, placerEtiquettes, rivieresVisibles, villesVisibles } from '../../utils/atlas.js'
+import { TAILLES_VILLES, construireZones, placerEtiquettes, rivieresVisibles, villesVisibles } from '../../utils/atlas.js'
 
 // =============================================================
 //  Carte de la Belgique de l'ATLAS (SVG, fond clair, à projeter)
@@ -248,29 +248,21 @@ export default function CarteAtlas({ carte, atlas, couche, noms, villes, nomsVil
     return zones.filter((z) => pos[z.id]).map((z) => ({ ...z, ...pos[z.id] }))
   }, [atlas, couche, zones])
 
-  // Noms de zones : position finale (certains sont écartés de leur zone) et taille en pixels
+  // Noms de zones (position idéale = centre de la zone ; Bruxelles est écarté de lui-même si la ville affiche son nom)
   const nomsZones = useMemo(
     () =>
-      etiquettesZones.map((z) => {
-        const ecart = ecartZone(couche, z.id)
-        const police = z.id === 'germanophone' ? taillePolice - 3 : taillePolice
-        const fs = px(police)
-        const x = z.x + (ecart ? px(ecart.dx) : 0)
-        const y = z.y + (ecart ? px(ecart.dy) : 0)
-        const trait = ecart ? [z.x, z.y, x + px(ecart.fin[0]), y + px(ecart.fin[1])] : null
-        return { ...z, x, y, fs, trait, ancre: 'middle' }
-      }),
+      etiquettesZones
+        .filter((z) => !(z.id === 'bruxelles' && villes.bruxelles && nomsVilles))
+        .map((z) => ({ id: z.id, lignes: z.lignes, x: z.x, y: z.y, fs: px(z.id === 'germanophone' ? taillePolice - 3 : taillePolice) })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [etiquettesZones, couche, taillePolice, vue.k, echelle]
+    [etiquettesZones, taillePolice, villes.bruxelles, nomsVilles, vue.k, echelle]
   )
-  // Pas de nom de zone pour Bruxelles si le nom de la ville est affiché au même endroit
-  const nomsZonesAffiches = nomsZones.filter((z) => !(z.id === 'bruxelles' && villes.bruxelles && nomsVilles))
 
-  // Noms des villes et des rivières : emplacements sans chevauchement
+  // Emplacement de tous les noms (zones, villes, rivières) : sans chevauchement
   const placement = useMemo(
     () =>
       placerEtiquettes({
-        zones: noms ? nomsZonesAffiches : [],
+        zones: noms ? nomsZones : [],
         villes: listeVilles,
         avecNomsVilles: nomsVilles,
         rivieres,
@@ -280,6 +272,7 @@ export default function CarteAtlas({ carte, atlas, couche, noms, villes, nomsVil
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [noms, nomsZones, listeVilles, nomsVilles, rivieres, vue.k, echelle]
   )
+  const nomsZonesAffiches = placement.zones
 
   // Noms de communes : seulement ceux qui tiennent dans leur commune, et seulement dans la zone visible
   const etiquettesCommunes = useMemo(() => {

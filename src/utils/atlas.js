@@ -148,16 +148,15 @@ export const TAILLES_VILLES = {
   ville: { police: 12.5, rayon: 4.6 },
 }
 
-// Noms de zones écartés de leur zone (zone trop petite) et reliés par un trait.
-// dx, dy : décalage du nom en pixels ; fin : où s'arrête le trait, par rapport au nom
+// Noms de zones qui ne tiennent pas dans leur zone : écartés (décalage en pixels, essayés dans l'ordre) et reliés par un trait.
 export const ECARTS_ZONES = {
-  bruxelles: { dx: 0, dy: -66, fin: [0, 20] },
-  germanophone: { dx: -165, dy: 60, fin: [70, -10], seulement: 'communautes' },
+  bruxelles: [[0, -66], [-92, -30], [92, -30], [0, 70], [-95, 44], [95, 44], [0, -110]],
+  germanophone: [[-165, 60], [-165, -10], [-150, 130]],
 }
-export function ecartZone(couche, id) {
-  const e = ECARTS_ZONES[id]
-  return e && (!e.seulement || e.seulement === couche) ? e : null
-}
+export const ecartZone = (id) => ECARTS_ZONES[id] || null
+
+// Petits décalages (pixels) essayés, dans l'ordre, pour un nom de zone qui en recouvre un autre ou un point de ville
+const DECALAGES_ZONES = [[0, 0], [0, -24], [0, 24], [-40, 0], [40, 0], [-40, -24], [40, -24], [-40, 24], [40, 24], [0, -48], [0, 48], [-75, 0], [75, 0]]
 
 // Rectangle [x0, y0, x1, y1] d'un texte (estimation : ~0,6 × la police par caractère)
 function rectTexte(x, y, lignes, fs, ancre) {
@@ -165,6 +164,13 @@ function rectTexte(x, y, lignes, fs, ancre) {
   const h = lignes.length * fs * 1.15
   const x0 = ancre === 'middle' ? x - w / 2 : ancre === 'end' ? x - w : x
   return [x0, y - fs * 0.95, x0 + w, y - fs * 0.95 + h]
+}
+
+// Rectangle d'un nom de zone (centré sur x, y)
+function rectCentre(x, y, lignes, fs) {
+  const w = Math.max(...lignes.map((l) => l.length)) * fs * 0.63
+  const h = lignes.length * fs * 1.15
+  return [x - w / 2, y - h / 2, x + w / 2, y + h / 2]
 }
 
 const secroisent = (a, b, marge = 0) => a[0] < b[2] + marge && a[2] > b[0] - marge && a[1] < b[3] + marge && a[3] > b[1] - marge
@@ -181,18 +187,42 @@ export function positionNomVille(v, r, fs, place) {
 }
 
 /**
- * zones   : [{ id, x, y, lignes, fs, ancre }] noms de zones déjà positionnés (fixes)
+ * zones   : [{ id, x, y, lignes, fs }] noms de zones, avec leur position idéale (le centre de la zone)
  * villes  : villes affichées ; avecNomsVilles : afficher leur nom
  * rivieres: rivières affichées ; avecNomsRivieres : afficher leur nom
  * Retourne { villes: { nom: {x, y, a} }, rivieres: { id: {x, y, angle} } }
  */
 export function placerEtiquettes({ zones, villes, avecNomsVilles, rivieres, avecNomsRivieres, px }) {
-  const obstacles = zones.map((z) => Object.assign(rectTexte(z.x, z.y, z.lignes, z.fs, z.ancre), { proprio: null }))
+  // 1. Les points des villes sont des obstacles fixes
+  const obstacles = []
   for (const v of villes) {
     const r = px(TAILLES_VILLES[v.type].rayon)
     obstacles.push(Object.assign([v.x - r, v.y - r, v.x + r, v.y + r], { proprio: v.nom }))
   }
   const marge = px(2)
+
+  // 2. Les noms de zones : chacun prend le premier emplacement libre (centre de la zone, puis de petits décalages ;
+  //    les zones trop petites, comme Bruxelles, essaient des emplacements plus éloignés, reliés par un trait)
+  const zonesPlacees = []
+  for (const z of zones) {
+    const ecarts = ecartZone(z.id)
+    const essais = ecarts ? ecarts.map(([dx, dy]) => [dx, dy, true]) : DECALAGES_ZONES.map(([dx, dy]) => [dx, dy, false])
+    let meilleur = null
+    for (const [dx, dy, relie] of essais) {
+      const x = z.x + px(dx)
+      const y = z.y + px(dy)
+      const rect = rectCentre(x, y, z.lignes, z.fs)
+      const n = nbCollisions(rect, obstacles, marge, undefined)
+      if (!meilleur || n < meilleur.n) meilleur = { n, x, y, rect, relie }
+      if (n === 0) break
+    }
+    // trait de liaison : du centre de la zone au bord le plus proche du nom
+    const trait = meilleur.relie
+      ? [z.x, z.y, Math.min(Math.max(z.x, meilleur.rect[0]), meilleur.rect[2]), Math.min(Math.max(z.y, meilleur.rect[1]), meilleur.rect[3])]
+      : null
+    zonesPlacees.push({ ...z, x: meilleur.x, y: meilleur.y, trait })
+    obstacles.push(Object.assign(meilleur.rect, { proprio: null }))
+  }
 
   const sortieVilles = {}
   if (avecNomsVilles) {
@@ -235,7 +265,7 @@ export function placerEtiquettes({ zones, villes, avecNomsVilles, rivieres, avec
         const ex = (Math.abs(Math.cos(a)) * w + Math.abs(Math.sin(a)) * h) / 2
         const ey = (Math.abs(Math.sin(a)) * w + Math.abs(Math.cos(a)) * h) / 2
         const rect = [cx - ex, cy - ey, cx + ex, cy + ey]
-        const n = nbCollisions(rect, obstacles, marge, null)
+        const n = nbCollisions(rect, obstacles, marge, undefined)
         if (!meilleur || n < meilleur.n) meilleur = { n, x, y, angle, rect }
         if (n === 0) break
       }
@@ -246,5 +276,5 @@ export function placerEtiquettes({ zones, villes, avecNomsVilles, rivieres, avec
       }
     }
   }
-  return { villes: sortieVilles, rivieres: sortieRivieres }
+  return { zones: zonesPlacees, villes: sortieVilles, rivieres: sortieRivieres }
 }
