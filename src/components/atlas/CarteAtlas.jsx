@@ -12,11 +12,11 @@ import { TAILLES_VILLES, construireZones, ecartZone, placerEtiquettes, rivieresV
 //  elles restent constantes quand on zoome.
 // =============================================================
 const ZOOM_MAX = 16
-const MARGE = 40 // unités de carte autour du pays
 
 const COULEUR_TRAIT = '#334155'
 const COULEUR_PAYS = '#0f172a'
-const COULEUR_EAU = '#2b7de0'
+const COULEUR_EAU = '#2a62a8'
+const COULEUR_MER = '#d3e8f7'
 const COULEUR_NOM_EAU = '#1d4ed8'
 
 // Zones colorées : ne se redessinent que si la couche change
@@ -49,12 +49,44 @@ const Traits = memo(function Traits({ chemins }) {
   )
 })
 
+// Fleuves et rivières : trait plein en Belgique ; hors de Belgique, pointillés qui s'effacent
+// (comme dans INTERFACE-ELEVES). Un court passage à l'étranger entre deux parties belges
+// (la Meuse à Maastricht) reste en pointillés, sans fondu : le tracé n'est jamais interrompu.
 const Hydro = memo(function Hydro({ rivieres }) {
   return (
     <g pointerEvents="none" fill="none" strokeLinejoin="round" strokeLinecap="round">
-      {rivieres.map((r) => (
-        <path key={r.id} d={r.d} stroke={COULEUR_EAU} strokeWidth={r.genre === 'fleuve' ? 3.6 : 2.4} vectorEffect="non-scaling-stroke" />
-      ))}
+      <defs>
+        {rivieres.flatMap((r) =>
+          r.dehors.map((p, i) =>
+            p.fondu ? (
+              <linearGradient key={`${r.id}${i}`} id={`atlas-fondu-${r.id}-${i}`} gradientUnits="userSpaceOnUse" x1={p.a[0]} y1={p.a[1]} x2={p.b[0]} y2={p.b[1]}>
+                <stop offset="0" stopColor={COULEUR_EAU} stopOpacity="0.8" />
+                {p.tenue > 0 && <stop offset={p.tenue} stopColor={COULEUR_EAU} stopOpacity="0.8" />}
+                <stop offset="1" stopColor={COULEUR_EAU} stopOpacity="0" />
+              </linearGradient>
+            ) : null
+          )
+        )}
+      </defs>
+      {rivieres.map((r) => {
+        const largeur = r.genre === 'fleuve' ? 3.6 : 2.4
+        return (
+          <g key={r.id}>
+            {r.dehors.map((p, i) => (
+              <path
+                key={i}
+                d={p.d}
+                stroke={p.fondu ? `url(#atlas-fondu-${r.id}-${i})` : COULEUR_EAU}
+                strokeOpacity={p.fondu ? 1 : 0.65}
+                strokeWidth={largeur * 0.8}
+                strokeDasharray="5 6"
+                vectorEffect="non-scaling-stroke"
+              />
+            ))}
+            <path d={r.d} stroke={COULEUR_EAU} strokeWidth={largeur} vectorEffect="non-scaling-stroke" />
+          </g>
+        )
+      })}
     </g>
   )
 })
@@ -72,11 +104,11 @@ function etoile(x, y, r) {
 
 const halo = (fs, couleur = '#ffffff') => ({ stroke: couleur, strokeWidth: fs * 0.3, paintOrder: 'stroke', strokeLinejoin: 'round' })
 
-export default function CarteAtlas({ carte, atlas, couche, noms, villes, nomsVilles, eau, selection, onSelection }) {
-  const W = carte.largeur + 2 * MARGE
-  const H = carte.hauteur + 2 * MARGE
-  const X0 = -MARGE
-  const Y0 = -MARGE
+export default function CarteAtlas({ carte, atlas, couche, noms, villes, nomsVilles, eau, mer, selection, onSelection }) {
+  // Cadre : le pays et les pointillés des rivières qui en sortent
+  const [X0, Y0, X1, Y1] = atlas.cadre
+  const W = X1 - X0
+  const H = Y1 - Y0
   const boite = useRef(null)
   const svgRef = useRef(null)
   const [taille, setTaille] = useState({ w: 1000, h: 800 })
@@ -280,6 +312,7 @@ export default function CarteAtlas({ carte, atlas, couche, noms, villes, nomsVil
         </defs>
 
         <g transform={`translate(${X0 + vue.x} ${Y0 + vue.y}) scale(${vue.k}) translate(${-X0} ${-Y0})`}>
+          {mer && <path d={atlas.mer} fill={COULEUR_MER} pointerEvents="none" />}
           <FondZones zones={zones} communes={couche === 'communes'} />
 
           {/* Zone touchée : voile sombre (+ contour pour une commune seule : pour une province, le contour
@@ -310,7 +343,7 @@ export default function CarteAtlas({ carte, atlas, couche, noms, villes, nomsVil
                   y={v.y}
                   fontSize={fs}
                   textAnchor="middle"
-                  fill={v.type === 'mer' ? '#6b9bd1' : '#94a3b8'}
+                  fill={v.type === 'mer' ? '#5b8fc7' : '#94a3b8'}
                   fontStyle="italic"
                   fontWeight="600"
                   letterSpacing={fs * 0.12}

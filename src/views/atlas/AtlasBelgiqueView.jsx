@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Check, ChevronDown, Droplets, Layers, MapPinned, Maximize, Minimize, Type } from 'lucide-react'
+import { ArrowLeft, Check, Maximize, Minimize } from 'lucide-react'
 import Chargement from '../../components/Chargement.jsx'
 import CarteAtlas from '../../components/atlas/CarteAtlas.jsx'
 import { useAtlasBelgique } from '../../hooks/useAtlasBelgique.js'
@@ -8,46 +8,17 @@ import { COUCHES, EAUX, TYPES_VILLES } from '../../utils/atlas.js'
 
 // =============================================================
 //  ATLAS · Belgique
-//  Une carte, quatre boutons : Couches, Noms, Villes, Hydrographie.
-//  Fond clair, traits nets, gros boutons : pensé pour la projection.
+//  Une carte et, à gauche, une colonne mince avec tous les choix :
+//  Couches, Noms, Villes, Hydrographie. Rien ne se déroule par-dessus
+//  la carte : elle reste toujours entièrement visible.
+//  Fond clair, traits nets : pensé pour la projection.
 // =============================================================
 
-// Bouton de la barre, avec (ou sans) menu déroulant qui se ferme en cliquant ailleurs
-function BoutonMenu({ icone: Icone, titre, resume, ouvert, onBascule, onFermer, children }) {
-  const ref = useRef(null)
-  useEffect(() => {
-    if (!ouvert) return
-    const dehors = (e) => ref.current && !ref.current.contains(e.target) && onFermer()
-    const echap = (e) => e.key === 'Escape' && onFermer()
-    document.addEventListener('pointerdown', dehors)
-    document.addEventListener('keydown', echap)
-    return () => {
-      document.removeEventListener('pointerdown', dehors)
-      document.removeEventListener('keydown', echap)
-    }
-  }, [ouvert, onFermer])
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        aria-expanded={ouvert}
-        onClick={onBascule}
-        className={`h-14 w-60 pl-4 pr-3 rounded-2xl border text-left flex items-center gap-3 transition active:scale-[0.98] ${
-          ouvert ? 'bg-sky-50 border-sky-400 ring-2 ring-sky-200' : 'bg-white border-slate-300 hover:bg-slate-50'
-        }`}
-      >
-        <Icone size={22} className="text-sky-600 shrink-0" />
-        <span className="leading-tight min-w-0 flex-1">
-          <span className="block text-base font-bold text-slate-900">{titre}</span>
-          {resume && <span className="block text-xs text-slate-500 truncate">{resume}</span>}
-        </span>
-        <ChevronDown size={18} className={`shrink-0 text-slate-400 transition ${ouvert ? 'rotate-180' : ''}`} />
-      </button>
-      {ouvert && <div className="absolute z-30 top-[calc(100%+8px)] left-0 w-80 rounded-2xl bg-white border border-slate-300 shadow-xl p-2">{children}</div>}
-    </div>
-  )
+function Titre({ children }) {
+  return <h2 className="px-2 pt-4 pb-1 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">{children}</h2>
 }
 
+// Une ligne de choix : rond (un seul choix possible) ou carré (plusieurs possibles)
 function Ligne({ actif, onClick, titre, aide, carre = false }) {
   return (
     <button
@@ -55,18 +26,18 @@ function Ligne({ actif, onClick, titre, aide, carre = false }) {
       role={carre ? 'checkbox' : 'radio'}
       aria-checked={actif}
       onClick={onClick}
-      className={`w-full flex items-center gap-3 rounded-xl px-3 py-3 text-left transition ${actif ? 'bg-sky-50' : 'hover:bg-slate-50'}`}
+      className={`w-full flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition ${actif ? 'bg-sky-50' : 'hover:bg-slate-50'}`}
     >
       <span
-        className={`w-6 h-6 shrink-0 flex items-center justify-center border-2 ${carre ? 'rounded-md' : 'rounded-full'} ${
+        className={`w-[18px] h-[18px] shrink-0 flex items-center justify-center border-2 ${carre ? 'rounded' : 'rounded-full'} ${
           actif ? 'bg-sky-600 border-sky-600 text-white' : 'border-slate-300 bg-white'
         }`}
       >
-        {actif && <Check size={15} strokeWidth={3.5} />}
+        {actif && <Check size={12} strokeWidth={4} />}
       </span>
-      <span className="leading-tight">
-        <span className="block text-base font-semibold text-slate-900">{titre}</span>
-        {aide && <span className="block text-sm text-slate-500">{aide}</span>}
+      <span className="leading-tight min-w-0">
+        <span className={`block text-[15px] ${actif ? 'font-bold text-slate-900' : 'font-semibold text-slate-800'}`}>{titre}</span>
+        {aide && <span className="block text-[11px] text-slate-500 truncate">{aide}</span>}
       </span>
     </button>
   )
@@ -75,12 +46,12 @@ function Ligne({ actif, onClick, titre, aide, carre = false }) {
 export default function AtlasBelgiqueView() {
   const { carte, atlas, erreur } = useAtlasBelgique()
   const racine = useRef(null)
-  const [menu, setMenu] = useState(null) // 'couches' | 'villes' | 'eau'
   const [couche, setCouche] = useState('vierge')
   const [noms, setNoms] = useState(true)
   const [villes, setVilles] = useState({ bruxelles: false, chefsLieux: false, importantes: false })
   const [nomsVilles, setNomsVilles] = useState(true)
   const [eau, setEau] = useState('aucune')
+  const [mer, setMer] = useState(false)
   const [selection, setSelection] = useState(null)
   const [pleinEcran, setPleinEcran] = useState(false)
 
@@ -99,92 +70,68 @@ export default function AtlasBelgiqueView() {
   }
   if (!carte || !atlas) return <Chargement message="Chargement de la carte…" />
 
-  const nbVilles = Object.values(villes).filter(Boolean).length
-  const resumeVilles = nbVilles === 0 ? 'Aucune' : TYPES_VILLES.filter((t) => villes[t.id]).map((t) => t.resume).join(', ')
-  const coucheActive = COUCHES.find((c) => c.id === couche)
-  const eauActive = EAUX.find((e) => e.id === eau)
-  const fermer = () => setMenu(null)
-  const basculer = (id) => setMenu((m) => (m === id ? null : id))
-
   return (
-    <div ref={racine} className="h-dvh flex flex-col bg-[#f4f6f8] text-slate-900 overflow-hidden">
-      <header className="shrink-0 flex flex-wrap items-center gap-x-5 gap-y-2 px-5 py-3 bg-white border-b border-slate-200">
-        <Link to="/maxence/atlas" aria-label="Retour à l’Atlas" className="w-12 h-12 rounded-xl border border-slate-300 flex items-center justify-center text-slate-600 hover:bg-slate-50 active:scale-95">
-          <ArrowLeft size={22} />
-        </Link>
-        <h1 className="text-2xl font-black tracking-tight mr-2">Belgique</h1>
-
-        <div className="flex flex-wrap items-center gap-3">
-          {/* 1. Couches */}
-          <BoutonMenu icone={Layers} titre="Couches" resume={coucheActive.nom} ouvert={menu === 'couches'} onBascule={() => basculer('couches')} onFermer={fermer}>
-            {COUCHES.map((c) => (
-              <Ligne
-                key={c.id}
-                actif={couche === c.id}
-                titre={c.nom}
-                aide={c.aide}
-                onClick={() => {
-                  setCouche(c.id)
-                  setSelection(null)
-                  fermer()
-                }}
-              />
-            ))}
-          </BoutonMenu>
-
-          {/* 2. Noms : afficher / masquer */}
+    <div ref={racine} className="h-dvh flex bg-[#f4f6f8] text-slate-900 overflow-hidden">
+      {/* Colonne des choix */}
+      <aside className="shrink-0 w-60 flex flex-col bg-white border-r border-slate-200">
+        <div className="shrink-0 flex items-center gap-2 px-3 py-3 border-b border-slate-200">
+          <Link to="/maxence/atlas" aria-label="Retour à l’Atlas" className="w-10 h-10 shrink-0 rounded-xl border border-slate-300 flex items-center justify-center text-slate-600 hover:bg-slate-50 active:scale-95">
+            <ArrowLeft size={20} />
+          </Link>
+          <h1 className="flex-1 text-xl font-black tracking-tight">Belgique</h1>
           <button
             type="button"
-            aria-pressed={noms}
-            onClick={() => setNoms((n) => !n)}
-            className={`h-14 px-4 rounded-2xl border flex items-center gap-3 transition active:scale-[0.98] ${
-              noms ? 'bg-sky-50 border-sky-400 ring-2 ring-sky-200' : 'bg-white border-slate-300 hover:bg-slate-50'
-            }`}
+            onClick={basculerPleinEcran}
+            aria-label={pleinEcran ? 'Quitter le plein écran' : 'Plein écran'}
+            className="w-10 h-10 shrink-0 rounded-xl border border-slate-300 flex items-center justify-center text-slate-600 hover:bg-slate-50 active:scale-95"
           >
-            <Type size={22} className="text-sky-600" />
-            <span className="leading-tight text-left">
-              <span className="block text-base font-bold text-slate-900">Noms</span>
-              <span className="block text-xs text-slate-500">{noms ? 'Affichés' : 'Masqués'}</span>
+            {pleinEcran ? <Minimize size={19} /> : <Maximize size={19} />}
+          </button>
+        </div>
+
+        <div className="flex-1 min-h-0 overflow-y-auto px-2 pb-4">
+          <Titre>Couches</Titre>
+          {COUCHES.map((c) => (
+            <Ligne
+              key={c.id}
+              actif={couche === c.id}
+              titre={c.nom}
+              onClick={() => {
+                setCouche(c.id)
+                setSelection(null)
+              }}
+            />
+          ))}
+
+          <Titre>Noms</Titre>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={noms}
+            onClick={() => setNoms((n) => !n)}
+            className="w-full flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 hover:bg-slate-50"
+          >
+            <span className="text-[15px] font-semibold text-slate-800">{noms ? 'Affichés' : 'Masqués'}</span>
+            <span className={`relative w-11 h-6 rounded-full transition ${noms ? 'bg-sky-600' : 'bg-slate-300'}`}>
+              <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${noms ? 'left-[22px]' : 'left-0.5'}`} />
             </span>
           </button>
 
-          {/* 3. Villes */}
-          <BoutonMenu icone={MapPinned} titre="Villes" resume={resumeVilles} ouvert={menu === 'villes'} onBascule={() => basculer('villes')} onFermer={fermer}>
-            {TYPES_VILLES.map((t) => (
-              <Ligne key={t.id} carre actif={villes[t.id]} titre={t.nom} aide={t.aide} onClick={() => setVilles((v) => ({ ...v, [t.id]: !v[t.id] }))} />
-            ))}
-            <div className="my-2 border-t border-slate-200" />
-            <Ligne carre actif={!nomsVilles} titre="Masquer les noms" aide="Garder seulement les points" onClick={() => setNomsVilles((n) => !n)} />
-          </BoutonMenu>
+          <Titre>Villes</Titre>
+          {TYPES_VILLES.map((t) => (
+            <Ligne key={t.id} carre actif={villes[t.id]} titre={t.nom} aide={t.aide} onClick={() => setVilles((v) => ({ ...v, [t.id]: !v[t.id] }))} />
+          ))}
+          <Ligne carre actif={!nomsVilles} titre="Masquer les noms" aide="Garder seulement les points" onClick={() => setNomsVilles((n) => !n)} />
 
-          {/* 4. Hydrographie */}
-          <BoutonMenu icone={Droplets} titre="Hydrographie" resume={eauActive.resume || eauActive.nom} ouvert={menu === 'eau'} onBascule={() => basculer('eau')} onFermer={fermer}>
-            {EAUX.map((e) => (
-              <Ligne
-                key={e.id}
-                actif={eau === e.id}
-                titre={e.nom}
-                aide={e.aide}
-                onClick={() => {
-                  setEau(e.id)
-                  fermer()
-                }}
-              />
-            ))}
-          </BoutonMenu>
+          <Titre>Hydrographie</Titre>
+          {EAUX.map((e) => (
+            <Ligne key={e.id} actif={eau === e.id} titre={e.nom} aide={e.aide} onClick={() => setEau(e.id)} />
+          ))}
+          <Ligne carre actif={mer} titre="Mer du Nord" onClick={() => setMer((m) => !m)} />
         </div>
+      </aside>
 
-        <button
-          type="button"
-          onClick={basculerPleinEcran}
-          aria-label={pleinEcran ? 'Quitter le plein écran' : 'Plein écran'}
-          className="ml-auto w-12 h-12 rounded-xl border border-slate-300 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50 active:scale-95"
-        >
-          {pleinEcran ? <Minimize size={22} /> : <Maximize size={22} />}
-        </button>
-      </header>
-
-      <main className="flex-1 min-h-0 p-2">
+      <main className="flex-1 min-w-0 p-2">
         <CarteAtlas
           carte={carte}
           atlas={atlas}
@@ -193,6 +140,7 @@ export default function AtlasBelgiqueView() {
           villes={villes}
           nomsVilles={nomsVilles}
           eau={eau}
+          mer={mer}
           selection={selection}
           onSelection={setSelection}
         />

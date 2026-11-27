@@ -2,7 +2,7 @@
 """
 Génère src/data/atlas-belgique.json (données de l'application ATLAS, série « Belgique »).
 
-Rien n'est dessiné à la main, sauf la Dendre (voir DENDRE ci-dessous) :
+Rien n'est dessiné à la main :
   - frontières des régions, communautés et provinces : calculées à partir des 565
     communes de src/data/communos-communes.json (Statbel, utilisé aussi par COMMUNOS).
     Un tronçon de frontière = une arête commune à deux communes de groupes différents.
@@ -29,16 +29,6 @@ SORTIE = os.path.join(RACINE, 'src', 'data', 'atlas-belgique.json')
 
 # Les 9 communes de la Communauté germanophone (codes Statbel)
 COMMUNES_DG = {'63001', '63012', '63013', '63023', '63040', '63048', '63061', '63067', '63087'}
-
-# Dendre : absente des données OSM récupérées → tracé approché à partir de points connus
-# (Ath, Lessines, Grammont, Ninove, Alost, Termonde), source jusqu'à l'embouchure dans l'Escaut.
-DENDRE = [
-    (50.4980, 3.9480), (50.5330, 3.8800), (50.5800, 3.8200), (50.6290, 3.7770),  # Dendre orientale → Ath
-    (50.6560, 3.7900), (50.6940, 3.8190), (50.7120, 3.8340), (50.7420, 3.8700),
-    (50.7730, 3.8800), (50.8000, 3.9400), (50.8280, 4.0100), (50.8620, 4.0540),
-    (50.8840, 4.0700), (50.9380, 4.0360), (50.9800, 4.0550), (51.0290, 4.1000),
-]
-
 
 def decoder(r):
     pts, x, y = [], 0, 0
@@ -253,97 +243,168 @@ def dp(points, tol):
 
 
 # ---------------------------------------------------------------- rivières
+# Même règle que l'appli INTERFACE-ELEVES (scripts/generer-cours-eau.mjs) :
+#  - les tronçons OSM d'un cours d'eau sont chaînés bout à bout (un trou de moins de 3 km est comblé) : pas d'interruption ;
+#  - en Belgique : trait plein ; hors de Belgique : ~15 km de pointillés qui s'effacent (vers la source ou la mer) ;
+#  - un court passage à l'étranger entre deux parties belges (la Meuse à Maastricht) : pointillés sans fondu.
+KM = 1 / UNITE  # unités de carte par km
+DEPASSE = 15 * KM
+BORD_PAYS = 1.2 * KM  # un point à moins de 1,2 km du pays compte comme belge (rivière-frontière)
+PROCHE = 0.05 * KM
+SAUT = 3 * KM
+LISSAGE = 1.2
+# Pointillés plus longs, vers l'amont : la Meuse continue en France jusqu'un peu après la jonction avec la Semois
+# (Monthermé, ~40 km en amont de la frontière à Givet) ; le trait garde toute son intensité sur 82 % de sa longueur.
+# (longueur, part du trait à pleine intensité, seulement vers le sud ?) ; la Semois rejoint la Meuse à Monthermé.
+EXTENSIONS = {'meuse': (48 * KM, 0.82, True), 'semois': (18.5 * KM, 0.9, False)}
+
+
+def longueur(pts):
+    return sum(math.hypot(*(pts[i + 1] - pts[i])) for i in range(len(pts) - 1))
+
+
 def chainer(lignes):
-    """Recolle bout à bout les tronçons OSM qui se touchent (mêmes extrémités)."""
-    lignes = [list(l) for l in lignes if len(l) > 1]
-    cle = lambda p: (round(p[0], 6), round(p[1], 6))
-    fait = True
-    while fait:
-        fait = False
-        debuts = defaultdict(list)
-        for i, l in enumerate(lignes):
-            debuts[cle(l[0])].append(i)
-        for i, l in enumerate(lignes):
-            if l is None:
-                continue
-            for j in debuts.get(cle(l[-1]), []):
-                if j != i and lignes[j] is not None:
-                    l.extend(lignes[j][1:])
-                    lignes[j] = None
-                    fait = True
-                    break
-            if fait:
-                break
-        lignes = [l for l in lignes if l is not None]
-        if not fait:
-            # essai en inversant des tronçons pour qu'ils aillent dans le même sens
-            fins = defaultdict(list)
-            for i, l in enumerate(lignes):
-                fins[cle(l[-1])].append(i)
-            for i, l in enumerate(lignes):
-                for j in fins.get(cle(l[-1]), []):
-                    if j != i:
-                        l.extend(reversed(lignes[j][:-1]))
-                        lignes.pop(j)
-                        fait = True
-                        break
-                if fait:
-                    break
-    return lignes
+    """Relie les morceaux bout à bout en partant du plus long (le plus proche d'abord, puis le plus long)."""
+    restantes = sorted(lignes, key=longueur, reverse=True)
+    chaine = restantes.pop(0)
+    while True:
+        meilleur = None
+        for i, l in enumerate(restantes):
+            debut, fin = chaine[0], chaine[-1]
+            d_fl0, d_fll = np.hypot(*(fin - l[0])), np.hypot(*(fin - l[-1]))
+            d_dll, d_dl0 = np.hypot(*(debut - l[-1])), np.hypot(*(debut - l[0]))
+            essais = [
+                (d_fl0, lambda l=l, d=d_fl0: np.vstack([chaine, l[1 if d < PROCHE else 0:]])),
+                (d_fll, lambda l=l, d=d_fll: np.vstack([chaine, l[::-1][1 if d < PROCHE else 0:]])),
+                (d_dll, lambda l=l, d=d_dll: np.vstack([l[:-1 if d < PROCHE else len(l)], chaine])),
+                (d_dl0, lambda l=l, d=d_dl0: np.vstack([l[::-1][:-1 if d < PROCHE else len(l)], chaine])),
+            ]
+            for d, joindre in essais:
+                if d <= SAUT and (meilleur is None or d < meilleur[0] or (d == meilleur[0] and longueur(l) > meilleur[1])):
+                    meilleur = (d, longueur(l), i, joindre)
+        if meilleur is None:
+            break
+        chaine = meilleur[3]()
+        restantes.pop(meilleur[2])
+    return chaine
+
+
+def couper(pts, l):
+    """Les `l` premières unités d'une ligne (dernier point interpolé)."""
+    res, reste = [pts[0]], l
+    for i in range(1, len(pts)):
+        d = math.hypot(*(pts[i] - pts[i - 1]))
+        if d >= reste:
+            t = reste / d if d else 0
+            res.append(pts[i - 1] + t * (pts[i] - pts[i - 1]))
+            return np.array(res)
+        res.append(pts[i])
+        reste -= d
+    return np.array(res)
+
+
+def en_belgique(pts):
+    return dedans_pays(pts) | (distance_au_contour(pts) <= BORD_PAYS)
 
 
 RIVIERES = [
-    # id, nom, genre, fraction du tracé où poser le nom, décalage (unités) du nom
-    ('meuse', 'Meuse', 'fleuve', 0.30, (0, 0)),
-    ('escaut', 'Escaut', 'fleuve', 0.80, (0, 0)),
-    ('yser', 'Yser', 'fleuve', 0.50, (0, 0)),
-    ('lys', 'Lys', 'riviere', 0.45, (0, 0)),
-    ('dendre', 'Dendre', 'riviere', 0.55, (0, 0)),
-    ('sambre', 'Sambre', 'riviere', 0.45, (0, 0)),
-    ('rupel', 'Rupel', 'riviere', 0.5, (0, 0)),
-    ('ourthe', 'Ourthe', 'riviere', 0.5, (0, 0)),
-    ('semois', 'Semois', 'riviere', 0.5, (0, 0)),
-    ('senne', 'Senne', 'riviere', 0.5, (0, 0)),
-    ('dyle', 'Dyle', 'riviere', 0.5, (0, 0)),
-    ('demer', 'Demer', 'riviere', 0.5, (0, 0)),
-    ('nete', 'Nète', 'riviere', 0.5, (0, 0)),
-    ('ambleve', 'Amblève', 'riviere', 0.5, (0, 0)),
-    ('haine', 'Haine', 'riviere', 0.5, (0, 0)),
+    # id, nom, genre, fraction du tracé où poser le nom
+    ('meuse', 'Meuse', 'fleuve', 0.30),
+    ('escaut', 'Escaut', 'fleuve', 0.80),
+    ('yser', 'Yser', 'fleuve', 0.50),
+    ('lys', 'Lys', 'riviere', 0.45),
+    ('dendre', 'Dendre', 'riviere', 0.55),
+    ('sambre', 'Sambre', 'riviere', 0.45),
+    ('rupel', 'Rupel', 'riviere', 0.5),
+    ('ourthe', 'Ourthe', 'riviere', 0.5),
+    ('semois', 'Semois', 'riviere', 0.5),
+    ('senne', 'Senne', 'riviere', 0.5),
+    ('dyle', 'Dyle', 'riviere', 0.5),
+    ('demer', 'Demer', 'riviere', 0.5),
+    ('nete', 'Nète', 'riviere', 0.5),
+    ('ambleve', 'Amblève', 'riviere', 0.5),
+    ('haine', 'Haine', 'riviere', 0.5),
 ]
 osm = {f['properties']['id']: f['geometry'] for f in json.load(open(os.path.join(SOURCES, 'cours-eau-osm.geojson')))['features']}
+# Dendre : absente des données OSM récupérées (Overpass injoignable) → tracé approché, remplacé dès qu'un tracé OSM 'dendre' existe
+if 'dendre' not in osm:
+    osm['dendre'] = {'type': 'LineString', 'coordinates': json.load(open(os.path.join(SOURCES, 'dendre-approchee.json')))['coordinates']}
+
+# Fenêtre de travail : la Belgique et 25 km autour (on n'a besoin de rien de plus loin)
+tous_les_points = np.concatenate([np.array(a, float) for a in anneaux_pays])
+fx0, fy0 = tous_les_points.min(0) - 25 * KM
+fx1, fy1 = tous_les_points.max(0) + 25 * KM
+
+
+def dans_fenetre(xy):
+    return (xy[:, 0] >= fx0) & (xy[:, 0] <= fx1) & (xy[:, 1] >= fy0) & (xy[:, 1] <= fy1)
+
+
+def net(pts):
+    return [(int(round(x)), int(round(y))) for x, y in dp(pts, LISSAGE)]
 
 
 rivieres_out = []
-for rid, nom, genre, frac, off in RIVIERES:
-    if rid == 'dendre':
-        lignes_ll = [[(lat, lon) for lat, lon in DENDRE]]
-    else:
-        g = osm[rid]
-        brut = g['coordinates'] if g['type'] == 'MultiLineString' else [g['coordinates']]
-        lignes_ll = chainer([[(lat, lon) for lon, lat in l] for l in brut])
-    morceaux = []
-    for l in lignes_ll:
-        xy = projeter_tab(l)
-        # on garde ce qui est dans le pays (ou à moins de 1,5 km de la frontière : tracés qui la longent)
-        ok = dedans_pays(xy) | (distance_au_contour(xy) * UNITE < 1.5)
+etendue = [tous_les_points.min(0), tous_les_points.max(0)]
+for rid, nom, genre, frac in RIVIERES:
+    if rid not in osm:
+        print('!! pas de données OSM pour', rid)
+        continue
+    g = osm[rid]
+    brut = g['coordinates'] if g['type'] == 'MultiLineString' else [g['coordinates']]
+    lignes = []
+    for l in brut:
+        xy = projeter_tab([(lat, lon) for lon, lat in l])
+        ok = dans_fenetre(xy)  # on coupe là où la ligne sort de la fenêtre
         cur = []
         for p, o in zip(xy, ok):
             if o:
                 cur.append(p)
             elif cur:
-                morceaux.append(cur)
+                lignes.append(np.array(cur))
                 cur = []
         if cur:
-            morceaux.append(cur)
-    morceaux = [dp(m, 1.2) for m in morceaux if len(m) > 1]
-    morceaux = [m for m in morceaux if sum(math.hypot(*(m[i + 1] - m[i])) for i in range(len(m) - 1)) * UNITE > 1.0]
-    if not morceaux:
-        print('!! rivière vide :', rid)
+            lignes.append(np.array(cur))
+    lignes = [l for l in lignes if len(l) > 1]
+    pts = chainer(lignes)
+    be = en_belgique(pts)
+    # suites de points belges / étrangers ; chaque suite reprend le dernier point de la précédente
+    suites = []
+    for p, b_ in zip(pts, be):
+        if suites and suites[-1]['be'] == b_:
+            suites[-1]['pts'].append(p)
+        else:
+            suites.append({'be': b_, 'pts': [suites[-1]['pts'][-1], p] if suites else [p]})
+    solides, pointilles = [], []
+    for i, su in enumerate(suites):
+        sp = np.array(su['pts'])
+        if su['be']:
+            solides.append(sp)
+            continue
+        avant = suites[i - 1]['be'] if i > 0 else False
+        apres = suites[i + 1]['be'] if i + 1 < len(suites) else False
+        if avant and apres and longueur(sp) <= 2 * DEPASSE:
+            pointilles.append((sp, False, 0.0))
+            continue
+        for depart, sens in ((sp, avant), (sp[::-1], apres)):
+            if not sens:
+                continue
+            long_, tenue = DEPASSE, 0.0
+            # vers le sud (la France, pour la Meuse) : pointillés plus longs si prévu
+            if rid in EXTENSIONS and (not EXTENSIONS[rid][2] or depart[-1][1] > depart[0][1] + 10 * KM):
+                long_, tenue = EXTENSIONS[rid][:2]
+            pointilles.append((couper(depart, long_), True, tenue))
+    solides = [m for m in solides if len(m) > 1]
+    if not solides:
+        print('!! rivière sans passage en Belgique :', rid)
         continue
-    # emplacements possibles du nom : sur le plus long morceau, du plus souhaité au moins souhaité
-    long_ = lambda m: sum(math.hypot(*(m[i + 1] - m[i])) for i in range(len(m) - 1))
-    plus_long = max(morceaux, key=long_)
-    total = long_(plus_long)
+    for sp, _, _ in pointilles:
+        etendue[0] = np.minimum(etendue[0], sp.min(0))
+        etendue[1] = np.maximum(etendue[1], sp.max(0))
+
+    # emplacements possibles du nom : sur le plus long morceau plein
+    plus_long = max(solides, key=longueur)
+    total = longueur(plus_long)
 
     def ancre_a(fraction):
         cible, acc = total * fraction, 0
@@ -367,15 +428,40 @@ for rid, nom, genre, frac, off in RIVIERES:
             acc += seg
         return [int(round(plus_long[-1][0])), int(round(plus_long[-1][1])), 0.0]
 
-    # candidats tous les 5 % du tracé, du plus proche de la fraction souhaitée au plus éloigné
     fractions = sorted((round(0.08 + 0.05 * i, 2) for i in range(18)), key=lambda f: abs(f - frac))
     noms_possibles = [ancre_a(f) for f in fractions if total * UNITE * 0.08 > 1.0] or [ancre_a(frac)]
     rivieres_out.append({
         'id': rid, 'nom': nom, 'genre': genre,
-        'd': chemin([[(int(round(x)), int(round(y))) for x, y in m] for m in morceaux]),
+        'd': chemin([net(m) for m in solides]),
+        'dehors': [
+            {'d': chemin([net(sp)]), 'fondu': fondu, 'tenue': tenue, 'a': [int(round(sp[0][0])), int(round(sp[0][1]))], 'b': [int(round(sp[-1][0])), int(round(sp[-1][1]))]}
+            for sp, fondu, tenue in pointilles
+        ],
         'noms': noms_possibles,
     })
-    print(f'rivière {rid:8s} {len(morceaux)} morceau(x), {sum(len(m) for m in morceaux)} points')
+    print(f'rivière {rid:8s} {len(solides)} morceau(x) plein(s), {len(pointilles)} pointillé(s), {longueur(pts) * UNITE:.0f} km')
+
+# Cadre de la carte : le pays et les pointillés des rivières, avec une marge
+MARGE_CADRE = 60
+cadre = [int(etendue[0][0] - MARGE_CADRE), int(etendue[0][1] - MARGE_CADRE), int(etendue[1][0] + MARGE_CADRE), int(etendue[1][1] + MARGE_CADRE)]
+
+# ---------------------------------------------------------------- mer du Nord
+# La côte belge = la partie du contour du pays entre la frontière française (La Panne) et la frontière néerlandaise (Knokke) ;
+# on la prolonge vers le large et le long des côtes française et néerlandaise voisines.
+contour = max((np.array(a, float) for a in anneaux_pays), key=len)
+nord_ouest = np.array(projeter(51.0905, 2.5450))
+nord_est = np.array(projeter(51.3556, 3.3737))
+i0 = int(np.hypot(*(contour - nord_ouest).T).argmin())
+i1 = int(np.hypot(*(contour - nord_est).T).argmin())
+chemin_a = contour[min(i0, i1):max(i0, i1) + 1]
+chemin_b = np.concatenate([contour[max(i0, i1):], contour[:min(i0, i1) + 1]])
+cote = chemin_a if longueur(chemin_a) < longueur(chemin_b) else chemin_b
+if np.hypot(*(cote[0] - nord_ouest)) > np.hypot(*(cote[-1] - nord_ouest)):
+    cote = cote[::-1]  # de La Panne vers Knokke
+# (le dessin déborde largement du cadre : la mer remplit tout l'écran, même si la fenêtre est plus large que la carte)
+large = [projeter(la, lo) for la, lo in [(51.40, 3.40), (51.53, 3.44), (51.58, 3.51), (51.72, 3.80), (51.82, 3.95), (51.98, 4.12), (52.10, 4.25), (53.0, 4.60), (53.0, -0.5), (50.60, -0.5), (50.72, 1.58), (50.96, 1.85), (51.04, 2.37), (51.07, 2.52)]]
+mer = np.vstack([cote, np.array(large)])
+print(f'mer : côte de {longueur(cote) * UNITE:.0f} km')
 
 # ---------------------------------------------------------------- villes
 CHEFS_LIEUX = [
@@ -461,7 +547,7 @@ for couche, groupes in ETIQUETTES.items():
 # Pays voisins et mer (positions en lon/lat)
 VOISINS = [
     ('Mer du Nord', 51.62, 2.55, 'mer'), ('France', 50.12, 2.62, 'pays'), ('Pays-Bas', 51.70, 5.35, 'pays'),
-    ('Allemagne', 50.45, 6.62, 'pays'), ('Luxembourg', 49.56, 6.42, 'pays'),
+    ('Allemagne', 50.62, 6.55, 'pays'), ('Luxembourg', 49.56, 6.42, 'pays'),
 ]
 voisins_out = []
 for n, la, lo, t in VOISINS:
@@ -470,10 +556,12 @@ for n, la, lo, t in VOISINS:
 
 sortie = {
     'source': "Frontières calculées depuis les communes Statbel (CC0) ; rivières © les contributeurs d'OpenStreetMap (ODbL) ; "
-              "Dendre approchée. Voir scripts/atlas/generer-atlas-belgique.py",
+              "Voir scripts/atlas/generer-atlas-belgique.py",
     'communesDG': sorted(COMMUNES_DG),
     'frontieres': {k: chemin([[(int(x), int(y)) for x, y in l] for l in v]) for k, v in frontieres_calculees.items()},
     'rivieres': rivieres_out,
+    'cadre': cadre,
+    'mer': chemin([[(int(round(x)), int(round(y))) for x, y in mer]]) + 'Z',
     'villes': villes,
     'etiquettes': etiquettes_out,
     'voisins': voisins_out,

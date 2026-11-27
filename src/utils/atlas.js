@@ -17,9 +17,9 @@ export const COUCHES = [
 
 // Hydrographie (menu « Hydrographie »)
 export const EAUX = [
-  { id: 'aucune', nom: 'Aucune' },
+  { id: 'aucune', nom: 'Aucun cours d’eau' },
   { id: 'fleuves', nom: 'Les 3 fleuves', resume: 'Les 3 fleuves', aide: 'Meuse, Escaut, Yser' },
-  { id: 'rivieres', nom: 'Fleuves et rivières importantes', resume: 'Fleuves + rivières', aide: 'Lys, Dendre, Sambre, Ourthe, Semois…' },
+  { id: 'rivieres', nom: 'Fleuves et rivières', resume: 'Fleuves + rivières', aide: 'Lys, Dendre, Sambre, Ourthe…' },
 ]
 
 // Villes (menu « Villes ») : ce qu'on peut cocher
