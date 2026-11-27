@@ -344,12 +344,15 @@ def net(pts):
     return [(int(round(x)), int(round(y))) for x, y in dp(pts, LISSAGE)]
 
 
-rivieres_out = []
-etendue = [tous_les_points.min(0), tous_les_points.max(0)]
-for rid, nom, genre, frac in RIVIERES:
-    if rid not in osm:
-        print('!! pas de données OSM pour', rid)
-        continue
+# Confluences : chaque affluent est prolongé jusqu'au cours d'eau où il se jette (les tracés OSM s'arrêtent parfois avant)
+CONFLUENCES = {
+    'lys': 'escaut', 'dendre': 'escaut', 'haine': 'escaut', 'sambre': 'meuse', 'ourthe': 'meuse', 'ambleve': 'ourthe',
+    'demer': 'dyle', 'dyle': 'rupel', 'nete': 'rupel', 'senne': 'dyle', 'rupel': 'escaut',
+}
+MAX_CONFLUENCE = 40 * KM
+
+
+def chaine_de(rid):
     g = osm[rid]
     brut = g['coordinates'] if g['type'] == 'MultiLineString' else [g['coordinates']]
     lignes = []
@@ -365,8 +368,39 @@ for rid, nom, genre, frac in RIVIERES:
                 cur = []
         if cur:
             lignes.append(np.array(cur))
-    lignes = [l for l in lignes if len(l) > 1]
-    pts = chainer(lignes)
+    return chainer([l for l in lignes if len(l) > 1])
+
+
+def point_le_plus_proche(pts, q):
+    """Point d'une polyligne le plus proche de q (projection sur les segments) et sa distance."""
+    a, b = pts[:-1], pts[1:]
+    d = b - a
+    l2 = (d ** 2).sum(1)
+    l2[l2 == 0] = 1
+    t = np.clip(((q - a) * d).sum(1) / l2, 0, 1)
+    proj = a + t[:, None] * d
+    dist = np.hypot(*(proj - q).T)
+    i = int(dist.argmin())
+    return proj[i], float(dist[i])
+
+
+chaines = {rid: chaine_de(rid) for rid, *_ in RIVIERES if rid in osm}
+
+rivieres_out = []
+etendue = [tous_les_points.min(0), tous_les_points.max(0)]
+for rid, nom, genre, frac in RIVIERES:
+    if rid not in osm:
+        print('!! pas de données OSM pour', rid)
+        continue
+    pts = chaines[rid]
+    if rid in CONFLUENCES and CONFLUENCES[rid] in chaines:
+        principal = chaines[CONFLUENCES[rid]]
+        bouts = [(0, pts[0]), (-1, pts[-1])]
+        (k, bout) = min(bouts, key=lambda kb: point_le_plus_proche(principal, kb[1])[1])
+        cible, dist_ = point_le_plus_proche(principal, bout)
+        print(f'   confluence {rid} → {CONFLUENCES[rid]} : écart {dist_ * UNITE:.1f} km')
+        if 0.05 * KM < dist_ <= MAX_CONFLUENCE:
+            pts = np.vstack([cible, pts]) if k == 0 else np.vstack([pts, cible])
     be = en_belgique(pts)
     # suites de points belges / étrangers ; chaque suite reprend le dernier point de la précédente
     suites = []

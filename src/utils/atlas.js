@@ -136,7 +136,7 @@ export const TAILLES_VILLES = {
 // dx, dy : décalage du nom en pixels ; fin : où s'arrête le trait, par rapport au nom
 export const ECARTS_ZONES = {
   bruxelles: { dx: -72, dy: -40, fin: [26, 6] },
-  germanophone: { dx: 150, dy: 52, fin: [-66, -6], seulement: 'communautes' },
+  germanophone: { dx: -165, dy: 60, fin: [70, -10], seulement: 'communautes' },
 }
 export function ecartZone(couche, id) {
   const e = ECARTS_ZONES[id]
