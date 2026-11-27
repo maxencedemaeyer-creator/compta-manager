@@ -89,7 +89,7 @@ export default function TesteurView() {
       <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_340px] tab:min-h-0 tab:flex-1 tab:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
         <div className="flex min-w-0 flex-col gap-3 tab:min-h-0">
           <div className="flex justify-center tab:min-h-0 tab:flex-1">
-            <Banc banc={banc} vue="photo" editable={false} cablage={false} hauteur={H} className="mx-auto w-full max-w-[540px] tab:h-[calc(100dvh-93px)] tab:w-auto tab:max-w-full" />
+            <Banc banc={banc} vue="photo" editable={false} cablage={false} hauteur={H} style={{ '--r': 360 / H }} className="mx-auto w-full max-w-[540px] tab:h-[calc(100dvh-93px)] tab:w-[calc((100dvh-93px)*var(--r))] tab:max-w-full" />
           </div>
           {verdict && (
             <Carte couleur={eclatAmpoule > 0.6 ? 'rgba(255,228,94,.6)' : eclatAmpoule > 0 ? 'rgba(255,184,107,.6)' : 'rgba(138,147,184,.5)'}>

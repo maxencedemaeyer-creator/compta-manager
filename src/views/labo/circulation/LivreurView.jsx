@@ -215,7 +215,7 @@ export default function LivreurView() {
         }
       >
       <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#070B16]/85 tab:flex tab:min-h-0 tab:flex-1 tab:justify-center">
-        <svg viewBox="0 0 360 560" className="w-full tab:h-[calc(100dvh-95px)] tab:w-auto" role="img" aria-label="Schéma de la double circulation">
+        <svg viewBox="0 0 360 560" className="w-full tab:h-[calc(100dvh-95px)] tab:w-[calc((100dvh-95px)*360/560)]" role="img" aria-label="Schéma de la double circulation">
           <defs>
             <pattern id="liv-capillaires" width="10" height="10" patternUnits="userSpaceOnUse">
               <path d="M0 5 Q2.5 0 5 5 T10 5" fill="none" stroke="rgba(255,255,255,.18)" strokeWidth=".8" />

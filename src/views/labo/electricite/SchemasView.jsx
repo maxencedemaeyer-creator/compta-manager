@@ -68,7 +68,7 @@ function creerQuiz() {
   return melanger([...circuits, ...symboles])
 }
 
-const Fige = ({ circuit, vue, hauteur = H, className = 'w-full' }) => <CircuitFige circuit={circuit} vue={vue} hauteur={hauteur} className={className} />
+const Fige = ({ circuit, vue, hauteur = H, className = 'w-full' }) => <CircuitFige circuit={circuit} vue={vue} hauteur={hauteur} className={className} style={{ '--r': 360 / hauteur }} />
 
 // ---------- Défis de construction ----------
 const DEFIS = [
@@ -120,12 +120,12 @@ function Construction() {
             SCHÉMA {n + 1}/{DEFIS.length} · {d.titre.toUpperCase()}
           </p>
           <div className="mt-2 flex justify-center tab:min-h-0 tab:flex-1">
-            <Fige circuit={d.modele} vue="schema" className="w-full tab:h-[calc(100dvh-93px)] tab:w-auto tab:max-w-full" />
+            <Fige circuit={d.modele} vue="schema" className="w-full tab:h-[calc(100dvh-93px)] tab:w-[calc((100dvh-93px)*var(--r))] tab:max-w-full" />
           </div>
         </Carte>
         <div className="flex min-w-0 flex-col gap-2 tab:min-h-0">
           <div className="flex justify-center tab:min-h-0 tab:flex-1">
-            <Banc banc={banc} vue="photo" editable={false} cablage hauteur={H} className="w-full tab:h-[calc(100dvh-93px)] tab:w-auto tab:max-w-full" />
+            <Banc banc={banc} vue="photo" editable={false} cablage hauteur={H} style={{ '--r': 360 / H }} className="w-full tab:h-[calc(100dvh-93px)] tab:w-[calc((100dvh-93px)*var(--r))] tab:max-w-full" />
           </div>
           {verif === false && (
             <p className="rounded-xl bg-[#FF8A95]/10 px-3 py-2 text-[13px] text-[#FFC2C8]">

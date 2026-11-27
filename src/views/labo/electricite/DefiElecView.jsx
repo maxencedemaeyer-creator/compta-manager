@@ -174,7 +174,7 @@ function rendu(q, flash) {
         <div>
           <p className="mb-2 text-center text-[15px] font-bold text-white">{q.texte}</p>
           {/* pendant la question, le circuit est montré éteint ; la réponse s'allume après */}
-          <CircuitFige circuit={q.circuit} vue={q.vue} hauteur={H} apercu={!flash} className="mx-auto w-full tab:h-[42dvh] tab:w-auto tab:max-w-full" />
+          <CircuitFige circuit={q.circuit} vue={q.vue} hauteur={H} apercu={!flash} style={{ '--r': 360 / H }} className="mx-auto w-full tab:h-[42dvh] tab:w-[calc(42dvh*var(--r))] tab:max-w-full" />
         </div>
       )}
     </>

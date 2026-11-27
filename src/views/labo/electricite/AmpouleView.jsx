@@ -65,7 +65,7 @@ export default function AmpouleView() {
     <PageElec code="E9" titre="Au cœur de l’ampoule" attendus={[111]} couleur={OR} large resultat={{ lumiere: Math.min(1, t * c.halo), courtCircuit: false }}>
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 tab:min-h-0 tab:flex-1 tab:grid-cols-[auto_minmax(0,1fr)]">
         <Carte couleur={`${OR}55`} className="p-2 tab:flex tab:h-full tab:min-h-0 tab:items-center tab:justify-center">
-          <svg viewBox="0 0 300 380" className="mx-auto block w-full max-w-[420px] select-none tab:h-[calc(100dvh-127px)] tab:w-auto tab:max-w-none" style={{ aspectRatio: '300 / 380' }}>
+          <svg viewBox="0 0 300 380" className="mx-auto block w-full max-w-[420px] select-none tab:h-[calc(100dvh-127px)] tab:w-[calc((100dvh-127px)*300/380)] tab:max-w-none" style={{ aspectRatio: '300 / 380' }}>
             <defs>
               <radialGradient id="am-halo" cx=".5" cy=".5" r=".5">
                 <stop offset="0" stopColor="#FFF4C8" stopOpacity=".95" />
