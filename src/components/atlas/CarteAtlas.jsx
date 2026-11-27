@@ -312,7 +312,13 @@ export default function CarteAtlas({ carte, atlas, couche, noms, villes, nomsVil
         </defs>
 
         <g transform={`translate(${X0 + vue.x} ${Y0 + vue.y}) scale(${vue.k}) translate(${-X0} ${-Y0})`}>
-          {mer && <path d={atlas.mer} fill={COULEUR_MER} pointerEvents="none" />}
+          {/* Mer du Nord : un grand fond bleu, sur lequel on repose la terre (France, Pays-Bas…) à la couleur de la page */}
+          {mer && (
+            <g pointerEvents="none">
+              <rect x={X0 - 20000} y={Y0 - 20000} width={W + 40000} height={H + 40000} fill={COULEUR_MER} />
+              <path d={atlas.terre} fill="#f4f6f8" stroke={COULEUR_MER} strokeWidth="1.5" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
+            </g>
+          )}
           <FondZones zones={zones} communes={couche === 'communes'} />
 
           {/* Zone touchée : voile sombre (+ contour pour une commune seule : pour une province, le contour

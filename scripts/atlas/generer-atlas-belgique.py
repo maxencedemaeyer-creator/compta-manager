@@ -446,22 +446,75 @@ MARGE_CADRE = 60
 cadre = [int(etendue[0][0] - MARGE_CADRE), int(etendue[0][1] - MARGE_CADRE), int(etendue[1][0] + MARGE_CADRE), int(etendue[1][1] + MARGE_CADRE)]
 
 # ---------------------------------------------------------------- mer du Nord
-# La côte belge = la partie du contour du pays entre la frontière française (La Panne) et la frontière néerlandaise (Knokke) ;
-# on la prolonge vers le large et le long des côtes française et néerlandaise voisines.
-contour = max((np.array(a, float) for a in anneaux_pays), key=len)
-nord_ouest = np.array(projeter(51.0905, 2.5450))
-nord_est = np.array(projeter(51.3556, 3.3737))
-i0 = int(np.hypot(*(contour - nord_ouest).T).argmin())
-i1 = int(np.hypot(*(contour - nord_est).T).argmin())
-chemin_a = contour[min(i0, i1):max(i0, i1) + 1]
-chemin_b = np.concatenate([contour[max(i0, i1):], contour[:min(i0, i1) + 1]])
-cote = chemin_a if longueur(chemin_a) < longueur(chemin_b) else chemin_b
-if np.hypot(*(cote[0] - nord_ouest)) > np.hypot(*(cote[-1] - nord_ouest)):
-    cote = cote[::-1]  # de La Panne vers Knokke
-# (le dessin déborde largement du cadre : la mer remplit tout l'écran, même si la fenêtre est plus large que la carte)
-large = [projeter(la, lo) for la, lo in [(51.40, 3.40), (51.53, 3.44), (51.58, 3.51), (51.72, 3.80), (51.82, 3.95), (51.98, 4.12), (52.10, 4.25), (53.0, 4.60), (53.0, -0.5), (50.60, -0.5), (50.72, 1.58), (50.96, 1.85), (51.04, 2.37), (51.07, 2.52)]]
-mer = np.vstack([cote, np.array(large)])
-print(f'mer : côte de {longueur(cote) * UNITE:.0f} km')
+# La mer = un grand rectangle bleu, sur lequel on pose la TERRE (Natural Earth 10 m, domaine public : côtes belge, française
+# et néerlandaise, estuaire de l'Escaut compris), puis la Belgique par-dessus. On sort donc le seul tracé de la terre.
+# Projection : Lambert conique conforme (comme la carte officielle belge) + transformation affine ajustée sur les communes,
+# car elle se comporte bien loin de la Belgique, contrairement au polynôme utilisé plus haut.
+
+
+def lcc(lat, lon, l1=49.8333, l2=51.1667, l0=50.7978, lo0=4.3593):
+    r = math.radians
+    l1, l2, l0, lo0, la, lo = map(r, (l1, l2, l0, lo0, lat, lon))
+    n = math.log(math.cos(l1) / math.cos(l2)) / math.log(math.tan(math.pi / 4 + l2 / 2) / math.tan(math.pi / 4 + l1 / 2))
+    F = math.cos(l1) * math.tan(math.pi / 4 + l1 / 2) ** n / n
+    rho = 6371 * F / math.tan(math.pi / 4 + la / 2) ** n
+    rho0 = 6371 * F / math.tan(math.pi / 4 + l0 / 2) ** n
+    th = n * (lo - lo0)
+    return rho * math.sin(th), rho0 - rho * math.cos(th)
+
+
+Pl = np.array([lcc(*positions[i]) for i in ids])
+Al = np.c_[Pl, np.ones(len(Pl))]
+garde_l = np.ones(len(ids), bool)
+for _ in range(6):
+    co_l, *_ = np.linalg.lstsq(Al[garde_l], X[garde_l], rcond=None)
+    err_l = np.hypot(*(Al @ co_l - X).T) * UNITE
+    garde_l = err_l < max(2.0, 2.5 * np.median(err_l[garde_l]))
+print(f'projection Lambert : erreur médiane {np.median(err_l[garde_l]):.2f} km')
+
+
+def projeter_lcc(lat, lon):
+    return tuple(np.array([*lcc(lat, lon), 1.0]) @ co_l)
+
+
+def decouper(poly, x0, y0, x1, y1):
+    """Sutherland-Hodgman : l'anneau (lon, lat) découpé par le rectangle."""
+    def passe(pts, dedans, coupe):
+        out = []
+        for i, p in enumerate(pts):
+            q = pts[i - 1]
+            if dedans(p):
+                if not dedans(q):
+                    out.append(coupe(q, p))
+                out.append(p)
+            elif dedans(q):
+                out.append(coupe(q, p))
+        return out
+    def inter_x(xc):
+        return lambda q, p: (xc, q[1] + (p[1] - q[1]) * (xc - q[0]) / (p[0] - q[0]))
+    def inter_y(yc):
+        return lambda q, p: (q[0] + (p[0] - q[0]) * (yc - q[1]) / (p[1] - q[1]), yc)
+    pts = [tuple(p) for p in poly]
+    for dedans, coupe in (
+        (lambda p: p[0] >= x0, inter_x(x0)), (lambda p: p[0] <= x1, inter_x(x1)),
+        (lambda p: p[1] >= y0, inter_y(y0)), (lambda p: p[1] <= y1, inter_y(y1)),
+    ):
+        if not pts:
+            break
+        pts = passe(pts, dedans, coupe)
+    return pts
+
+
+terre = []
+for anneau in json.load(open(os.path.join(SOURCES, 'ne_10m_land_extrait.json')))['anneaux']:
+    morceau = decouper(anneau, 0.6, 48.9, 8.6, 53.3)
+    if len(morceau) < 3:
+        continue
+    xy = np.array([projeter_lcc(la, lo) for lo, la in morceau])
+    terre.append([(int(round(x)), int(round(y))) for x, y in dp(xy, 1.0)])
+# le cadre inclut la mer jusqu'au-delà de l'embouchure de l'Escaut (Flessingue, 51,44° N) et la côte jusqu'à Dunkerque
+cadre[1] = min(cadre[1], int(projeter_lcc(51.62, 3.2)[1]) - 20)
+print(f'terre : {len(terre)} morceaux, {sum(len(t) for t in terre)} points')
 
 # ---------------------------------------------------------------- villes
 CHEFS_LIEUX = [
@@ -546,7 +599,7 @@ for couche, groupes in ETIQUETTES.items():
 
 # Pays voisins et mer (positions en lon/lat)
 VOISINS = [
-    ('Mer du Nord', 51.62, 2.55, 'mer'), ('France', 50.12, 2.62, 'pays'), ('Pays-Bas', 51.70, 5.35, 'pays'),
+    ('Mer du Nord', 51.55, 2.70, 'mer'), ('France', 50.12, 2.62, 'pays'), ('Pays-Bas', 51.70, 5.35, 'pays'),
     ('Allemagne', 50.62, 6.55, 'pays'), ('Luxembourg', 49.56, 6.42, 'pays'),
 ]
 voisins_out = []
@@ -561,7 +614,7 @@ sortie = {
     'frontieres': {k: chemin([[(int(x), int(y)) for x, y in l] for l in v]) for k, v in frontieres_calculees.items()},
     'rivieres': rivieres_out,
     'cadre': cadre,
-    'mer': chemin([[(int(round(x)), int(round(y))) for x, y in mer]]) + 'Z',
+    'terre': chemin(terre) + 'Z',
     'villes': villes,
     'etiquettes': etiquettes_out,
     'voisins': voisins_out,
