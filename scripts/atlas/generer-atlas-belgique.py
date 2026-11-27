@@ -553,6 +553,7 @@ for anneau in json.load(open(os.path.join(SOURCES, 'ne_10m_land_extrait.json')))
 # Pays limitrophes (couche « Pays limitrophes ») : mêmes données Natural Earth, mêmes découpe et projection
 NOMS_PAYS = {'france': 'France', 'pays-bas': 'Pays-Bas', 'allemagne': 'Allemagne', 'luxembourg': 'Luxembourg'}
 pays_voisins = []
+geom_pays = {}
 # La Belgique officielle (communes Statbel) sert de référence : les pays voisins sont recalés dessus, pour que leur frontière
 # avec la Belgique coïncide exactement avec celle de la Belgique (les deux sources diffèrent d'environ 1 km).
 belgique = unary_union([make_valid(Polygon(r)) for c in communes for r in c['anneaux'] if len(r) > 2])
@@ -586,6 +587,7 @@ for pid, anneaux in json.load(open(os.path.join(SOURCES, 'ne_10m_pays_limitrophe
     # ce que le pays gagne en comblant l'écart avec la frontière belge (hors mer), puis on retire la Belgique
     comble = proche_be.difference(belgique).intersection(pays.buffer(2.5 * KM))
     final = unary_union([pays, comble]).difference(belgique).difference(mer_ne)
+    geom_pays[pid] = final
     pays_voisins.append({'id': pid, 'nom': NOMS_PAYS[pid], 'd': chemin(anneaux_de(final)) + 'Z'})
 # le cadre inclut la mer jusqu'au-delà de l'embouchure de l'Escaut (Flessingue, 51,44° N) et la côte jusqu'à Dunkerque
 cadre[1] = min(cadre[1], int(projeter_lcc(51.62, 3.2)[1]) - 20)
@@ -648,36 +650,33 @@ villes = [ville('Bruxelles', 'capitale')]
 villes += [ville(n, 'chef-lieu') for _, n in CHEFS_LIEUX]
 villes += [ville(n, 'ville') for n in VILLES_IMPORTANTES]
 
-# ---------------------------------------------------------------- noms de zones (ancrés sur le centre d'une commune)
-# (groupe, commune d'ancrage, décalage x, décalage y en unités)
-ETIQUETTES = {
-    'regions': {
-        'flandre': ('Aarschot', 0, 0), 'wallonie': ('Ohey', 0, 0), 'bruxelles': ('Bruxelles', 0, 0),
-    },
-    'communautes': {
-        'flamande': ('Aarschot', 0, 0), 'francaise': ('Ohey', 0, 0), 'germanophone': ('Saint-Vith', 0, 0), 'bruxelles': ('Bruxelles', 0, 0),
-    },
-    'provinces': {
-        'anvers': ('Geel', 0, 0), 'limbourg': ('Bree', 0, 0), 'flandre-orientale': ('Zottegem', 0, 0), 'flandre-occidentale': ('Tielt', 0, 0),
-        'brabant-flamand': ('Haacht', 0, 0), 'brabant-wallon': ('Perwez', 0, 0), 'hainaut': ('Ath', 0, 0), 'namur': ('Ciney', 0, 0),
-        'liege': ('Hannut', 0, 0), 'luxembourg': ('Nassogne', 0, 0), 'bruxelles': ('Bruxelles', 0, 0),
-    },
-}
-etiquettes_out = {}
-POSITIONS_PAYS = {'france': (50.05, 2.85), 'pays-bas': (51.55, 5.35), 'allemagne': (50.88, 6.22), 'luxembourg': (49.58, 6.25)}
-for couche, groupes in ETIQUETTES.items():
-    etiquettes_out[couche] = {}
-    for g, (commune, dx, dy) in groupes.items():
-        if commune not in par_nom:
-            sys.exit(f'commune d’ancrage introuvable : {commune}')
-        cx, cy = par_nom[commune]['centre']
-        etiquettes_out[couche][g] = {'x': int(round(cx + dx)), 'y': int(round(cy + dy))}
+# ---------------------------------------------------------------- noms de zones
+# Chaque nom est posé au « centre visuel » de sa zone : le point le plus éloigné de tous les bords (pôle d'inaccessibilité,
+# shapely.polylabel), sur la plus grande partie de la zone. Pour les pays voisins, uniquement la part visible dans le cadre.
+from shapely.ops import polylabel
 
-# Noms de la couche « Pays limitrophes » (Belgique ancrée sur une commune, les autres en lon/lat)
-etiquettes_out['limitrophes'] = {'belgique': {'x': int(round(par_nom['Ohey']['centre'][0])), 'y': int(round(par_nom['Ohey']['centre'][1]))}}
-for pid, (la, lo) in POSITIONS_PAYS.items():
-    x, y = projeter(la, lo)
-    etiquettes_out['limitrophes'][pid] = {'x': int(round(x)), 'y': int(round(y))}
+
+def centre_visuel(geom):
+    polys = [geom] if isinstance(geom, Polygon) else [g for g in geom.geoms if isinstance(g, Polygon)]
+    plus_grand = max(polys, key=lambda g: g.area)
+    pt = polylabel(plus_grand, tolerance=2.0)
+    return {'x': int(round(pt.x)), 'y': int(round(pt.y))}
+
+
+def union_communes(selection):
+    return unary_union([make_valid(Polygon(r)) for c in communes if selection(c) for r in c['anneaux'] if len(r) > 2])
+
+
+etiquettes_out = {}
+for couche, fonction in (('regions', groupe_region), ('communautes', groupe_communaute), ('provinces', groupe_province)):
+    etiquettes_out[couche] = {}
+    for g in sorted({fonction(c) for c in communes}):
+        etiquettes_out[couche][g] = centre_visuel(union_communes(lambda c, g=g, f=fonction: f(c) == g))
+
+visible = box(cadre[0] + 150, cadre[1] + 150, cadre[2] - 150, cadre[3] - 150)
+etiquettes_out['limitrophes'] = {'belgique': centre_visuel(belgique)}
+for pid, geom in geom_pays.items():
+    etiquettes_out['limitrophes'][pid] = centre_visuel(geom.intersection(visible))
 
 # Pays voisins et mer (positions en lon/lat)
 VOISINS = [

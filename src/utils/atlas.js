@@ -151,7 +151,7 @@ export const TAILLES_VILLES = {
 // Noms de zones écartés de leur zone (zone trop petite) et reliés par un trait.
 // dx, dy : décalage du nom en pixels ; fin : où s'arrête le trait, par rapport au nom
 export const ECARTS_ZONES = {
-  bruxelles: { dx: -72, dy: -40, fin: [26, 6] },
+  bruxelles: { dx: 0, dy: -66, fin: [0, 20] },
   germanophone: { dx: -165, dy: 60, fin: [70, -10], seulement: 'communautes' },
 }
 export function ecartZone(couche, id) {
