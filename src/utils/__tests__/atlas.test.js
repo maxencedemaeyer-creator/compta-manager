@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import communesBrutes from '../../data/communos-communes.json'
 import atlas from '../../data/atlas-belgique.json'
 import { preparerCarte } from '../communos.js'
-import { COUCHES, FLEUVES, construireZones, placerEtiquettes, rivieresVisibles, villesVisibles } from '../atlas.js'
+import { COUCHES, FLEUVES, construireZones, placerEtiquettes, rivieresVisibles, villesVisibles, voiesNavigables } from '../atlas.js'
 
 const carte = preparerCarte(communesBrutes)
 const dg = new Set(atlas.communesDG)
@@ -75,5 +75,16 @@ describe('ATLAS · Belgique', () => {
     const demi = (z) => (Math.max(...z.lignes.map((l) => l.length)) * z.fs * 0.63) / 2
     const chevauche = Math.abs(fl.x - br.x) < demi(fl) + demi(br) && Math.abs(fl.y - br.y) < fl.fs * 1.15 * 2
     expect(chevauche).toBe(false)
+  })
+
+  it('les réseaux de communication sont là (rail, autoroutes, voies navigables)', () => {
+    const r = atlas.reseaux
+    expect(r.rail.length).toBeGreaterThan(5000)
+    expect(r.autoroutes.map((a) => a.ref)).toEqual(expect.arrayContaining(['E40', 'E19', 'E411', 'E42']))
+    expect(r.autoroutes.some((a) => a.ref.startsWith('N'))).toBe(false) // pas de routes nationales
+    expect(r.canaux.map((c) => c.id)).toEqual(expect.arrayContaining(['albert', 'gand-terneuzen', 'bruxelles-charleroi', 'centre', 'willebroek']))
+    for (const id of r.navigables) expect(atlas.rivieres.some((x) => x.id === id)).toBe(true)
+    expect(voiesNavigables(atlas, false).canaux).toHaveLength(0)
+    expect(voiesNavigables(atlas, true).canaux).toHaveLength(r.canaux.length)
   })
 })
