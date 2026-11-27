@@ -20,7 +20,26 @@ const COULEUR_MER = '#d3e8f7'
 const COULEUR_NOM_EAU = '#1d4ed8'
 
 // Zones colorées : ne se redessinent que si la couche change
-const FondZones = memo(function FondZones({ zones, communes }) {
+const FondZones = memo(function FondZones({ zones, communes, limitrophes }) {
+  if (limitrophes) {
+    // Les voisins viennent d'une autre source que les communes belges : leurs frontières ne coïncident pas exactement.
+    // Un large trait de leur couleur comble les interstices ; la Belgique (sans le détail de ses communes) est posée dessus.
+    const voisins = zones.filter((z) => z.id !== 'belgique')
+    const belgique = zones.find((z) => z.id === 'belgique')
+    return (
+      <g>
+        {voisins.map((z) => (
+          <path key={'e' + z.id} d={z.d} fill={z.couleur} stroke={z.couleur} strokeWidth="3.5" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
+        ))}
+        {voisins.map((z) => (
+          <path key={z.id} d={z.d} data-id={z.id} fill={z.couleur} stroke="#475569" strokeWidth="1.3" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
+        ))}
+        {belgique && (
+          <path d={belgique.d} data-id="belgique" fill={belgique.couleur} stroke={belgique.couleur} strokeWidth="1" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
+        )}
+      </g>
+    )
+  }
   return (
     <g>
       {zones.map((z) => (
@@ -129,14 +148,14 @@ export default function CarteAtlas({ carte, atlas, couche, noms, villes, nomsVil
   const px = (n) => (n * upp) / vue.k // n pixels d'écran → unités de carte
 
   const communesDG = useMemo(() => new Set(atlas.communesDG), [atlas])
-  const zones = useMemo(() => construireZones(carte, couche, communesDG), [carte, couche, communesDG])
+  const zones = useMemo(() => construireZones(carte, couche, communesDG, atlas), [carte, couche, communesDG, atlas])
   const rivieres = useMemo(() => rivieresVisibles(atlas, eau), [atlas, eau])
   const listeVilles = useMemo(() => villesVisibles(atlas, villes), [atlas, villes])
 
   const traits = useMemo(() => {
     const t = []
     if (couche === 'communes') t.push(['prov', atlas.frontieres.provinces, '#475569', 1.9])
-    else if (couche !== 'vierge') t.push(['couche', atlas.frontieres[couche], COULEUR_TRAIT, 2.2])
+    else if (couche !== 'vierge' && couche !== 'limitrophes') t.push(['couche', atlas.frontieres[couche], COULEUR_TRAIT, 2.2])
     t.push(['pays', carte.pays, COULEUR_PAYS, 2.6])
     return t
   }, [atlas, carte, couche])
@@ -225,7 +244,7 @@ export default function CarteAtlas({ carte, atlas, couche, noms, villes, nomsVil
   }
 
   // ---------- étiquettes ----------
-  const taillePolice = { regions: 20, communautes: 17, provinces: 15, vierge: 0, communes: 0 }[couche]
+  const taillePolice = { regions: 20, communautes: 17, provinces: 15, limitrophes: 17, vierge: 0, communes: 0 }[couche]
   const etiquettesZones = useMemo(() => {
     const pos = atlas.etiquettes[couche]
     if (!pos) return []
@@ -319,7 +338,7 @@ export default function CarteAtlas({ carte, atlas, couche, noms, villes, nomsVil
               <path d={atlas.terre} fill="#f4f6f8" stroke={COULEUR_MER} strokeWidth="1.5" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
             </g>
           )}
-          <FondZones zones={zones} communes={couche === 'communes'} />
+          <FondZones zones={zones} communes={couche === 'communes'} limitrophes={couche === 'limitrophes'} />
 
           {/* Zone touchée : voile sombre (+ contour pour une commune seule : pour une province, le contour
               dessinerait toutes les communes qui la composent) */}
@@ -339,7 +358,7 @@ export default function CarteAtlas({ carte, atlas, couche, noms, villes, nomsVil
           <Hydro rivieres={rivieres} />
 
           {/* Mer et pays voisins */}
-          {noms &&
+          {noms && couche !== 'limitrophes' &&
             atlas.voisins.map((v) => {
               const fs = px(v.type === 'mer' ? 17 : 14)
               return (

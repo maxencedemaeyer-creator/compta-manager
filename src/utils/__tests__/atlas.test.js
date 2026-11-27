@@ -6,7 +6,7 @@ import { COUCHES, FLEUVES, construireZones, placerEtiquettes, rivieresVisibles, 
 
 const carte = preparerCarte(communesBrutes)
 const dg = new Set(atlas.communesDG)
-const nombre = (couche) => construireZones(carte, couche, dg).length
+const nombre = (couche) => construireZones(carte, couche, dg, atlas).length
 
 describe('ATLAS · Belgique', () => {
   it('les couches contiennent le bon nombre de zones', () => {
@@ -15,6 +15,7 @@ describe('ATLAS · Belgique', () => {
     expect(nombre('communautes')).toBe(4) // flamande, française, germanophone, Bruxelles (bilingue)
     expect(nombre('provinces')).toBe(11) // 10 provinces + Bruxelles-Capitale
     expect(nombre('communes')).toBe(565)
+    expect(nombre('limitrophes')).toBe(5) // Belgique + France, Pays-Bas, Allemagne, Luxembourg
   })
 
   it('la Communauté germanophone compte 9 communes, toutes en Région wallonne', () => {
@@ -25,8 +26,8 @@ describe('ATLAS · Belgique', () => {
   it('chaque couche (sauf vierge et communes) a ses frontières et ses noms', () => {
     for (const { id } of COUCHES) {
       if (id === 'vierge' || id === 'communes') continue
-      expect(atlas.frontieres[id].length).toBeGreaterThan(1000)
-      for (const z of construireZones(carte, id, dg)) expect(atlas.etiquettes[id][z.id], `${id}/${z.id}`).toBeTruthy()
+      if (id !== 'limitrophes') expect(atlas.frontieres[id].length).toBeGreaterThan(1000)
+      for (const z of construireZones(carte, id, dg, atlas)) expect(atlas.etiquettes[id][z.id], `${id}/${z.id}`).toBeTruthy()
     }
   })
 

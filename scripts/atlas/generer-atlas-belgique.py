@@ -546,6 +546,18 @@ for anneau in json.load(open(os.path.join(SOURCES, 'ne_10m_land_extrait.json')))
         continue
     xy = np.array([projeter_lcc(la, lo) for lo, la in morceau])
     terre.append([(int(round(x)), int(round(y))) for x, y in dp(xy, 1.0)])
+# Pays limitrophes (couche « Pays limitrophes ») : mêmes données Natural Earth, mêmes découpe et projection
+NOMS_PAYS = {'france': 'France', 'pays-bas': 'Pays-Bas', 'allemagne': 'Allemagne', 'luxembourg': 'Luxembourg'}
+pays_voisins = []
+for pid, anneaux in json.load(open(os.path.join(SOURCES, 'ne_10m_pays_limitrophes_extrait.json')))['pays'].items():
+    morceaux = []
+    for anneau in anneaux:
+        morceau = decouper(anneau, 0.6, 48.9, 8.6, 53.3)
+        if len(morceau) < 3:
+            continue
+        xy = np.array([projeter_lcc(la, lo) for lo, la in morceau])
+        morceaux.append([(int(round(x)), int(round(y))) for x, y in dp(xy, 1.0)])
+    pays_voisins.append({'id': pid, 'nom': NOMS_PAYS[pid], 'd': chemin(morceaux) + 'Z'})
 # le cadre inclut la mer jusqu'au-delà de l'embouchure de l'Escaut (Flessingue, 51,44° N) et la côte jusqu'à Dunkerque
 cadre[1] = min(cadre[1], int(projeter_lcc(51.62, 3.2)[1]) - 20)
 print(f'terre : {len(terre)} morceaux, {sum(len(t) for t in terre)} points')
@@ -623,6 +635,7 @@ ETIQUETTES = {
     },
 }
 etiquettes_out = {}
+POSITIONS_PAYS = {'france': (50.05, 2.85), 'pays-bas': (51.55, 5.35), 'allemagne': (50.62, 6.55), 'luxembourg': (49.58, 6.25)}
 for couche, groupes in ETIQUETTES.items():
     etiquettes_out[couche] = {}
     for g, (commune, dx, dy) in groupes.items():
@@ -630,6 +643,12 @@ for couche, groupes in ETIQUETTES.items():
             sys.exit(f'commune d’ancrage introuvable : {commune}')
         cx, cy = par_nom[commune]['centre']
         etiquettes_out[couche][g] = {'x': int(round(cx + dx)), 'y': int(round(cy + dy))}
+
+# Noms de la couche « Pays limitrophes » (Belgique ancrée sur une commune, les autres en lon/lat)
+etiquettes_out['limitrophes'] = {'belgique': {'x': int(round(par_nom['Ohey']['centre'][0])), 'y': int(round(par_nom['Ohey']['centre'][1]))}}
+for pid, (la, lo) in POSITIONS_PAYS.items():
+    x, y = projeter(la, lo)
+    etiquettes_out['limitrophes'][pid] = {'x': int(round(x)), 'y': int(round(y))}
 
 # Pays voisins et mer (positions en lon/lat)
 VOISINS = [
@@ -649,6 +668,7 @@ sortie = {
     'rivieres': rivieres_out,
     'cadre': cadre,
     'terre': chemin(terre) + 'Z',
+    'paysVoisins': pays_voisins,
     'villes': villes,
     'etiquettes': etiquettes_out,
     'voisins': voisins_out,

@@ -13,6 +13,7 @@ export const COUCHES = [
   { id: 'communautes', nom: 'Communautés', aide: '3 communautés' },
   { id: 'provinces', nom: 'Provinces', aide: '10 provinces + Bruxelles' },
   { id: 'communes', nom: 'Communes', aide: '565 communes' },
+  { id: 'limitrophes', nom: 'Pays limitrophes', aide: 'France, Pays-Bas, Allemagne, Luxembourg' },
 ]
 
 // Hydrographie (menu « Hydrographie »)
@@ -74,6 +75,13 @@ const NOMS_PROVINCES = {
   'Province du Luxembourg': 'luxembourg',
   'Région de Bruxelles-Capitale': 'bruxelles',
 }
+const PAYS = {
+  belgique: { nom: 'Belgique', lignes: ['BELGIQUE'], couleur: '#fcd34d' },
+  france: { nom: 'France', lignes: ['FRANCE'], couleur: '#f5d0fe' },
+  'pays-bas': { nom: 'Pays-Bas', lignes: ['PAYS-BAS'], couleur: '#fdba74' },
+  allemagne: { nom: 'Allemagne', lignes: ['ALLEMAGNE'], couleur: '#d1d5db' },
+  luxembourg: { nom: 'Luxembourg', lignes: ['LUXEMBOURG'], couleur: '#86efac' },
+}
 const DEFINITIONS = { regions: REGIONS, communautes: COMMUNAUTES, provinces: PROVINCES }
 
 // À quel groupe appartient une commune, pour une couche
@@ -89,12 +97,20 @@ function groupeDe(couche, commune, communesDG) {
 }
 
 // Les zones à dessiner pour une couche : [{ id, nom, lignes, d (chemin SVG), couleur }]
-export function construireZones(carte, couche, communesDG) {
+export function construireZones(carte, couche, communesDG, atlas) {
   if (couche === 'communes') {
     return carte.communes.map((c) => ({ id: c.id, nom: nomComplet(c), lignes: [c.fr], d: c.chemin, couleur: '#ffffff', commune: c }))
   }
   if (couche === 'vierge') {
     return [{ id: 'pays', nom: 'Belgique', lignes: ['Belgique'], d: carte.communes.map((c) => c.chemin).join(''), couleur: '#ffffff' }]
+  }
+  if (couche === 'limitrophes') {
+    // La Belgique (communes) au-dessus de ses quatre voisins
+    const tous = [
+      ...atlas.paysVoisins.map((p) => ({ id: p.id, nom: PAYS[p.id].nom, lignes: PAYS[p.id].lignes, d: p.d, couleur: PAYS[p.id].couleur })),
+      { id: 'belgique', nom: 'Belgique', lignes: PAYS.belgique.lignes, d: carte.communes.map((c) => c.chemin).join(''), couleur: PAYS.belgique.couleur },
+    ]
+    return tous
   }
   const def = DEFINITIONS[couche]
   const morceaux = {}
