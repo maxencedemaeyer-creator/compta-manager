@@ -25,6 +25,7 @@ import ProjectionGalerieView from './views/projection/ProjectionGalerieView.jsx'
 import RequetesView from './views/RequetesView.jsx'
 import AtlasView from './views/atlas/AtlasView.jsx'
 import AtlasBelgiqueView from './views/atlas/AtlasBelgiqueView.jsx'
+import AtlasMondeView from './views/atlas/AtlasMondeView.jsx'
 import JeuxView from './views/JeuxView.jsx'
 import CommunosView from './views/jeux/CommunosView.jsx'
 import CommunosProvincesView from './views/jeux/CommunosProvincesView.jsx'
@@ -250,6 +251,7 @@ export default function App() {
         {/* Application Atlas : bibliothèque de cartes de géographie (à projeter en classe) */}
         <Route path="/maxence/atlas" element={<Protege><AtlasView /></Protege>} />
         <Route path="/maxence/atlas/belgique" element={<Protege><AtlasBelgiqueView /></Protege>} />
+        <Route path="/maxence/atlas/monde" element={<Protege><AtlasMondeView /></Protege>} />
 
         {/* Application Jeux (Game Center) */}
         <Route path="/maxence/jeux" element={<Protege><JeuxView /></Protege>} />
