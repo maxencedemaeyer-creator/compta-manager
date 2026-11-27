@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Minus, Plus, Maximize2, MapPin } from 'lucide-react'
-import { TAILLES_VILLES, construireZones, placerEtiquettes, rivieresVisibles, villesVisibles } from '../../utils/atlas.js'
+import { TAILLES_VILLES, construireZones, placerEtiquettes, rivieresVisibles, villesVisibles, voiesNavigables } from '../../utils/atlas.js'
 
 // =============================================================
 //  Carte de la Belgique de l'ATLAS (SVG, fond clair, à projeter)
@@ -17,6 +17,10 @@ const COULEUR_TRAIT = '#334155'
 const COULEUR_PAYS = '#0f172a'
 const COULEUR_EAU = '#2a62a8'
 const COULEUR_MER = '#d3e8f7'
+const COULEUR_RAIL = '#4b5563'
+const COULEUR_AUTOROUTE = '#ea580c'
+const COULEUR_CANAL = '#0e8fa0'
+const COULEUR_NOM_CANAL = '#0b6f7d'
 const COULEUR_NOM_EAU = '#1d4ed8'
 
 // Zones colorées : ne se redessinent que si la couche change
@@ -107,6 +111,44 @@ const Hydro = memo(function Hydro({ rivieres }) {
   )
 })
 
+// Chemins de fer : trait gris foncé coupé de petits traits blancs (les « traverses »)
+const Rail = memo(function Rail({ d }) {
+  return (
+    <g pointerEvents="none" fill="none" strokeLinejoin="round">
+      <path d={d} stroke={COULEUR_RAIL} strokeWidth="2.6" vectorEffect="non-scaling-stroke" />
+      <path d={d} stroke="#ffffff" strokeWidth="1.3" strokeDasharray="5 6" vectorEffect="non-scaling-stroke" />
+    </g>
+  )
+})
+
+// Autoroutes : trait orange cerné de blanc
+const Autoroutes = memo(function Autoroutes({ routes }) {
+  return (
+    <g pointerEvents="none" fill="none" strokeLinejoin="round" strokeLinecap="round">
+      {routes.map((a) => (
+        <path key={'c' + a.ref} d={a.d} stroke="#ffffff" strokeWidth="5.6" vectorEffect="non-scaling-stroke" />
+      ))}
+      {routes.map((a) => (
+        <path key={a.ref} d={a.d} stroke={COULEUR_AUTOROUTE} strokeWidth="3.2" vectorEffect="non-scaling-stroke" />
+      ))}
+    </g>
+  )
+})
+
+// Voies navigables : double trait turquoise (se distingue des rivières, en bleu)
+const Navigables = memo(function Navigables({ voies }) {
+  return (
+    <g pointerEvents="none" fill="none" strokeLinejoin="round" strokeLinecap="round">
+      {voies.map((v) => (
+        <path key={'n' + v.id} d={v.d} stroke={COULEUR_CANAL} strokeWidth="5" vectorEffect="non-scaling-stroke" />
+      ))}
+      {voies.map((v) => (
+        <path key={'b' + v.id} d={v.d} stroke="#ffffff" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+      ))}
+    </g>
+  )
+})
+
 // Étoile à 5 branches (Bruxelles), centrée, rayon r
 function etoile(x, y, r) {
   const pts = []
@@ -120,7 +162,7 @@ function etoile(x, y, r) {
 
 const halo = (fs, couleur = '#ffffff') => ({ stroke: couleur, strokeWidth: fs * 0.3, paintOrder: 'stroke', strokeLinejoin: 'round' })
 
-export default function CarteAtlas({ carte, atlas, couche, noms, villes, nomsVilles, eau, mer, selection, onSelection }) {
+export default function CarteAtlas({ carte, atlas, couche, noms, villes, nomsVilles, eau, mer, reseaux, selection, onSelection }) {
   // Cadre : le pays et les pointillés des rivières qui en sortent
   const [X0, Y0, X1, Y1] = atlas.cadre
   const W = X1 - X0
@@ -148,6 +190,13 @@ export default function CarteAtlas({ carte, atlas, couche, noms, villes, nomsVil
   const zones = useMemo(() => construireZones(carte, couche, communesDG, atlas), [carte, couche, communesDG, atlas])
   const rivieres = useMemo(() => rivieresVisibles(atlas, eau), [atlas, eau])
   const listeVilles = useMemo(() => villesVisibles(atlas, villes), [atlas, villes])
+  const navigables = useMemo(() => voiesNavigables(atlas, reseaux.navigables), [atlas, reseaux.navigables])
+  const voiesToutes = useMemo(() => [...navigables.canaux, ...navigables.rivieres], [navigables])
+  // Tous les cours d'eau dont on écrit le nom : hydrographie choisie + voies navigables (sans doublon)
+  const listeNoms = useMemo(() => {
+    const vus = new Set(rivieres.map((r) => r.id))
+    return [...rivieres, ...navigables.rivieres.filter((r) => !vus.has(r.id)), ...navigables.canaux]
+  }, [rivieres, navigables])
 
   const traits = useMemo(() => {
     const t = []
@@ -265,12 +314,12 @@ export default function CarteAtlas({ carte, atlas, couche, noms, villes, nomsVil
         zones: noms ? nomsZones : [],
         villes: listeVilles,
         avecNomsVilles: nomsVilles,
-        rivieres,
+        rivieres: listeNoms,
         avecNomsRivieres: noms,
         px,
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [noms, nomsZones, listeVilles, nomsVilles, rivieres, vue.k, echelle]
+    [noms, nomsZones, listeVilles, nomsVilles, listeNoms, vue.k, echelle]
   )
   const nomsZonesAffiches = placement.zones
 
@@ -336,7 +385,7 @@ export default function CarteAtlas({ carte, atlas, couche, noms, villes, nomsVil
             <path
               d={zoneSelectionnee.d}
               fill="rgba(15,23,42,0.16)"
-              stroke={couche === 'communes' || couche === 'vierge' ? COULEUR_PAYS : 'none'}
+              stroke={couche === 'communes' ? COULEUR_PAYS : 'none'}
               strokeWidth="3"
               vectorEffect="non-scaling-stroke"
               strokeLinejoin="round"
@@ -346,6 +395,9 @@ export default function CarteAtlas({ carte, atlas, couche, noms, villes, nomsVil
 
           <Traits chemins={traits} />
           <Hydro rivieres={rivieres} />
+          {reseaux.rail && <Rail d={atlas.reseaux.rail} />}
+          {reseaux.navigables && <Navigables voies={voiesToutes} />}
+          {reseaux.autoroutes && <Autoroutes routes={atlas.reseaux.autoroutes} />}
 
           {/* Mer et pays voisins */}
           {noms && couche !== 'limitrophes' &&
@@ -404,19 +456,40 @@ export default function CarteAtlas({ carte, atlas, couche, noms, villes, nomsVil
             </g>
           )}
 
-          {/* Noms des rivières */}
+          {/* Noms des rivières et des canaux */}
           {noms && (
-            <g pointerEvents="none" textAnchor="middle" fill={COULEUR_NOM_EAU} fontStyle="italic" fontWeight="700">
-              {rivieres.map((r) => {
+            <g pointerEvents="none" textAnchor="middle" fontStyle="italic" fontWeight="700">
+              {listeNoms.map((r) => {
                 const pos = placement.rivieres[r.id]
                 if (!pos) return null
                 const fs = px(r.genre === 'fleuve' ? 15 : 13)
                 return (
-                  <text key={r.id} transform={`translate(${pos.x} ${pos.y}) rotate(${pos.angle})`} y={-fs * 0.55} fontSize={fs} {...halo(fs)}>
+                  <text key={r.id} fill={r.genre === 'canal' ? COULEUR_NOM_CANAL : COULEUR_NOM_EAU} transform={`translate(${pos.x} ${pos.y}) rotate(${pos.angle})`} y={-fs * 0.55} fontSize={fs} {...halo(fs)}>
                     {r.nom}
                   </text>
                 )
               })}
+            </g>
+          )}
+
+          {/* Écussons des autoroutes : E (vert), A et R0 (bleu) */}
+          {noms && reseaux.autoroutes && (
+            <g pointerEvents="none" textAnchor="middle" fontWeight="800">
+              {atlas.reseaux.autoroutes
+                .filter((a) => a.badge)
+                .map((a) => {
+                  const fs = px(11)
+                  const w = (a.ref.length * 0.62 + 0.9) * fs
+                  const h = fs * 1.5
+                  return (
+                    <g key={a.ref}>
+                      <rect x={a.badge[0] - w / 2} y={a.badge[1] - h / 2} width={w} height={h} rx={fs * 0.35} fill={a.ref.startsWith('E') ? '#15803d' : '#1d4ed8'} stroke="#ffffff" strokeWidth="1.4" vectorEffect="non-scaling-stroke" />
+                      <text x={a.badge[0]} y={a.badge[1] + fs * 0.36} fontSize={fs} fill="#ffffff">
+                        {a.ref}
+                      </text>
+                    </g>
+                  )
+                })}
             </g>
           )}
 

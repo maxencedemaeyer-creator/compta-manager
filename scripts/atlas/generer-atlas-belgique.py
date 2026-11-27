@@ -18,6 +18,7 @@ Lancer :  python3 -I scripts/atlas/generer-atlas-belgique.py
 import json
 import math
 import os
+import re
 import sys
 from collections import defaultdict
 
@@ -479,6 +480,129 @@ for rid, nom, genre, frac in RIVIERES:
     })
     print(f'rivière {rid:8s} {len(solides)} morceau(x) plein(s), {len(pointilles)} pointillé(s), {longueur(pts) * UNITE:.0f} km')
 
+# ---------------------------------------------------------------- activité humaine : réseaux de communication
+# - chemins de fer et autoroutes : Natural Earth 10 m (domaine public, précision ~1 km) ;
+# - voies navigables : rivières navigables (OpenStreetMap, plus haut), Albertkanaal et canal Gand-Terneuzen (Rijkswaterstaat),
+#   et quelques canaux dont le tracé exact n'a pas pu être récupéré (Overpass injoignable) : tracés APPROCHÉS, marqués `approx`.
+TOL_RESEAU = 2.0 * KM  # on garde ce qui est à moins de 2 km du pays (tracés qui le longent)
+boite_pays = (tous_les_points.min(0) - 3 * KM, tous_les_points.max(0) + 3 * KM)
+
+
+def tronconner_belgique(xy):
+    """Parties d'une polyligne (n×2) situées en Belgique, découpées à la frontière."""
+    dans_boite = np.all((xy >= boite_pays[0]) & (xy <= boite_pays[1]), axis=1)
+    ok = np.zeros(len(xy), bool)
+    if dans_boite.any():
+        sous = xy[dans_boite]
+        ok[dans_boite] = dedans_pays(sous) | (distance_au_contour(sous) <= TOL_RESEAU)
+    morceaux, cur = [], []
+    for pt, o in zip(xy, ok):
+        if o:
+            cur.append(pt)
+        elif cur:
+            morceaux.append(np.array(cur))
+            cur = []
+    if cur:
+        morceaux.append(np.array(cur))
+    return [m for m in morceaux if len(m) > 1]
+
+
+def chemin_reseau(lignes_xy, tol=1.5):
+    morceaux = []
+    for xy in lignes_xy:
+        for m in tronconner_belgique(xy):
+            morceaux.append(net_pts(m, tol))
+    return chemin(morceaux), morceaux
+
+
+def net_pts(pts, tol):
+    return [(int(round(x)), int(round(y))) for x, y in dp(pts, tol)]
+
+
+# chemins de fer
+rail_d, _ = chemin_reseau([projeter_tab([(la, lo) for lo, la in l]) for l in json.load(open(os.path.join(SOURCES, 'ne_10m_chemins_de_fer_extrait.json')))['lignes']])
+print(f'chemins de fer : {len(rail_d) // 1024} Ko')
+
+# autoroutes : un tracé par route européenne (E40…), avec la position de son écusson
+par_ref = defaultdict(list)
+for r in json.load(open(os.path.join(SOURCES, 'ne_10m_autoroutes_extrait.json')))['routes']:
+    # on ne garde que les autoroutes (E, A, ring R0) ; pas les routes nationales (N…) ni les libellés doubles
+    if r['ref'] and not re.fullmatch(r'E\d+|A\d+|R0', r['ref']):
+        continue
+    par_ref[r['ref']].append(projeter_tab([(la, lo) for lo, la in r['l']]))
+autoroutes = []
+for ref, lignes in sorted(par_ref.items()):
+    d_, morceaux = chemin_reseau(lignes, 1.2)
+    if not morceaux:
+        continue
+    badge = None
+    if ref:
+        plus_long_m = max(morceaux, key=lambda m: longueur(np.array(m, float)))
+        arr = np.array(plus_long_m, float)
+        cible, acc = longueur(arr) / 2, 0.0
+        for i in range(len(arr) - 1):
+            seg = math.hypot(*(arr[i + 1] - arr[i]))
+            if acc + seg >= cible:
+                t = (cible - acc) / seg if seg else 0
+                badge = [int(round(arr[i][0] + t * (arr[i + 1][0] - arr[i][0]))), int(round(arr[i][1] + t * (arr[i + 1][1] - arr[i][1])))]
+                break
+            acc += seg
+    autoroutes.append({'ref': ref, 'd': d_, 'badge': badge})
+print('autoroutes :', ', '.join(a['ref'] or '?' for a in autoroutes))
+
+# canaux
+CANAUX_APPROCHES = {  # (latitude, longitude) relevés à la main : à remplacer par OpenStreetMap
+    ('bruxelles-charleroi', 'Canal Bruxelles-Charleroi'): [
+        (50.8590, 4.3400), (50.8330, 4.3100), (50.7860, 4.2830), (50.7600, 4.2600), (50.7370, 4.2380), (50.7260, 4.2300),
+        (50.6900, 4.2000), (50.6760, 4.1950), (50.6500, 4.2150), (50.6200, 4.2300), (50.6080, 4.2340), (50.5760, 4.2420),
+        (50.5280, 4.2600), (50.4980, 4.3500), (50.5025, 4.3790), (50.4650, 4.4200), (50.4650, 4.4400), (50.4150, 4.4380)],
+    ('centre', 'Canal du Centre'): [
+        (50.5280, 4.2600), (50.5000, 4.2300), (50.4786, 4.1861), (50.4700, 4.1500), (50.4650, 4.1250), (50.4620, 4.0640),
+        (50.4720, 3.9830), (50.4620, 3.9560)],
+    ('willebroek', 'Canal de Willebroek'): [
+        (50.8620, 4.3480), (50.8850, 4.3750), (50.9100, 4.4050), (50.9290, 4.4250), (50.9750, 4.4250), (51.0200, 4.3900), (51.0580, 4.3600), (51.0900, 4.3700)],
+}
+ALBERT_VERS_LIEGE = [(50.7917, 5.6892), (50.7525, 5.6955), (50.7336, 5.6836), (50.7050, 5.6350), (50.6680, 5.6200), (50.6520, 5.6440)]
+rws = json.load(open(os.path.join(SOURCES, 'rws_canaux_extrait.json')))['canaux']
+canaux_sources = [
+    ('albert', 'Canal Albert', False, [projeter_tab([(la, lo) for lo, la in l]) for l in rws['Albertkanaal']] + [projeter_tab(ALBERT_VERS_LIEGE)]),
+    ('gand-terneuzen', 'Canal Gand-Terneuzen', False, [projeter_tab([(la, lo) for lo, la in l]) for l in rws['Kanaal Gent-Terneuzen']]),
+]
+for (cid, cnom), pts_ll in CANAUX_APPROCHES.items():
+    canaux_sources.append((cid, cnom, True, [projeter_tab(pts_ll)]))
+canaux = []
+for cid, cnom, approx, lignes in canaux_sources:
+    d_, morceaux = chemin_reseau(lignes, 1.0)
+    if not morceaux:
+        print('!! canal vide', cid)
+        continue
+    arr = np.array(max(morceaux, key=lambda m: longueur(np.array(m, float))), float)
+    tot = longueur(arr)
+
+    def ancre_canal(fraction):
+        cible, acc = tot * fraction, 0.0
+        for i in range(len(arr) - 1):
+            seg = math.hypot(*(arr[i + 1] - arr[i]))
+            if acc + seg >= cible:
+                t = (cible - acc) / seg if seg else 0
+                pt = arr[i] + t * (arr[i + 1] - arr[i])
+                j0, j1 = i, i + 1
+                while j0 > 0 and np.hypot(*(arr[j0] - pt)) * UNITE < 6:
+                    j0 -= 1
+                while j1 < len(arr) - 1 and np.hypot(*(arr[j1] - pt)) * UNITE < 6:
+                    j1 += 1
+                dd = arr[j1] - arr[j0]
+                ang = math.degrees(math.atan2(dd[1], dd[0]))
+                ang = ang - 180 if ang > 90 else ang + 180 if ang < -90 else ang
+                return [int(round(pt[0])), int(round(pt[1])), round(ang, 1)]
+            acc += seg
+        return [int(round(arr[-1][0])), int(round(arr[-1][1])), 0.0]
+
+    fr = sorted((round(0.1 + 0.05 * i, 2) for i in range(17)), key=lambda f: abs(f - 0.5))
+    canaux.append({'id': cid, 'nom': cnom, 'genre': 'canal', 'approx': approx, 'd': d_, 'dehors': [], 'noms': [ancre_canal(f) for f in fr]})
+    print(f'canal {cid:20s} {tot * UNITE:.0f} km {"(approché)" if approx else ""}')
+NAVIGABLES = ['meuse', 'escaut', 'sambre', 'lys']  # rivières navigables (tracés OpenStreetMap)
+
 # Cadre de la carte : le pays et les pointillés des rivières, avec une marge
 MARGE_CADRE = 60
 cadre = [int(etendue[0][0] - MARGE_CADRE), int(etendue[0][1] - MARGE_CADRE), int(etendue[1][0] + MARGE_CADRE), int(etendue[1][1] + MARGE_CADRE)]
@@ -694,6 +818,7 @@ sortie = {
     'communesDG': sorted(COMMUNES_DG),
     'frontieres': {k: chemin([[(int(x), int(y)) for x, y in l] for l in v]) for k, v in frontieres_calculees.items()},
     'rivieres': rivieres_out,
+    'reseaux': {'rail': rail_d, 'autoroutes': autoroutes, 'canaux': canaux, 'navigables': NAVIGABLES},
     'cadre': cadre,
     'terre': chemin(terre) + 'Z',
     'paysVoisins': pays_voisins,

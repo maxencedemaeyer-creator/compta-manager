@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Check, Maximize, Minimize } from 'lucide-react'
+import { ArrowLeft, Car, Check, Maximize, Minimize, Ship, TrainFront } from 'lucide-react'
 import Chargement from '../../components/Chargement.jsx'
 import CarteAtlas from '../../components/atlas/CarteAtlas.jsx'
 import { useAtlasBelgique } from '../../hooks/useAtlasBelgique.js'
-import { COUCHES, EAUX, TYPES_VILLES } from '../../utils/atlas.js'
+import { COUCHES, EAUX, RESEAUX, TYPES_VILLES } from '../../utils/atlas.js'
 
 // =============================================================
 //  ATLAS · Belgique
@@ -15,18 +15,31 @@ import { COUCHES, EAUX, TYPES_VILLES } from '../../utils/atlas.js'
 // =============================================================
 
 function Titre({ children }) {
-  return <h2 className="px-2 pt-3 pb-0.5 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">{children}</h2>
+  return <h2 className="px-2 pt-2.5 pb-0.5 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">{children}</h2>
 }
 
 // Une ligne de choix : rond (un seul choix possible) ou carré (plusieurs possibles)
-function Ligne({ actif, onClick, titre, aide, carre = false }) {
+// Pictogramme et échantillon de trait de chaque réseau (les mêmes que sur la carte)
+const LOGOS_RESEAUX = {
+  rail: { Icone: TrainFront, couleur: '#4b5563', trait: (
+    <svg width="34" height="10" viewBox="0 0 34 10" aria-hidden="true"><line x1="1" y1="5" x2="33" y2="5" stroke="#4b5563" strokeWidth="3" /><line x1="1" y1="5" x2="33" y2="5" stroke="#fff" strokeWidth="1.4" strokeDasharray="4 5" /></svg>
+  ) },
+  autoroutes: { Icone: Car, couleur: '#ea580c', trait: (
+    <svg width="34" height="10" viewBox="0 0 34 10" aria-hidden="true"><line x1="1" y1="5" x2="33" y2="5" stroke="#ea580c" strokeWidth="4" strokeLinecap="round" /></svg>
+  ) },
+  navigables: { Icone: Ship, couleur: '#0e8fa0', trait: (
+    <svg width="34" height="10" viewBox="0 0 34 10" aria-hidden="true"><line x1="1" y1="5" x2="33" y2="5" stroke="#0e8fa0" strokeWidth="5" strokeLinecap="round" /><line x1="1" y1="5" x2="33" y2="5" stroke="#fff" strokeWidth="1.5" /></svg>
+  ) },
+}
+
+function Ligne({ actif, onClick, titre, aide, carre = false, logo = null }) {
   return (
     <button
       type="button"
       role={carre ? 'checkbox' : 'radio'}
       aria-checked={actif}
       onClick={onClick}
-      className={`w-full flex items-center gap-2.5 rounded-lg px-2 py-1 text-left transition ${actif ? 'bg-sky-50' : 'hover:bg-slate-50'}`}
+      className={`w-full flex items-center gap-2.5 rounded-lg px-2 py-0.5 text-left transition ${actif ? 'bg-sky-50' : 'hover:bg-slate-50'}`}
     >
       <span
         className={`w-[18px] h-[18px] shrink-0 flex items-center justify-center border-2 ${carre ? 'rounded' : 'rounded-full'} ${
@@ -35,9 +48,14 @@ function Ligne({ actif, onClick, titre, aide, carre = false }) {
       >
         {actif && <Check size={12} strokeWidth={4} />}
       </span>
-      <span className="leading-tight min-w-0">
+      {logo && (
+        <span className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-white" style={{ background: logo.couleur }}>
+          <logo.Icone size={16} />
+        </span>
+      )}
+      <span className="leading-tight min-w-0 flex-1">
         <span className={`block text-[15px] ${actif ? 'font-bold text-slate-900' : 'font-semibold text-slate-800'}`}>{titre}</span>
-        {aide && <span className="block text-[11px] text-slate-500 truncate">{aide}</span>}
+        {logo ? <span className="block mt-0.5">{logo.trait}</span> : aide && <span className="block text-[11px] text-slate-500 truncate">{aide}</span>}
       </span>
     </button>
   )
@@ -52,6 +70,7 @@ export default function AtlasBelgiqueView() {
   const [nomsVilles, setNomsVilles] = useState(true)
   const [eau, setEau] = useState('aucune')
   const [mer, setMer] = useState(false)
+  const [reseaux, setReseaux] = useState({ rail: false, autoroutes: false, navigables: false })
   const [selection, setSelection] = useState(null)
   const [pleinEcran, setPleinEcran] = useState(false)
 
@@ -128,6 +147,11 @@ export default function AtlasBelgiqueView() {
             <Ligne key={e.id} actif={eau === e.id} titre={e.nom} aide={e.aide} onClick={() => setEau(e.id)} />
           ))}
           <Ligne carre actif={mer} titre="Mer du Nord" onClick={() => setMer((m) => !m)} />
+
+          <Titre>Activité humaine</Titre>
+          {RESEAUX.map((r) => (
+            <Ligne key={r.id} carre logo={LOGOS_RESEAUX[r.id]} actif={reseaux[r.id]} titre={r.nom} aide={r.aide} onClick={() => setReseaux((x) => ({ ...x, [r.id]: !x[r.id] }))} />
+          ))}
         </div>
 
         {/* Sources (la licence OpenStreetMap, ODbL, demande de la citer) */}
@@ -146,6 +170,7 @@ export default function AtlasBelgiqueView() {
           nomsVilles={nomsVilles}
           eau={eau}
           mer={mer}
+          reseaux={reseaux}
           selection={selection}
           onSelection={setSelection}
         />

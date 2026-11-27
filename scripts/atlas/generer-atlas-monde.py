@@ -5,11 +5,15 @@ Génère src/data/atlas-monde.json (données de l'application ATLAS, série « M
 Source : Natural Earth 1:50m (domaine public), via le paquet npm « world-atlas »
 (scripts/atlas/sources/pays-monde-50m.topo.json, 241 pays et territoires).
 
-Les pays sont regroupés en 7 continents (Amérique du Nord, Amérique du Sud, Europe, Afrique,
-Asie, Océanie, Antarctique). Quelques cas particuliers sont tranchés à la main :
+Les pays sont regroupés en continents. Le programme belge compte 6 continents (Europe, Asie, Amérique,
+Afrique, Océanie, Antarctique) : on garde aussi l'Amérique du Nord et l'Amérique du Sud, pour pouvoir
+les distinguer. Quelques cas particuliers sont tranchés à la main :
   - Russie et Kazakhstan : la partie à l'ouest de l'Oural est en Europe, le reste en Asie ;
-  - Indonésie : la Nouvelle-Guinée occidentale (Papouasie) est en Océanie ;
+  - Indonésie : entièrement en Asie (la frontière avec la Papouasie-Nouvelle-Guinée, à 141° E,
+    est donc aussi la limite entre l'Asie et l'Océanie) ;
   - territoires d'outre-mer (France, Espagne, États-Unis, Chili) : classés selon leur position.
+Frontières : lignes communes à deux pays (« contestees » : celles dont le tracé n'est pas reconnu
+de tous : Sahara occidental, Somaliland, nord de Chypre, Palestine).
 Tout est en longitude / latitude : la projection est calculée dans l'application (d3-geo).
 
 Nécessite shapely (pip install shapely).
@@ -23,13 +27,15 @@ from shapely import set_precision
 from shapely.geometry import MultiPolygon, Polygon, box, shape
 from shapely.geometry.polygon import orient
 from shapely.affinity import translate
-from shapely.ops import unary_union
+from shapely.ops import linemerge, unary_union
 
 RACINE = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
 SOURCE = os.path.join(RACINE, 'scripts', 'atlas', 'sources', 'pays-monde-50m.topo.json')
 SORTIE = os.path.join(RACINE, 'src', 'data', 'atlas-monde.json')
 
 CONTINENTS = ['amerique-nord', 'amerique-sud', 'europe', 'afrique', 'asie', 'oceanie', 'antarctique']
+# Frontières dont le tracé est contesté : dessinées en pointillés
+CONTESTEES = [{'W. Sahara', 'Morocco'}, {'Somaliland', 'Somalia'}, {'N. Cyprus', 'Cyprus'}, {'Palestine', 'Israel'}]
 
 PAR_CONTINENT = {
     'amerique-nord': """Anguilla|Antigua and Barb.|Aruba|Bahamas|Barbados|Belize|Bermuda|British Virgin Is.|Canada|Cayman Is.|Costa Rica|Cuba|Curaçao|Dominica|Dominican Rep.|El Salvador|Greenland|Grenada|Guatemala|Haiti|Honduras|Jamaica|Mexico|Montserrat|Nicaragua|Panama|Puerto Rico|Saint Lucia|Sint Maarten|St-Barthélemy|St-Martin|St. Kitts and Nevis|St. Pierre and Miquelon|St. Vin. and Gren.|Trinidad and Tobago|Turks and Caicos Is.|U.S. Virgin Is.|United States of America""",
@@ -47,7 +53,6 @@ EUROPE_OURAL = Polygon([
     (-35, 35), (-35, 85), (69.5, 85), (69.5, 71), (66.5, 69.5), (64, 65.5), (60.5, 62), (59.5, 58), (59.5, 56),
     (58.5, 52), (58.5, 51.0), (55.1, 51.7), (51.4, 51.2), (50.0, 49.5), (51.8, 47.1), (50.5, 46), (50.5, 40), (-35, 40),
 ])
-PAPOUASIE = box(130.5, -10.5, 141.5, 1.5)
 
 
 def decoder_topo(topo):
@@ -141,24 +146,20 @@ def continent_du_morceau(nom, poly):
 def main():
     topo = json.load(open(SOURCE))
     morceaux = {c: [] for c in CONTINENTS}
+    par_pays = {}
     for nom, polys in decoder_topo(topo):
         if nom not in CONTINENT_DU_PAYS:
             sys.exit(f'Pays sans continent : {nom}')
         for p in polys:
             if not p.is_valid:
                 p = p.buffer(0)
+            if nom != 'Antarctica':
+                par_pays.setdefault(nom, []).append(p)
             if nom in ('Russia', 'Kazakhstan'):
                 europe = p.intersection(EUROPE_OURAL)
                 asie = p.difference(EUROPE_OURAL)
                 if not europe.is_empty:
                     morceaux['europe'].append(europe)
-                if not asie.is_empty:
-                    morceaux['asie'].append(asie)
-            elif nom == 'Indonesia':
-                oceanie = p.intersection(PAPOUASIE)
-                asie = p.difference(PAPOUASIE)
-                if not oceanie.is_empty:
-                    morceaux['oceanie'].append(oceanie)
                 if not asie.is_empty:
                     morceaux['asie'].append(asie)
             else:
@@ -180,8 +181,44 @@ def main():
         sortie.append({'id': c, 'polygones': coords})
         print(f'{c:15s} {len(coords):4d} polygones')
 
+    # « Amérique » en un seul continent (programme belge) : les deux Amériques fusionnées, sans frontière entre elles
+    amerique = unary_union([set_precision(m, 1e-4) for c in ('amerique-nord', 'amerique-sud') for m in morceaux[c]])
+    amerique = set_precision(amerique.simplify(0.04, preserve_topology=True), 0.01)
+    polys = [amerique] if amerique.geom_type == 'Polygon' else list(amerique.geoms)
+    coords = [[[[round(x, 2), round(y, 2)] for x, y in r.coords] for r in [q.exterior, *q.interiors]] for q in (orient(q, sign=-1.0) for q in polys if q.area > 0.03)]
+    sortie.append({'id': 'amerique', 'polygones': coords})
+    print(f'{"amerique":15s} {len(coords):4d} polygones')
+
+    # Frontières : parties communes aux contours de deux pays
+    pays = {nom: set_precision(unary_union(ps), 1e-4) for nom, ps in par_pays.items()}
+    noms = sorted(pays)
+    def lignes_de(g):
+        if g.geom_type == 'LineString':
+            return [g]
+        if g.geom_type in ('MultiLineString', 'GeometryCollection'):
+            return [l for x in g.geoms for l in lignes_de(x)]
+        return []
+    ordinaires, contestees = [], []
+    for i, a in enumerate(noms):
+        for b in noms[i + 1:]:
+            ga, gb = pays[a], pays[b]
+            if not ga.intersects(gb):
+                continue
+            communes = lignes_de(ga.boundary.intersection(gb.boundary))
+            (contestees if {a, b} in CONTESTEES else ordinaires).extend(communes)
+
+    def vers_json(lignes):
+        if not lignes:
+            return []
+        fusion = linemerge(lignes)
+        fusion = [fusion] if fusion.geom_type == 'LineString' else list(fusion.geoms)
+        return [[[round(x, 2), round(y, 2)] for x, y in l.simplify(0.04).coords] for l in fusion if l.length > 0.05]
+
+    frontieres, frontieres_contestees = vers_json(ordinaires), vers_json(contestees)
+    print(f'frontières : {len(frontieres)} lignes, {len(frontieres_contestees)} contestées')
+
     with open(SORTIE, 'w') as f:
-        json.dump({'continents': sortie}, f, separators=(',', ':'))
+        json.dump({'continents': sortie, 'frontieres': frontieres, 'contestees': frontieres_contestees}, f, separators=(',', ':'))
     print(f'{SORTIE} : {os.path.getsize(SORTIE) / 1024:.0f} Ko')
 
 

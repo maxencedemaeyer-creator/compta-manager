@@ -7,26 +7,49 @@ import { geoCylindricalEqualArea, geoMollweide, geoRobinson, geoWinkel3 } from '
 //  c'est d3-geo qui les projette, selon la projection choisie.
 // =============================================================
 
+// Projection de base des 4 premiers volets : Robinson (parallèles droits, méridiens courbes, pôles aplatis)
+export const PROJECTION_BASE = 'robinson'
+
 export const LARGEUR = 1000 // largeur de la carte, en unités du SVG
 
 // ---------- Continents ----------
+// Programme belge : Europe, Asie, Amérique (un seul continent), Afrique, Océanie, Antarctique.
+// On peut aussi séparer l'Amérique du Nord et l'Amérique du Sud (option de l'écran).
 export const CONTINENTS = [
-  { id: 'amerique-nord', nom: 'Amérique du Nord', couleur: '#fdba74', label: [-102, 46] },
-  { id: 'amerique-sud', nom: 'Amérique du Sud', couleur: '#f9a8d4', label: [-61, -14] },
-  { id: 'europe', nom: 'Europe', couleur: '#a5b4fc', label: [18, 55] },
-  { id: 'afrique', nom: 'Afrique', couleur: '#fde047', label: [21, 5] },
-  { id: 'asie', nom: 'Asie', couleur: '#86efac', label: [92, 47] },
-  { id: 'oceanie', nom: 'Océanie', couleur: '#c4b5fd', label: [136, -25] },
-  { id: 'antarctique', nom: 'Antarctique', couleur: '#e2e8f0', label: [20, -77] },
+  { id: 'amerique', nom: 'Amérique', couleur: '#fdba74', labels: [[-102, 46], [-61, -14]] },
+  { id: 'europe', nom: 'Europe', couleur: '#a5b4fc', labels: [[18, 55]] },
+  { id: 'afrique', nom: 'Afrique', couleur: '#fde047', labels: [[21, 5]] },
+  { id: 'asie', nom: 'Asie', couleur: '#86efac', labels: [[92, 47]] },
+  { id: 'oceanie', nom: 'Océanie', couleur: '#c4b5fd', labels: [[134, -31]] },
+  { id: 'antarctique', nom: 'Antarctique', couleur: '#e2e8f0', labels: [[70, -78]] },
 ]
+const AMERIQUES = [
+  { id: 'amerique-nord', nom: 'Amérique du Nord', couleur: '#fdba74', labels: [[-102, 46]] },
+  { id: 'amerique-sud', nom: 'Amérique du Sud', couleur: '#f9a8d4', labels: [[-61, -14]] },
+]
+// Les continents à dessiner (l'Amérique en un ou en deux morceaux)
+export const continentsAffiches = (scinde) => (scinde ? CONTINENTS.flatMap((c) => (c.id === 'amerique' ? AMERIQUES : [c])) : CONTINENTS)
 
-// Océans : un ou plusieurs emplacements pour le nom (le Pacifique est coupé en deux sur une carte centrée sur Greenwich)
+// Océans (programme belge : Atlantique, Pacifique, Indien, Arctique, Antarctique). Un ou plusieurs
+// emplacements pour le nom (le Pacifique est coupé en deux sur une carte centrée sur Greenwich).
 export const OCEANS = [
   { id: 'atlantique', nom: 'Océan Atlantique', lieux: [[-36, 27]] },
-  { id: 'pacifique', nom: 'Océan Pacifique', lieux: [[-138, 8], [166, 24]] },
+  { id: 'pacifique', nom: 'Océan Pacifique', lieux: [[-138, 8], [164, 11]] },
   { id: 'indien', nom: 'Océan Indien', lieux: [[78, -18]] },
-  { id: 'arctique', nom: 'Océan Arctique', lieux: [[40, 84]] },
-  { id: 'austral', nom: 'Océan Austral', lieux: [[75, -60]] },
+  { id: 'arctique', nom: 'Océan Arctique', lieux: [[95, 82]] },
+  { id: 'antarctique', nom: 'Océan Antarctique', lieux: [[75, -57]] },
+]
+
+// ---------- Hémisphères et pôles (repères du programme) ----------
+export const HEMISPHERES = [
+  { id: 'nord', nom: 'Hémisphère nord', groupe: 'ns', lat: [0, 90], couleur: 'rgba(59,130,246,0.13)', label: [-42, 55] },
+  { id: 'sud', nom: 'Hémisphère sud', groupe: 'ns', lat: [-90, 0], couleur: 'rgba(249,115,22,0.13)', label: [-30, -38] },
+  { id: 'est', nom: 'Hémisphère est', groupe: 'eo', lon: [0, 180], couleur: 'rgba(16,185,129,0.13)', label: [105, -45] },
+  { id: 'ouest', nom: 'Hémisphère ouest', groupe: 'eo', lon: [-180, 0], couleur: 'rgba(168,85,247,0.13)', label: [-105, -45] },
+]
+export const POLES = [
+  { id: 'nord', nom: 'Pôle Nord', lat: 90 },
+  { id: 'sud', nom: 'Pôle Sud', lat: -90 },
 ]
 
 // ---------- Lignes imaginaires ----------
@@ -40,6 +63,8 @@ export const LIGNES = [
   { id: 'arctique', nom: 'Cercle polaire arctique', lat: CERCLE_POLAIRE, couleur: '#2563eb', largeur: 2, tirets: '10 6' },
   { id: 'antarctique', nom: 'Cercle polaire antarctique', lat: -CERCLE_POLAIRE, couleur: '#2563eb', largeur: 2, tirets: '10 6' },
   { id: 'greenwich', nom: 'Méridien de Greenwich', lon: 0, couleur: '#7c3aed', largeur: 2.6 },
+  // Limite des hémisphères est / ouest (de l'autre côté de la Terre) : seulement avec les hémisphères
+  { id: 'antimeridien', nom: 'Méridien 180°', lon: 180, couleur: '#7c3aed', largeur: 2.6, tirets: '10 6', auxiliaire: true },
 ]
 
 // ---------- Zones climatiques (selon la latitude) ----------
@@ -227,4 +252,12 @@ export const grille = () => geoGraticule().step([30, 30])()
 // Les continents, en un seul objet par continent (pour d3-geo)
 export function continentsGeo(donnees) {
   return donnees.continents.map((c) => ({ id: c.id, geo: { type: 'MultiPolygon', coordinates: c.polygones } }))
+}
+
+// Frontières entre pays : ordinaires, et contestées (tracé non reconnu de tous : pointillés)
+export function frontieresGeo(donnees) {
+  return {
+    pays: { type: 'MultiLineString', coordinates: donnees.frontieres },
+    contestees: { type: 'MultiLineString', coordinates: donnees.contestees },
+  }
 }

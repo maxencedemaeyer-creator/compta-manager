@@ -33,6 +33,13 @@ export const TYPES_VILLES = [
 // Ce qu'une ville de atlas-belgique.json est, selon sa « type »
 export const TYPE_VILLE_VERS_OPTION = { capitale: 'bruxelles', 'chef-lieu': 'chefsLieux', ville: 'importantes' }
 
+// Activité humaine (menu « Activité humaine ») : réseaux de communication qui relient les espaces habités
+export const RESEAUX = [
+  { id: 'rail', nom: 'Chemins de fer', aide: 'réseau ferroviaire' },
+  { id: 'autoroutes', nom: 'Autoroutes', aide: 'E40, E19, E411…' },
+  { id: 'navigables', nom: 'Voies navigables', aide: 'canaux et rivières navigables' },
+]
+
 // Les trois fleuves de Belgique
 export const FLEUVES = ['meuse', 'escaut', 'yser']
 
@@ -128,6 +135,12 @@ export function rivieresVisibles(atlas, eau) {
   if (eau === 'aucune') return []
   if (eau === 'fleuves') return atlas.rivieres.filter((r) => FLEUVES.includes(r.id))
   return atlas.rivieres
+}
+
+// Voies navigables à dessiner : les canaux et les rivières navigables (leurs tracés sont ceux de l'hydrographie)
+export function voiesNavigables(atlas, actif) {
+  if (!actif) return { canaux: [], rivieres: [] }
+  return { canaux: atlas.reseaux.canaux, rivieres: atlas.rivieres.filter((r) => atlas.reseaux.navigables.includes(r.id)) }
 }
 
 // Villes à afficher selon les cases cochées { bruxelles, chefsLieux, importantes }
