@@ -1,4 +1,4 @@
-import { Landmark } from 'lucide-react'
+import { Globe2, Landmark } from 'lucide-react'
 
 // =============================================================
 //  Bibliothèque de cartes de l'ATLAS.
@@ -17,7 +17,17 @@ export const SERIES_ATLAS = [
     couleur: 'from-amber-300 via-rose-400 to-sky-500',
     pret: true,
   },
+  {
+    id: 'monde',
+    rubrique: 'Monde',
+    titre: 'Le monde',
+    texte: 'Continents, océans, lignes imaginaires, fuseaux horaires, zones climatiques, projections et planisphères',
+    to: '/maxence/atlas/monde',
+    icon: Globe2,
+    couleur: 'from-sky-400 via-emerald-400 to-amber-300',
+    pret: true,
+  },
 ]
 
 // Rubriques dans l'ordre d'affichage (une rubrique sans série n'apparaît pas)
-export const RUBRIQUES_ATLAS = ['Régions', 'Thèmes']
+export const RUBRIQUES_ATLAS = ['Monde', 'Régions', 'Thèmes']
