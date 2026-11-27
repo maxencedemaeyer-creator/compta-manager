@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ArrowRight, Check, Lightbulb, RotateCcw, Trophy } from 'lucide-react'
-import Banc, { HAUTEUR, useBanc } from '../../../components/labo/electricite/Banc.jsx'
+import Banc, { HAUTEUR, LARGEUR, useBanc } from '../../../components/labo/electricite/Banc.jsx'
 import { Bouton, Carte, Eclat } from '../../../components/labo/CadreJeu.jsx'
 import { Outils, PageElec } from './commun.jsx'
 
@@ -96,7 +96,10 @@ export default function Missions({ code, titre, attendus, couleur, missions, int
             silence={!son}
             fond={m.fond?.(vue)}
             hauteur={m.hauteur ?? HAUTEUR}
-            className="mx-auto w-full max-w-[540px] tab:h-[calc(100dvh-93px)] tab:w-auto tab:max-w-full"
+            // largeur explicite (hauteur × proportions du plan) : Safari n'arrive pas à la déduire
+            // de l'aspect-ratio dans une colonne « auto » et écrase l'établi à 0 de large
+            style={{ '--r': LARGEUR / (m.hauteur ?? HAUTEUR) }}
+            className="mx-auto w-full max-w-[540px] tab:h-[calc(100dvh-93px)] tab:w-[calc((100dvh-93px)*var(--r))] tab:max-w-full"
           />
         </div>
         <div className="order-1 flex min-w-0 flex-col gap-3 md:order-2 tab:min-h-0 tab:overflow-y-auto">
