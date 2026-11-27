@@ -22,17 +22,14 @@ const COULEUR_NOM_EAU = '#1d4ed8'
 // Zones colorées : ne se redessinent que si la couche change
 const FondZones = memo(function FondZones({ zones, communes, limitrophes }) {
   if (limitrophes) {
-    // Les voisins viennent d'une autre source que les communes belges : leurs frontières ne coïncident pas exactement.
-    // Un large trait de leur couleur comble les interstices ; la Belgique (sans le détail de ses communes) est posée dessus.
+    // Les voisins sont recalés sur la Belgique par le script de génération (leur frontière avec elle est celle de la Belgique) ;
+    // la Belgique, sans le détail de ses communes, est posée dessus.
     const voisins = zones.filter((z) => z.id !== 'belgique')
     const belgique = zones.find((z) => z.id === 'belgique')
     return (
       <g>
         {voisins.map((z) => (
-          <path key={'e' + z.id} d={z.d} fill={z.couleur} stroke={z.couleur} strokeWidth="3.5" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
-        ))}
-        {voisins.map((z) => (
-          <path key={z.id} d={z.d} data-id={z.id} fill={z.couleur} stroke="#475569" strokeWidth="1.3" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
+          <path key={z.id} d={z.d} data-id={z.id} fillRule="evenodd" fill={z.couleur} stroke="#475569" strokeWidth="1.3" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
         ))}
         {belgique && (
           <path d={belgique.d} data-id="belgique" fill={belgique.couleur} stroke={belgique.couleur} strokeWidth="1" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />

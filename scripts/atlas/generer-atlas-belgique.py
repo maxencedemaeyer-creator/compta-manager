@@ -12,6 +12,7 @@ Rien n'est dessiné à la main :
   - villes : positions des communes (jief/zipcode-belgium, via INTERFACE-ELEVES).
   - projection : polynôme (lon, lat) → repère de la carte, ajusté sur les 565 communes.
 
+Nécessite numpy et shapely (pip install numpy shapely).
 Lancer :  python3 -I scripts/atlas/generer-atlas-belgique.py
 """
 import json
@@ -21,6 +22,9 @@ import sys
 from collections import defaultdict
 
 import numpy as np
+from shapely.geometry import MultiPolygon, Polygon, box
+from shapely.ops import unary_union
+from shapely.validation import make_valid
 
 RACINE = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
 SOURCES = os.path.join(RACINE, 'scripts', 'atlas', 'sources')
@@ -549,15 +553,40 @@ for anneau in json.load(open(os.path.join(SOURCES, 'ne_10m_land_extrait.json')))
 # Pays limitrophes (couche « Pays limitrophes ») : mêmes données Natural Earth, mêmes découpe et projection
 NOMS_PAYS = {'france': 'France', 'pays-bas': 'Pays-Bas', 'allemagne': 'Allemagne', 'luxembourg': 'Luxembourg'}
 pays_voisins = []
+# La Belgique officielle (communes Statbel) sert de référence : les pays voisins sont recalés dessus, pour que leur frontière
+# avec la Belgique coïncide exactement avec celle de la Belgique (les deux sources diffèrent d'environ 1 km).
+belgique = unary_union([make_valid(Polygon(r)) for c in communes for r in c['anneaux'] if len(r) > 2])
+terre_union = unary_union([make_valid(Polygon(t)) for t in terre if len(t) > 2])
+cadre_large = box(*(np.concatenate([tous_les_points.min(0) - 6000, tous_les_points.max(0) + 6000])))
+mer_ne = cadre_large.difference(terre_union)  # la mer selon Natural Earth : on n'y étend jamais un pays
+proche_be = belgique.buffer(2.5 * KM)
+
+
+def anneaux_de(geom):
+    polys = [geom] if isinstance(geom, Polygon) else [g for g in getattr(geom, 'geoms', []) if isinstance(g, Polygon)]
+    out = []
+    for g in polys:
+        if g.is_empty or g.area < 400:  # taille minimale (≈ 1 km²) : on ignore les miettes
+            continue
+        g = g.simplify(0.8)
+        out.append([(int(round(x)), int(round(y))) for x, y in g.exterior.coords])
+        out += [[(int(round(x)), int(round(y))) for x, y in h.coords] for h in g.interiors]
+    return out
+
+
 for pid, anneaux in json.load(open(os.path.join(SOURCES, 'ne_10m_pays_limitrophes_extrait.json')))['pays'].items():
-    morceaux = []
+    polys = []
     for anneau in anneaux:
         morceau = decouper(anneau, 0.6, 48.9, 8.6, 53.3)
         if len(morceau) < 3:
             continue
         xy = np.array([projeter_lcc(la, lo) for lo, la in morceau])
-        morceaux.append([(int(round(x)), int(round(y))) for x, y in dp(xy, 1.0)])
-    pays_voisins.append({'id': pid, 'nom': NOMS_PAYS[pid], 'd': chemin(morceaux) + 'Z'})
+        polys.append(make_valid(Polygon(dp(xy, 1.0))))
+    pays = unary_union(polys)
+    # ce que le pays gagne en comblant l'écart avec la frontière belge (hors mer), puis on retire la Belgique
+    comble = proche_be.difference(belgique).intersection(pays.buffer(2.5 * KM))
+    final = unary_union([pays, comble]).difference(belgique).difference(mer_ne)
+    pays_voisins.append({'id': pid, 'nom': NOMS_PAYS[pid], 'd': chemin(anneaux_de(final)) + 'Z'})
 # le cadre inclut la mer jusqu'au-delà de l'embouchure de l'Escaut (Flessingue, 51,44° N) et la côte jusqu'à Dunkerque
 cadre[1] = min(cadre[1], int(projeter_lcc(51.62, 3.2)[1]) - 20)
 print(f'terre : {len(terre)} morceaux, {sum(len(t) for t in terre)} points')
@@ -635,7 +664,7 @@ ETIQUETTES = {
     },
 }
 etiquettes_out = {}
-POSITIONS_PAYS = {'france': (50.05, 2.85), 'pays-bas': (51.55, 5.35), 'allemagne': (50.62, 6.55), 'luxembourg': (49.58, 6.25)}
+POSITIONS_PAYS = {'france': (50.05, 2.85), 'pays-bas': (51.55, 5.35), 'allemagne': (50.88, 6.22), 'luxembourg': (49.58, 6.25)}
 for couche, groupes in ETIQUETTES.items():
     etiquettes_out[couche] = {}
     for g, (commune, dx, dy) in groupes.items():
