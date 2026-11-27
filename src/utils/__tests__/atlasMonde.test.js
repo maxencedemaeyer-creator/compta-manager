@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { geoArea } from 'd3-geo'
+import { geoArea, geoContains } from 'd3-geo'
 import donnees from '../../data/atlas-monde.json'
 import {
   CERCLE_POLAIRE,
@@ -12,24 +12,32 @@ import {
   PROJECTIONS,
   ZONES_CLIMAT,
   construireVue,
+  continentsAffiches,
   continentsGeo,
+  frontieresGeo,
+  HEMISPHERES,
+  POLES,
   heureDuFuseau,
   signe,
 } from '../atlasMonde.js'
 
 const RAYON_TERRE_KM = 6371
 const continents = continentsGeo(donnees)
+const geoDe = (id) => continents.find((c) => c.id === id).geo
 const surface = (id) => (geoArea(continents.find((c) => c.id === id).geo) * RAYON_TERRE_KM ** 2) / 1e6 // millions de km²
 
 describe('ATLAS · Monde · continents', () => {
-  it('contient les 7 continents, chacun avec un nom et une couleur', () => {
-    expect(continents.map((c) => c.id).sort()).toEqual(CONTINENTS.map((c) => c.id).sort())
-    expect(CONTINENTS).toHaveLength(7)
+  it('programme belge : 6 continents (Amérique en un seul) ; Amérique du Nord et du Sud en option', () => {
+    expect(CONTINENTS.map((c) => c.nom)).toEqual(['Amérique', 'Europe', 'Afrique', 'Asie', 'Océanie', 'Antarctique'])
+    expect(continentsAffiches(false)).toHaveLength(6)
+    expect(continentsAffiches(true).map((c) => c.id)).toEqual(['amerique-nord', 'amerique-sud', 'europe', 'afrique', 'asie', 'oceanie', 'antarctique'])
+    // toutes les formes nécessaires existent dans les données
+    for (const c of [...continentsAffiches(false), ...continentsAffiches(true)]) expect(continents.some((x) => x.id === c.id), c.id).toBe(true)
   })
 
   it('les surfaces sont proches de la réalité (millions de km²)', () => {
     // valeurs de référence, à ±10 % (contours simplifiés, quelques territoires classés autrement)
-    const attendu = { 'amerique-nord': 24.7, 'amerique-sud': 17.8, europe: 10.2, afrique: 30.4, asie: 44.6, oceanie: 8.5, antarctique: 14.2 }
+    const attendu = { amerique: 42.5, 'amerique-nord': 24.7, 'amerique-sud': 17.8, europe: 10.2, afrique: 30.4, asie: 44.6, oceanie: 8.5, antarctique: 14.2 }
     for (const [id, ref] of Object.entries(attendu)) {
       expect(surface(id), id).toBeGreaterThan(ref * 0.85)
       expect(surface(id), id).toBeLessThan(ref * 1.1)
@@ -41,8 +49,37 @@ describe('ATLAS · Monde · continents', () => {
   })
 
   it('les noms de continents et d’océans sont placés sur la carte', () => {
-    for (const c of CONTINENTS) expect(c.label).toHaveLength(2)
-    expect(OCEANS.map((o) => o.id).sort()).toEqual(['arctique', 'atlantique', 'austral', 'indien', 'pacifique'])
+    for (const c of CONTINENTS) for (const l of c.labels) expect(l).toHaveLength(2)
+    // programme belge : pas d'océan « Austral »
+    expect(OCEANS.map((o) => o.nom).sort()).toEqual(['Océan Antarctique', 'Océan Arctique', 'Océan Atlantique', 'Océan Indien', 'Océan Pacifique'])
+  })
+})
+
+describe('ATLAS · Monde · limites', () => {
+  it('l’Indonésie est en Asie : la frontière avec la Papouasie-Nouvelle-Guinée sépare l’Asie de l’Océanie', () => {
+    expect(geoContains(geoDe('asie'), [138, -4])).toBe(true) // Papouasie indonésienne
+    expect(geoContains(geoDe('oceanie'), [138, -4])).toBe(false)
+    expect(geoContains(geoDe('oceanie'), [145, -6])).toBe(true) // Papouasie-Nouvelle-Guinée
+    expect(geoContains(geoDe('asie'), [145, -6])).toBe(false)
+  })
+
+  it('l’Amérique fusionnée couvre les deux Amériques', () => {
+    expect(geoContains(geoDe('amerique'), [-100, 40])).toBe(true)
+    expect(geoContains(geoDe('amerique'), [-60, -10])).toBe(true)
+    expect(geoContains(geoDe('amerique'), [10, 10])).toBe(false)
+  })
+
+  it('les frontières entre pays sont fournies, et celles qui sont contestées à part', () => {
+    expect(donnees.frontieres.length).toBeGreaterThan(200)
+    expect(donnees.contestees.length).toBeGreaterThanOrEqual(3)
+    const geo = frontieresGeo(donnees)
+    expect(geo.pays.type).toBe('MultiLineString')
+    expect(geo.contestees.coordinates).toBe(donnees.contestees)
+  })
+
+  it('hémisphères et pôles du programme', () => {
+    expect(HEMISPHERES.map((h) => h.id).sort()).toEqual(['est', 'nord', 'ouest', 'sud'])
+    expect(POLES.map((p) => p.lat).sort((a, b) => a - b)).toEqual([-90, 90])
   })
 })
 

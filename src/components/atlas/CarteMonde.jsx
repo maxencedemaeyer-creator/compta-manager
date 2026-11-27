@@ -1,10 +1,11 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Minus, Plus, Maximize2, MapPin } from 'lucide-react'
 import {
-  CONTINENTS,
   FUSEAUX,
+  HEMISPHERES,
   LIGNES,
   OCEANS,
+  POLES,
   ZONES_CLIMAT,
   bandeGeo,
   cerclesTissot,
@@ -59,7 +60,7 @@ const Terres = memo(function Terres({ continents, mode, zones }) {
   )
 })
 
-export default function CarteMonde({ vue, donneesContinents, couleurs, nomsContinents, nomsOceans, lignes, nomsLignes, fuseaux, heure, climat, avecGrille, tissot, centre, selection, onSelection }) {
+export default function CarteMonde({ vue, donneesContinents, listeContinents, frontieres, avecPays, hemispheres, poles, couleurs, nomsContinents, nomsOceans, lignes, nomsLignes, fuseaux, heure, climat, avecGrille, tissot, centre, selection, onSelection }) {
   const W = vue.largeur
   const H = vue.hauteur
   const boite = useRef(null)
@@ -85,9 +86,16 @@ export default function CarteMonde({ vue, donneesContinents, couleurs, nomsConti
 
   // ---------- géométrie (recalculée seulement si la projection change) ----------
   const continents = useMemo(
-    () => donneesContinents.map((c) => ({ ...c, d: vue.path(c.geo), couleur: CONTINENTS.find((x) => x.id === c.id).couleur })),
-    [donneesContinents, vue]
+    () => listeContinents.map((c) => ({ id: c.id, couleur: c.couleur, d: vue.path(donneesContinents.find((x) => x.id === c.id).geo) })),
+    [donneesContinents, listeContinents, vue]
   )
+  const dPays = useMemo(() => (avecPays ? { ordinaires: vue.path(frontieres.pays), contestees: vue.path(frontieres.contestees) } : null), [avecPays, frontieres, vue])
+  const bandesHemispheres = useMemo(
+    () =>
+      HEMISPHERES.filter((h) => hemispheres[h.groupe]).map((h) => ({ ...h, d: vue.path(bandeGeo({ lat: h.lat, lon: h.lon })), p: vue.place(...h.label) })),
+    [hemispheres, vue]
+  )
+  const marquesPoles = useMemo(() => (poles ? POLES.map((o) => ({ ...o, p: vue.place(0, o.lat) })).filter((o) => o.p) : []), [poles, vue])
   const zonesClimat = useMemo(() => ZONES_CLIMAT.map((z) => ({ ...z, d: vue.path(bandeGeo({ lat: z.lat })) })), [vue])
   const bandesFuseaux = useMemo(() => FUSEAUX.map((f) => ({ ...f, d: vue.path(bandeGeo({ lon: [f.de, f.a] })) })), [vue])
   const dLignes = useMemo(() => LIGNES.filter((l) => lignes.includes(l.id)).map((l) => ({ ...l, d: vue.path(ligneGeo(l)) })), [vue, lignes])
@@ -178,8 +186,11 @@ export default function CarteMonde({ vue, donneesContinents, couleurs, nomsConti
 
   // ---------- noms ----------
   const nomsC = useMemo(
-    () => (nomsContinents ? CONTINENTS.map((c) => ({ ...c, p: vue.place(...c.label) })).filter((c) => c.p) : []),
-    [nomsContinents, vue]
+    () =>
+      nomsContinents
+        ? listeContinents.flatMap((c) => c.labels.map((l, i) => ({ cle: `${c.id}${i}`, id: c.id, nom: c.nom, p: vue.place(...l) }))).filter((c) => c.p)
+        : [],
+    [nomsContinents, listeContinents, vue]
   )
   // Un nom d'océan trop près d'un nom de continent est supprimé (vues polaires, où tout se rapproche)
   const nomsO = useMemo(
@@ -200,7 +211,7 @@ export default function CarteMonde({ vue, donneesContinents, couleurs, nomsConti
           return p && { ...l, p, a: 'end', dy: -1 }
         }
         const p = vue.place(l.lon, -50)
-        return p && { ...l, p, a: 'start', dy: 0 }
+        return p && { ...l, p, a: l.lon > 90 ? 'end' : 'start', dy: 0 }
       })
       .filter(Boolean)
   }, [nomsLignes, dLignes, vue, centre])
@@ -210,7 +221,7 @@ export default function CarteMonde({ vue, donneesContinents, couleurs, nomsConti
     [climat, zonesClimat, vue]
   )
 
-  const continentChoisi = selection ? CONTINENTS.find((c) => c.id === selection) : null
+  const continentChoisi = selection ? listeContinents.find((c) => c.id === selection) : null
   const dChoisi = selection ? continents.find((c) => c.id === selection)?.d : null
   const boutons =
     'w-12 h-12 rounded-xl bg-white/90 backdrop-blur border border-slate-300 text-slate-700 flex items-center justify-center active:scale-95 hover:bg-white shadow-sm transition'
@@ -257,6 +268,23 @@ export default function CarteMonde({ vue, donneesContinents, couleurs, nomsConti
 
           {dChoisi && <path d={dChoisi} fill="rgba(15,23,42,0.18)" stroke="#0f172a" strokeWidth="2.5" vectorEffect="non-scaling-stroke" pointerEvents="none" />}
 
+          {/* Hémisphères : deux moitiés teintées, avec leur nom */}
+          {bandesHemispheres.length > 0 && (
+            <g pointerEvents="none">
+              {bandesHemispheres.map((h) => (
+                <path key={h.id} d={h.d} fill={h.couleur} />
+              ))}
+            </g>
+          )}
+
+          {/* Frontières entre pays (pointillés : tracé contesté) */}
+          {dPays && (
+            <g pointerEvents="none" fill="none" strokeLinejoin="round" strokeLinecap="round">
+              <path d={dPays.ordinaires} stroke="#64748b" strokeWidth="0.9" vectorEffect="non-scaling-stroke" />
+              <path d={dPays.contestees} stroke="#64748b" strokeWidth="1.1" strokeDasharray="4 3" vectorEffect="non-scaling-stroke" />
+            </g>
+          )}
+
           {/* Fuseaux horaires : une tranche sur deux est grisée */}
           {fuseaux && (
             <g pointerEvents="none">
@@ -280,9 +308,41 @@ export default function CarteMonde({ vue, donneesContinents, couleurs, nomsConti
               {nomsL.map((l) => {
                 const fs = px(14)
                 return (
-                  <text key={l.id} x={l.p[0] + (l.a === 'start' ? px(8) : 0)} y={l.p[1] + (l.dy < 0 ? -px(5) : fs * 0.35)} fontSize={fs} textAnchor={l.a} fill={l.couleur} {...halo(fs, 'rgba(255,255,255,0.9)')}>
+                  <text key={l.id} x={l.p[0] + (l.a === 'start' ? px(8) : l.dy === 0 ? -px(8) : 0)} y={l.p[1] + (l.dy < 0 ? -px(5) : fs * 0.35)} fontSize={fs} textAnchor={l.a} fill={l.couleur} {...halo(fs, 'rgba(255,255,255,0.9)')}>
                     {l.nom}
                   </text>
+                )
+              })}
+            </g>
+          )}
+
+          {/* Noms des hémisphères */}
+          {nomsLignes && bandesHemispheres.length > 0 && (
+            <g pointerEvents="none" textAnchor="middle" fontWeight="800" fill="#334155">
+              {bandesHemispheres.filter((h) => h.p).map((h) => {
+                const fs = px(17)
+                return (
+                  <text key={h.id} x={caler(h.p[0], h.nom, fs, W)} y={h.p[1] + fs * 0.35} fontSize={fs} letterSpacing={fs * 0.04} {...halo(fs, 'rgba(255,255,255,0.85)')}>
+                    {h.nom.toUpperCase()}
+                  </text>
+                )
+              })}
+            </g>
+          )}
+
+          {/* Pôles */}
+          {marquesPoles.length > 0 && (
+            <g pointerEvents="none" textAnchor="middle" fontWeight="800">
+              {marquesPoles.map((o) => {
+                const fs = px(15)
+                const nord = o.lat > 0
+                return (
+                  <g key={o.id}>
+                    <circle cx={o.p[0]} cy={o.p[1]} r={px(6)} fill="#0f172a" stroke="#fff" strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
+                    <text x={o.p[0]} y={o.p[1] + (nord ? px(24) : -px(14))} fontSize={fs} fill="#0f172a" {...halo(fs, 'rgba(255,255,255,0.9)')}>
+                      {o.nom}
+                    </text>
+                  </g>
                 )
               })}
             </g>
@@ -322,7 +382,7 @@ export default function CarteMonde({ vue, donneesContinents, couleurs, nomsConti
               {nomsC.map((c) => {
                 const fs = px(c.id === 'antarctique' ? 15 : 18)
                 return (
-                  <text key={c.id} x={caler(c.p[0], c.nom, fs, W)} y={c.p[1] + fs * 0.35} fontSize={fs} letterSpacing={fs * 0.06} {...halo(fs, 'rgba(255,255,255,0.8)')}>
+                  <text key={c.cle} x={caler(c.p[0], c.nom, fs, W)} y={c.p[1] + fs * 0.35} fontSize={fs} letterSpacing={fs * 0.06} {...halo(fs, 'rgba(255,255,255,0.8)')}>
                     {c.nom.toUpperCase()}
                   </text>
                 )

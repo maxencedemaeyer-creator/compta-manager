@@ -4,7 +4,7 @@ import { ArrowLeft, Check, Maximize, Minimize } from 'lucide-react'
 import Chargement from '../../components/Chargement.jsx'
 import CarteMonde from '../../components/atlas/CarteMonde.jsx'
 import { useAtlasMonde } from '../../hooks/useAtlasMonde.js'
-import { LIGNES, PLANISPHERES, PROJECTIONS, PROJECTION_BASE, PROPRIETES, ZONES_CLIMAT, construireVue } from '../../utils/atlasMonde.js'
+import { LIGNES, PLANISPHERES, PROJECTIONS, PROJECTION_BASE, PROPRIETES, ZONES_CLIMAT, construireVue, continentsAffiches } from '../../utils/atlasMonde.js'
 
 // =============================================================
 //  ATLAS · Monde
@@ -15,7 +15,7 @@ import { LIGNES, PLANISPHERES, PROJECTIONS, PROJECTION_BASE, PROPRIETES, ZONES_C
 // =============================================================
 const VOLETS = [
   { id: 'vierge', nom: 'Carte vierge', aide: 'Rien d’écrit : toucher un continent pour son nom' },
-  { id: 'affichage', nom: 'Continents et océans', aide: 'Noms, couleurs et lignes imaginaires' },
+  { id: 'affichage', nom: 'Continents, océans et repères', aide: 'Noms, pays, parallèles, hémisphères, pôles' },
   { id: 'fuseaux', nom: 'Fuseaux horaires', aide: '24 tranches de 15° de longitude' },
   { id: 'climats', nom: 'Zones climatiques', aide: 'Chaude, tempérée, froide' },
   { id: 'projections', nom: 'Projections', aide: 'Comment aplatir la Terre' },
@@ -83,8 +83,19 @@ function Explication({ titre, badge, texte }) {
   )
 }
 
+// Réglages communs : limites des pays, Amérique en un ou deux continents
+function ReglagesCommuns({ pays, setPays, scinde, setScinde }) {
+  return (
+    <>
+      <Titre>Pays et continents</Titre>
+      <Ligne carre actif={pays} titre="Limites des pays" aide="Pointillés : tracé contesté" onClick={() => setPays((x) => !x)} />
+      <Ligne carre actif={scinde} titre="Séparer l’Amérique" aide="Amérique du Nord et du Sud" onClick={() => setScinde((x) => !x)} />
+    </>
+  )
+}
+
 export default function AtlasMondeView() {
-  const { continents, erreur } = useAtlasMonde()
+  const { continents, frontieres, erreur } = useAtlasMonde()
   const racine = useRef(null)
   const [volet, setVolet] = useState('affichage')
   const [pleinEcran, setPleinEcran] = useState(false)
@@ -95,6 +106,12 @@ export default function AtlasMondeView() {
   const [nomsContinents, setNomsContinents] = useState(true)
   const [nomsOceans, setNomsOceans] = useState(true)
   const [lignes, setLignes] = useState([])
+  const [hemisNS, setHemisNS] = useState(false)
+  const [hemisEO, setHemisEO] = useState(false)
+  const [poles, setPoles] = useState(false)
+  // Réglages communs à plusieurs volets
+  const [pays, setPays] = useState(false)
+  const [scinde, setScinde] = useState(false)
   const [nomsLignes, setNomsLignes] = useState(true)
   // Fuseaux
   const [heure, setHeure] = useState(12)
@@ -122,6 +139,7 @@ export default function AtlasMondeView() {
   }
   const basculer = (liste, setListe, id) => setListe(liste.includes(id) ? liste.filter((x) => x !== id) : [...liste, id])
 
+  const listeContinents = useMemo(() => continentsAffiches(scinde), [scinde])
   const defProjection = PROJECTIONS.find((p) => p.id === projection)
   const defPlani = PLANISPHERES.find((p) => p.id === planisphere)
 
@@ -137,24 +155,27 @@ export default function AtlasMondeView() {
   const affichage = useMemo(() => {
     switch (volet) {
       case 'vierge':
-        return { couleurs: false, nomsContinents: false, nomsOceans: false, lignes: [], nomsLignes: false }
-      case 'affichage':
-        return { couleurs, nomsContinents, nomsOceans, lignes, nomsLignes }
+        return { couleurs: false, nomsContinents: false, nomsOceans: false, lignes: [], nomsLignes: false, pays }
+      case 'affichage': {
+        // Les hémisphères tracent aussi leurs limites : équateur (nord / sud), Greenwich et 180° (est / ouest)
+        const limites = [...lignes, ...(hemisNS ? ['equateur'] : []), ...(hemisEO ? ['greenwich', 'antimeridien'] : [])]
+        return { couleurs, nomsContinents, nomsOceans, lignes: [...new Set(limites)], nomsLignes, pays, hemispheres: { ns: hemisNS, eo: hemisEO }, poles }
+      }
       case 'fuseaux':
         return { couleurs: false, nomsContinents: false, nomsOceans: false, lignes: [], nomsLignes: false, fuseaux: true }
       case 'climats':
         return { couleurs: false, nomsContinents: false, nomsOceans: false, lignes: ['equateur', 'cancer', 'capricorne', 'arctique', 'antarctique'], nomsLignes: nomsClimat, climat: true }
       case 'projections':
-        return { couleurs: true, nomsContinents: nomsProj, nomsOceans: false, lignes: [], nomsLignes: false, avecGrille: grille, tissot }
+        return { couleurs: true, nomsContinents: nomsProj, nomsOceans: false, lignes: [], nomsLignes: false, avecGrille: grille, tissot, pays }
       default:
-        return { couleurs: true, nomsContinents: nomsPlani, nomsOceans: nomsPlani, lignes: lignesPlani, nomsLignes: false }
+        return { couleurs: true, nomsContinents: nomsPlani, nomsOceans: nomsPlani, lignes: lignesPlani, nomsLignes: false, pays }
     }
-  }, [volet, couleurs, nomsContinents, nomsOceans, lignes, nomsLignes, nomsClimat, nomsProj, grille, tissot, nomsPlani, lignesPlani])
+  }, [volet, couleurs, nomsContinents, nomsOceans, lignes, hemisNS, hemisEO, poles, pays, nomsLignes, nomsClimat, nomsProj, grille, tissot, nomsPlani, lignesPlani])
 
   if (erreur) {
     return <div className="min-h-dvh flex items-center justify-center bg-[#f4f6f8] text-slate-700">La carte n’a pas pu être chargée. Recharge la page.</div>
   }
-  if (!continents) return <Chargement message="Chargement de la carte du monde…" />
+  if (!continents || !frontieres) return <Chargement message="Chargement de la carte du monde…" />
 
   return (
     <div ref={racine} className="h-dvh flex bg-[#f4f6f8] text-slate-900 overflow-hidden">
@@ -189,17 +210,24 @@ export default function AtlasMondeView() {
             />
           ))}
 
+          {volet === 'vierge' && <ReglagesCommuns pays={pays} setPays={setPays} scinde={scinde} setScinde={setScinde} />}
+
           {volet === 'affichage' && (
             <>
               <Titre>Continents et océans</Titre>
               <Ligne carre actif={couleurs} titre="Continents en couleur" onClick={() => setCouleurs((x) => !x)} />
               <Ligne carre actif={nomsContinents} titre="Noms des continents" onClick={() => setNomsContinents((x) => !x)} />
               <Ligne carre actif={nomsOceans} titre="Noms des océans" onClick={() => setNomsOceans((x) => !x)} />
-              <Titre>Lignes imaginaires</Titre>
-              {LIGNES.map((l) => (
+              <ReglagesCommuns pays={pays} setPays={setPays} scinde={scinde} setScinde={setScinde} />
+              <Titre>Parallèles et méridiens</Titre>
+              {LIGNES.filter((l) => !l.auxiliaire).map((l) => (
                 <Ligne key={l.id} carre actif={lignes.includes(l.id)} titre={l.nom} pastille={l.couleur} onClick={() => basculer(lignes, setLignes, l.id)} />
               ))}
-              <Ligne carre actif={nomsLignes} titre="Noms des lignes" onClick={() => setNomsLignes((x) => !x)} />
+              <Titre>Hémisphères et pôles</Titre>
+              <Ligne carre actif={hemisNS} titre="Hémisphères nord et sud" aide="Séparés par l’équateur" onClick={() => setHemisNS((x) => !x)} />
+              <Ligne carre actif={hemisEO} titre="Hémisphères est et ouest" aide="Séparés par Greenwich et le méridien 180°" onClick={() => setHemisEO((x) => !x)} />
+              <Ligne carre actif={poles} titre="Pôles Nord et Sud" onClick={() => setPoles((x) => !x)} />
+              <Ligne carre actif={nomsLignes} titre="Noms des lignes et hémisphères" onClick={() => setNomsLignes((x) => !x)} />
             </>
           )}
 
@@ -264,6 +292,7 @@ export default function AtlasMondeView() {
               <Ligne carre actif={grille} titre="Grille (tous les 30°)" onClick={() => setGrille((x) => !x)} />
               <Ligne carre actif={tissot} titre="Cercles de déformation" aide="Des cercles identiques sur le globe" onClick={() => setTissot((x) => !x)} />
               <Ligne carre actif={nomsProj} titre="Noms des continents" onClick={() => setNomsProj((x) => !x)} />
+              <ReglagesCommuns pays={pays} setPays={setPays} scinde={scinde} setScinde={setScinde} />
             </>
           )}
 
@@ -279,6 +308,7 @@ export default function AtlasMondeView() {
               {LIGNES.filter((l) => l.id === 'equateur' || l.id === 'greenwich').map((l) => (
                 <Ligne key={l.id} carre actif={lignesPlani.includes(l.id)} titre={l.nom} pastille={l.couleur} onClick={() => basculer(lignesPlani, setLignesPlani, l.id)} />
               ))}
+              <ReglagesCommuns pays={pays} setPays={setPays} scinde={scinde} setScinde={setScinde} />
             </>
           )}
         </div>
@@ -290,6 +320,11 @@ export default function AtlasMondeView() {
         <CarteMonde
           vue={vue}
           donneesContinents={continents}
+          listeContinents={listeContinents}
+          frontieres={frontieres}
+          avecPays={!!affichage.pays}
+          hemispheres={affichage.hemispheres || { ns: false, eo: false }}
+          poles={!!affichage.poles}
           couleurs={affichage.couleurs}
           nomsContinents={affichage.nomsContinents}
           nomsOceans={affichage.nomsOceans}
