@@ -1,4 +1,4 @@
-import { Globe2, Landmark } from 'lucide-react'
+import { Earth, Globe2, Landmark } from 'lucide-react'
 
 // =============================================================
 //  Bibliothèque de cartes de l'ATLAS.
@@ -25,6 +25,16 @@ export const SERIES_ATLAS = [
     to: '/maxence/atlas/monde',
     icon: Globe2,
     couleur: 'from-sky-400 via-emerald-400 to-amber-300',
+    pret: true,
+  },
+  {
+    id: 'europe',
+    rubrique: 'Régions',
+    titre: 'Europe',
+    texte: 'Pays, capitales, Union européenne, zone euro, Schengen, montagnes et limites de l’Europe',
+    to: '/maxence/atlas/europe',
+    icon: Earth,
+    couleur: 'from-indigo-400 via-sky-500 to-amber-300',
     pret: true,
   },
 ]
