@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { addDoc, collection, limit, onSnapshot, orderBy, query, serverTimestamp, Timestamp, where } from 'firebase/firestore'
-import { Check, Crown, Flame, Play, RotateCcw, Send, Trophy } from 'lucide-react'
+import { Check, Crown, Flame, Play, RotateCcw, Trophy } from 'lucide-react'
 import { db } from '../../../firebase/config.js'
 import { usePin } from '../../../context/PinContext.jsx'
 import { Bouton, Carte, Eclat } from '../CadreJeu.jsx'
@@ -18,12 +18,32 @@ import { EXPERIENCE } from '../../../config/laboAteliers.js'
 //  - Records en direct (Firebase) : DU JOUR et DE TOUS LES TEMPS.
 //    Même collection qu'avant (laboDefi, laboDefiElec, laboDefiCirc),
 //    mêmes champs : pseudo, score, createdAt (+ bons, total).
+//  - « Qui joue ? » : un ou plusieurs prénoms saisis AVANT chaque partie ;
+//    à la fin, le score est inscrit tout seul au classement.
+//  - NOUVELLE EXPÉRIENCE : <DefiEclair experience="..." /> suffit ; sans
+//    nomCollection, le classement va dans « laboDefi_<experience> ».
 //
 //  Chaque vue fournit : question() → { act, choix, bonne, ... },
 //  rendu(q, flash) (zone de la question), nomChoix(q, c).
 // =============================================================
 const DUREE = 60
 const JAUNE = '#FFE45E'
+const CLE_JOUEURS = 'labo.defi.joueurs'
+
+const lireJoueurs = () => {
+  try {
+    return localStorage.getItem(CLE_JOUEURS) || ''
+  } catch {
+    return ''
+  }
+}
+const retenirJoueurs = (v) => {
+  try {
+    localStorage.setItem(CLE_JOUEURS, v)
+  } catch {
+    /* pas grave */
+  }
+}
 
 const minuit = () => {
   const d = new Date()
@@ -53,18 +73,18 @@ function useRecords(nomCollection, authReady) {
 }
 
 function TableauRecords({ tous, jour, monId }) {
-  const [onglet, setOnglet] = useState('jour')
+  const [onglet, setOnglet] = useState('tous')
   const liste = onglet === 'jour' ? jour : tous
   return (
     <Carte couleur="rgba(255,228,94,.45)">
       <div className="flex items-center justify-between gap-2">
         <p className="labo-mono flex items-center gap-1.5 text-[11px] text-[#FFE45E]">
-          <Trophy size={13} /> RECORDS
+          <Trophy size={13} /> CLASSEMENT
         </p>
         <div className="flex rounded-full bg-[#070B16]/70 p-1 text-xs font-bold">
           {[
-            ['jour', 'Aujourd’hui'],
             ['tous', 'Tous les temps'],
+            ['jour', 'Aujourd’hui'],
           ].map(([id, nom]) => (
             <button key={id} type="button" onClick={() => setOnglet(id)} className="min-h-[34px] rounded-full px-3" style={onglet === id ? { background: JAUNE, color: '#070B16' } : { color: '#B9C1E3' }}>
               {nom}
@@ -143,8 +163,9 @@ function Bilan({ experience, resultats }) {
   )
 }
 
-export default function DefiEclair({ Page, cadre, experience, nomCollection, question, rendu, nomChoix, annonce, delaiErreur = 800 }) {
+export default function DefiEclair({ Page, cadre, experience, nomCollection: nomCol, question, rendu, nomChoix, annonce, delaiErreur = 800 }) {
   const { authReady } = usePin()
+  const nomCollection = nomCol || `laboDefi_${experience}`
   const [phase, setPhase] = useState('accueil') // accueil | jeu | fin
   const [restant, setRestant] = useState(DUREE)
   const [q, setQ] = useState(question)
@@ -152,7 +173,8 @@ export default function DefiEclair({ Page, cadre, experience, nomCollection, que
   const [serie, setSerie] = useState(0)
   const [flash, setFlash] = useState(null)
   const [resultats, setResultats] = useState({})
-  const [pseudo, setPseudo] = useState('')
+  const [pseudo, setPseudo] = useState(lireJoueurs)
+  const envoye = useRef(false)
   const [monId, setMonId] = useState(null)
   const [eclat, setEclat] = useState({ message: '', cle: 0 })
   const minuteur = useRef(null)
@@ -169,6 +191,8 @@ export default function DefiEclair({ Page, cadre, experience, nomCollection, que
   }
 
   function lancer() {
+    retenirJoueurs(pseudo.trim())
+    envoye.current = false
     setPhase('jeu')
     setRestant(DUREE)
     setScore(0)
@@ -214,10 +238,18 @@ export default function DefiEclair({ Page, cadre, experience, nomCollection, que
 
   const totaux = useMemo(() => Object.values(resultats).reduce((t, r) => ({ bons: t.bons + r.bons, total: t.total + r.total }), { bons: 0, total: 0 }), [resultats])
 
+  // à la fin de la partie, le score est inscrit tout seul avec le(s) prénom(s)
+  useEffect(() => {
+    if (phase !== 'fin' || envoye.current || !authReady) return
+    envoye.current = true
+    if (score > 0) envoyer()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, authReady])
+
   async function envoyer() {
     try {
       const ref = await addDoc(collection(db, nomCollection), {
-        pseudo: pseudo.trim().slice(0, 20) || 'Anonyme',
+        pseudo: pseudo.trim().slice(0, 40) || 'Anonyme',
         score,
         bons: totaux.bons,
         total: totaux.total,
@@ -240,6 +272,16 @@ export default function DefiEclair({ Page, cadre, experience, nomCollection, que
           <p className="labo-jeu relative mt-2 text-[34px] leading-none text-[#070B16]">Teste-toi !</p>
           <p className="relative mt-2 text-[15px] font-medium text-[#3D3200]">{annonce}</p>
           <p className="labo-mono relative mt-1 text-xs text-[#5C4A00]">60 secondes · 3 bonnes d’affilée = points ×2</p>
+          <label className="relative mt-4 block text-left text-sm font-bold text-[#3D3200]">
+            Qui joue ?
+            <input
+              value={pseudo}
+              onChange={(e) => setPseudo(e.target.value)}
+              maxLength={40}
+              placeholder="Un ou plusieurs prénoms (Léa, Tom…)"
+              className="mt-1 h-12 w-full rounded-xl border-2 border-[#070B16]/30 bg-white/90 px-3 text-base font-medium text-[#070B16]"
+            />
+          </label>
           <button
             type="button"
             onClick={lancer}
@@ -271,20 +313,10 @@ export default function DefiEclair({ Page, cadre, experience, nomCollection, que
               <Crown size={15} /> {recordTous ? 'Record de tous les temps !' : 'Record du jour !'}
             </p>
           )}
-          {!monId ? (
-            <div className="mt-3 text-left">
-              <label className="block text-sm text-[#E8ECFF]">
-                Ton surnom ou ton numéro de table
-                <input value={pseudo} onChange={(e) => setPseudo(e.target.value)} maxLength={20} placeholder="Table 4" className="mt-2 h-12 w-full rounded-xl border border-white/20 bg-[#070B16] px-3 text-white" />
-              </label>
-              <Bouton className="mt-3 w-full" couleur={JAUNE} onClick={envoyer} disabled={!authReady}>
-                <Send size={18} /> Inscrire mon score
-              </Bouton>
-            </div>
-          ) : (
-            <p className="mt-2 text-sm text-[#9DFF8A]">Score inscrit au tableau !</p>
+          {score > 0 && (
+            <p className="mt-2 text-sm text-[#9DFF8A]">{monId ? `Score inscrit au classement pour ${pseudo.trim() || 'Anonyme'} !` : 'Inscription du score…'}</p>
           )}
-          <Bouton variante="secondaire" className="mx-auto mt-3" onClick={lancer}>
+          <Bouton variante="secondaire" className="mx-auto mt-3" onClick={() => setPhase('accueil')}>
             <RotateCcw size={18} /> Rejouer
           </Bouton>
         </Carte>
