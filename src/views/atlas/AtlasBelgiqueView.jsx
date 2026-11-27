@@ -129,6 +129,11 @@ export default function AtlasBelgiqueView() {
           ))}
           <Ligne carre actif={mer} titre="Mer du Nord" onClick={() => setMer((m) => !m)} />
         </div>
+
+        {/* Sources (la licence OpenStreetMap, ODbL, demande de la citer) */}
+        <p className="shrink-0 border-t border-slate-200 px-3 py-2 text-[10px] leading-snug text-slate-400">
+          Rivières © les contributeurs d’OpenStreetMap (ODbL) · Communes : Statbel
+        </p>
       </aside>
 
       <main className="flex-1 min-w-0 p-2">
